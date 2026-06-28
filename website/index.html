@@ -1,1 +1,379 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ApnaGhar — आपलं घर, आपला विश्वास</title>
+  <meta name="description" content="Pune मधील Residential, Commercial आणि Land Properties साठी ApnaGhar शी संपर्क करा. खरेदी, विक्री, भाडे सर्व सेवा उपलब्ध." />
+  <meta name="keywords" content="property pune, flat for rent pune, 2bhk pune, land sale pune, real estate pune" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
 
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar" id="navbar">
+  <div class="container nav-inner">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">🏠</span>
+      <span class="logo-text">ApnaGhar</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="properties.html">Properties</a></li>
+      <li><a href="land.html">Land</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="tel:+919876543210" class="btn btn-outline btn-sm"><i class="fas fa-phone"></i> Call Now</a>
+      <a href="admin/login.html" class="btn btn-primary btn-sm">Admin</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="hero-overlay"></div>
+  </div>
+  <div class="container hero-content">
+    <div class="hero-badge"><i class="fas fa-shield-alt"></i> RERA Registered Agents</div>
+    <h1 class="hero-title">आपलं घर,<br><span class="accent">आपला विश्वास</span></h1>
+    <p class="hero-sub">Pune मधील 500+ Verified Properties • खरेदी • विक्री • भाडे</p>
+
+    <!-- Search Bar -->
+    <div class="search-box">
+      <div class="search-tabs">
+        <button class="stab active" data-type="Buy">खरेदी</button>
+        <button class="stab" data-type="Rent">भाडे</button>
+        <button class="stab" data-type="Land">जमीन</button>
+      </div>
+      <div class="search-fields">
+        <div class="sfield">
+          <i class="fas fa-map-marker-alt"></i>
+          <input type="text" id="searchLocation" placeholder="Location, Society, Area..." />
+        </div>
+        <div class="sfield">
+          <i class="fas fa-home"></i>
+          <select id="searchBHK">
+            <option value="">BHK Type</option>
+            <option value="1BHK">1 BHK</option>
+            <option value="2BHK">2 BHK</option>
+            <option value="3BHK">3 BHK</option>
+            <option value="4BHK">4 BHK</option>
+            <option value="Studio">Studio</option>
+            <option value="Shop">Shop</option>
+            <option value="Office">Office</option>
+          </select>
+        </div>
+        <div class="sfield">
+          <i class="fas fa-rupee-sign"></i>
+          <select id="searchBudget">
+            <option value="">Budget</option>
+            <option value="0-1000000">Under 10 Lakh</option>
+            <option value="1000000-3000000">10–30 Lakh</option>
+            <option value="3000000-6000000">30–60 Lakh</option>
+            <option value="6000000-10000000">60L–1 Cr</option>
+            <option value="10000000-999999999">1 Cr+</option>
+          </select>
+        </div>
+        <button class="btn btn-primary search-btn" onclick="handleSearch()">
+          <i class="fas fa-search"></i> Search
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num" id="statProps">500+</span><span class="stat-label">Properties</span></div>
+      <div class="stat"><span class="stat-num" id="statClients">2000+</span><span class="stat-label">Happy Clients</span></div>
+      <div class="stat"><span class="stat-num" id="statAgents">12+</span><span class="stat-label">Expert Agents</span></div>
+      <div class="stat"><span class="stat-num">10+</span><span class="stat-label">Years Experience</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== QUICK CATEGORIES ===== -->
+<section class="section categories-section">
+  <div class="container">
+    <div class="categories-grid">
+      <a href="properties.html?type=Apartment" class="cat-card">
+        <div class="cat-icon">🏢</div>
+        <h3>Apartment</h3>
+        <p>Flat & Apartment</p>
+      </a>
+      <a href="properties.html?type=Villa" class="cat-card">
+        <div class="cat-icon">🏡</div>
+        <h3>Villa</h3>
+        <p>Bungalow & Villa</p>
+      </a>
+      <a href="properties.html?type=Shop" class="cat-card">
+        <div class="cat-icon">🏪</div>
+        <h3>Commercial</h3>
+        <p>Shop & Office</p>
+      </a>
+      <a href="land.html" class="cat-card">
+        <div class="cat-icon">🌾</div>
+        <h3>Land</h3>
+        <p>NA Plot & Farmland</p>
+      </a>
+      <a href="properties.html?listing_type=Rent" class="cat-card">
+        <div class="cat-icon">🔑</div>
+        <h3>Rent</h3>
+        <p>Monthly Rental</p>
+      </a>
+      <a href="services.html" class="cat-card">
+        <div class="cat-icon">🚛</div>
+        <h3>Services</h3>
+        <p>Packers & Movers</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURED PROPERTIES ===== -->
+<section class="section" id="featuredSection">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <span class="section-eyebrow">Latest Listings</span>
+        <h2 class="section-title">Featured Properties</h2>
+      </div>
+      <a href="properties.html" class="btn btn-outline">View All <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="properties-grid" id="featuredGrid">
+      <!-- Loaded via JS -->
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== WHY CHOOSE US ===== -->
+<section class="section why-section">
+  <div class="container">
+    <div class="section-header center">
+      <div>
+        <span class="section-eyebrow">Our Promise</span>
+        <h2 class="section-title">ApnaGhar का निवडावे?</h2>
+      </div>
+    </div>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-icon"><i class="fas fa-shield-check"></i></div>
+        <h3>RERA Verified</h3>
+        <p>सर्व Properties RERA अंतर्गत Verified. 100% Legal आणि Safe.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon"><i class="fas fa-handshake"></i></div>
+        <h3>Expert Agents</h3>
+        <p>10+ वर्षांचा अनुभव असलेले Certified Real Estate Agents.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon"><i class="fas fa-map-marked-alt"></i></div>
+        <h3>Site Visit Free</h3>
+        <p>कोणत्याही Property साठी Free Site Visit बुक करा आमच्यासोबत.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon"><i class="fas fa-file-contract"></i></div>
+        <h3>Document Help</h3>
+        <p>Agreement, Registration, Loan — सर्व कागदपत्रांमध्ये मदत.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon"><i class="fas fa-calculator"></i></div>
+        <h3>EMI Calculator</h3>
+        <p>Property खरेदीसाठी Loan आणि EMI Calculate करा सहज.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-icon"><i class="fas fa-headset"></i></div>
+        <h3>24/7 Support</h3>
+        <p>WhatsApp, Call, Email — केव्हाही संपर्क साधा आमच्याशी.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== EMI CALCULATOR ===== -->
+<section class="section emi-section">
+  <div class="container">
+    <div class="emi-wrapper">
+      <div class="emi-info">
+        <span class="section-eyebrow">Finance Tool</span>
+        <h2 class="section-title">EMI Calculator</h2>
+        <p>तुमच्या Budget नुसार Home Loan EMI Calculate करा</p>
+        <ul class="emi-features">
+          <li><i class="fas fa-check"></i> SBI, HDFC, Axis Bank rates</li>
+          <li><i class="fas fa-check"></i> तत्काळ EMI Calculation</li>
+          <li><i class="fas fa-check"></i> Total Interest Amount</li>
+        </ul>
+      </div>
+      <div class="emi-calc">
+        <div class="emi-form">
+          <label>Loan Amount (₹)</label>
+          <input type="range" id="loanAmt" min="500000" max="10000000" step="100000" value="3000000" oninput="calcEMI()" />
+          <span class="emi-val" id="loanAmtVal">₹30,00,000</span>
+
+          <label>Interest Rate (%)</label>
+          <input type="range" id="interestRate" min="6" max="15" step="0.1" value="8.5" oninput="calcEMI()" />
+          <span class="emi-val" id="rateVal">8.5%</span>
+
+          <label>Loan Tenure (Years)</label>
+          <input type="range" id="tenure" min="5" max="30" step="1" value="20" oninput="calcEMI()" />
+          <span class="emi-val" id="tenureVal">20 Years</span>
+        </div>
+        <div class="emi-result">
+          <div class="emi-number"><span>Monthly EMI</span><strong id="emiResult">₹26,035</strong></div>
+          <div class="emi-breakdown">
+            <div><span>Total Amount</span><strong id="totalAmt">₹62,48,400</strong></div>
+            <div><span>Total Interest</span><strong id="totalInterest">₹32,48,400</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONTACT SECTION ===== -->
+<section class="section contact-section" id="contact">
+  <div class="container">
+    <div class="contact-wrapper">
+      <div class="contact-info">
+        <span class="section-eyebrow">Get In Touch</span>
+        <h2 class="section-title">आजच संपर्क करा</h2>
+        <p>तुमची Property गरज सांगा. आमचा Expert Agent 2 तासांत संपर्क करेल.</p>
+        <div class="contact-items">
+          <a href="tel:+919876543210" class="contact-item">
+            <div class="ci-icon"><i class="fas fa-phone"></i></div>
+            <div><span>Call Us</span><strong>+91 98765 43210</strong></div>
+          </a>
+          <a href="https://wa.me/919876543210" target="_blank" class="contact-item whatsapp">
+            <div class="ci-icon"><i class="fab fa-whatsapp"></i></div>
+            <div><span>WhatsApp</span><strong>+91 98765 43210</strong></div>
+          </a>
+          <div class="contact-item">
+            <div class="ci-icon"><i class="fas fa-map-marker-alt"></i></div>
+            <div><span>Office</span><strong>Baner Road, Pune – 411045</strong></div>
+          </div>
+        </div>
+      </div>
+      <form class="contact-form" id="contactForm" onsubmit="submitContact(event)">
+        <h3>Property Inquiry</h3>
+        <div class="form-row">
+          <div class="form-group">
+            <label>पूर्ण नाव *</label>
+            <input type="text" id="cName" placeholder="तुमचे नाव" required />
+          </div>
+          <div class="form-group">
+            <label>Mobile Number *</label>
+            <input type="tel" id="cMobile" placeholder="9876543210" pattern="[0-9]{10}" required />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="cEmail" placeholder="email@example.com" />
+          </div>
+          <div class="form-group">
+            <label>मला हवे आहे</label>
+            <select id="cType">
+              <option value="Buyer">Property खरेदी</option>
+              <option value="Tenant">Property भाडे</option>
+              <option value="Investor">Investment</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Message</label>
+          <textarea id="cMessage" placeholder="तुमची requirement सांगा..." rows="3"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary full-width" id="submitBtn">
+          <i class="fas fa-paper-plane"></i> Submit Inquiry
+        </button>
+        <div id="formStatus" class="form-status"></div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="logo logo-white">
+          <span class="logo-icon">🏠</span>
+          <span class="logo-text">ApnaGhar</span>
+        </a>
+        <p>Pune मधील विश्वासू Real Estate Partner. खरेदी, विक्री, भाडे — सर्व सेवा एकाच ठिकाणी.</p>
+        <div class="social-links">
+          <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+          <a href="https://wa.me/919876543210" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Properties</h4>
+        <ul>
+          <li><a href="properties.html?listing_type=Sale">Flat for Sale</a></li>
+          <li><a href="properties.html?listing_type=Rent">Flat for Rent</a></li>
+          <li><a href="properties.html?type=Villa">Villa & Bungalow</a></li>
+          <li><a href="properties.html?type=Shop">Shop & Office</a></li>
+          <li><a href="land.html">Land & Plots</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Services</h4>
+        <ul>
+          <li><a href="#">Home Loans</a></li>
+          <li><a href="#">Legal Help</a></li>
+          <li><a href="#">Packers & Movers</a></li>
+          <li><a href="#">Property Management</a></li>
+          <li><a href="#">Interior Design</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul class="footer-contact">
+          <li><i class="fas fa-phone"></i> +91 98765 43210</li>
+          <li><i class="fab fa-whatsapp"></i> +91 98765 43210</li>
+          <li><i class="fas fa-envelope"></i> info@apnaghar.in</li>
+          <li><i class="fas fa-map-marker-alt"></i> Baner Road, Pune 411045</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2024 ApnaGhar Realty. All Rights Reserved.</p>
+      <div class="footer-links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Use</a>
+        <a href="#">RERA Disclosure</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- WhatsApp Float Button -->
+<a href="https://wa.me/919876543210?text=Hello! I'm interested in properties." 
+   class="whatsapp-float" target="_blank" aria-label="WhatsApp">
+  <i class="fab fa-whatsapp"></i>
+</a>
+
+<!-- Call Float -->
+<a href="tel:+919876543210" class="call-float" aria-label="Call">
+  <i class="fas fa-phone"></i>
+</a>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

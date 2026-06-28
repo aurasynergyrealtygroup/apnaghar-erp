@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Properties — ApnaGhar</title>
+  <meta name="description" content="Pune मधील Flat, Villa, Shop, Office — Buy & Rent Properties. Filter by BHK, Budget, Location." />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/properties.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar scrolled" id="navbar">
+  <div class="container nav-inner">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">🏠</span>
+      <span class="logo-text">ApnaGhar</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="properties.html" class="active">Properties</a></li>
+      <li><a href="land.html">Land</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="tel:+919876543210" class="btn btn-outline btn-sm"><i class="fas fa-phone"></i> Call Now</a>
+      <a href="admin/login.html" class="btn btn-primary btn-sm">Admin</a>
+    </div>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<section class="page-header">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">Home</a>
+      <i class="fas fa-chevron-right"></i>
+      <span>Properties</span>
+    </div>
+    <h1 class="page-title">Properties</h1>
+    <p class="page-sub">Pune मधील Verified Properties — खरेदी आणि भाडे</p>
+  </div>
+</section>
+
+<!-- MAIN CONTENT -->
+<div class="prop-layout container">
+
+  <!-- ===== SIDEBAR FILTERS ===== -->
+  <aside class="filter-sidebar" id="filterSidebar">
+    <div class="filter-header">
+      <h3><i class="fas fa-sliders-h"></i> Filters</h3>
+      <button class="filter-clear" onclick="clearAllFilters()">Clear All</button>
+    </div>
+
+    <!-- Listing Type -->
+    <div class="filter-group">
+      <h4>Listing Type</h4>
+      <div class="radio-group">
+        <label class="radio-label">
+          <input type="radio" name="listingType" value="" checked onchange="applyFilters()" /> All
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="listingType" value="Sale" onchange="applyFilters()" />
+          <span class="badge-sale">विक्री</span> Sale
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="listingType" value="Rent" onchange="applyFilters()" />
+          <span class="badge-rent">भाडे</span> Rent
+        </label>
+      </div>
+    </div>
+
+    <!-- Property Type -->
+    <div class="filter-group">
+      <h4>Property Type</h4>
+      <div class="checkbox-group" id="propTypeFilters">
+        <label class="check-label"><input type="checkbox" value="Apartment" onchange="applyFilters()" /> Apartment / Flat</label>
+        <label class="check-label"><input type="checkbox" value="Villa" onchange="applyFilters()" /> Villa / Bungalow</label>
+        <label class="check-label"><input type="checkbox" value="Row House" onchange="applyFilters()" /> Row House</label>
+        <label class="check-label"><input type="checkbox" value="Shop" onchange="applyFilters()" /> Shop</label>
+        <label class="check-label"><input type="checkbox" value="Office" onchange="applyFilters()" /> Office</label>
+        <label class="check-label"><input type="checkbox" value="Warehouse" onchange="applyFilters()" /> Warehouse</label>
+      </div>
+    </div>
+
+    <!-- BHK -->
+    <div class="filter-group">
+      <h4>BHK</h4>
+      <div class="bhk-chips" id="bhkFilters">
+        <button class="chip active" data-bhk="" onclick="selectBHK(this, '')">All</button>
+        <button class="chip" data-bhk="1BHK" onclick="selectBHK(this, '1BHK')">1 BHK</button>
+        <button class="chip" data-bhk="2BHK" onclick="selectBHK(this, '2BHK')">2 BHK</button>
+        <button class="chip" data-bhk="3BHK" onclick="selectBHK(this, '3BHK')">3 BHK</button>
+        <button class="chip" data-bhk="4BHK" onclick="selectBHK(this, '4BHK')">4 BHK</button>
+        <button class="chip" data-bhk="Studio" onclick="selectBHK(this, 'Studio')">Studio</button>
+      </div>
+    </div>
+
+    <!-- Budget (Sale) -->
+    <div class="filter-group" id="budgetSaleGroup">
+      <h4>Budget (Sale)</h4>
+      <div class="radio-group">
+        <label class="radio-label"><input type="radio" name="budgetSale" value="" checked onchange="applyFilters()" /> Any</label>
+        <label class="radio-label"><input type="radio" name="budgetSale" value="0-1000000" onchange="applyFilters()" /> Under ₹10 Lakh</label>
+        <label class="radio-label"><input type="radio" name="budgetSale" value="1000000-3000000" onchange="applyFilters()" /> ₹10L – ₹30L</label>
+        <label class="radio-label"><input type="radio" name="budgetSale" value="3000000-6000000" onchange="applyFilters()" /> ₹30L – ₹60L</label>
+        <label class="radio-label"><input type="radio" name="budgetSale" value="6000000-10000000" onchange="applyFilters()" /> ₹60L – ₹1Cr</label>
+        <label class="radio-label"><input type="radio" name="budgetSale" value="10000000-999999999" onchange="applyFilters()" /> ₹1Cr+</label>
+      </div>
+    </div>
+
+    <!-- Budget (Rent) -->
+    <div class="filter-group" id="budgetRentGroup" style="display:none">
+      <h4>Monthly Rent</h4>
+      <div class="radio-group">
+        <label class="radio-label"><input type="radio" name="budgetRent" value="" checked onchange="applyFilters()" /> Any</label>
+        <label class="radio-label"><input type="radio" name="budgetRent" value="0-10000" onchange="applyFilters()" /> Under ₹10,000</label>
+        <label class="radio-label"><input type="radio" name="budgetRent" value="10000-20000" onchange="applyFilters()" /> ₹10K – ₹20K</label>
+        <label class="radio-label"><input type="radio" name="budgetRent" value="20000-35000" onchange="applyFilters()" /> ₹20K – ₹35K</label>
+        <label class="radio-label"><input type="radio" name="budgetRent" value="35000-999999" onchange="applyFilters()" /> ₹35K+</label>
+      </div>
+    </div>
+
+    <!-- Furnished Status -->
+    <div class="filter-group">
+      <h4>Furnished</h4>
+      <div class="checkbox-group">
+        <label class="check-label"><input type="checkbox" value="Furnished" onchange="applyFilters()" /> Furnished</label>
+        <label class="check-label"><input type="checkbox" value="Semi-Furnished" onchange="applyFilters()" /> Semi-Furnished</label>
+        <label class="check-label"><input type="checkbox" value="Unfurnished" onchange="applyFilters()" /> Unfurnished</label>
+      </div>
+    </div>
+
+    <!-- Facing -->
+    <div class="filter-group">
+      <h4>Facing</h4>
+      <div class="checkbox-group">
+        <label class="check-label"><input type="checkbox" value="East" onchange="applyFilters()" /> East</label>
+        <label class="check-label"><input type="checkbox" value="West" onchange="applyFilters()" /> West</label>
+        <label class="check-label"><input type="checkbox" value="North" onchange="applyFilters()" /> North</label>
+        <label class="check-label"><input type="checkbox" value="South" onchange="applyFilters()" /> South</label>
+      </div>
+    </div>
+
+    <!-- Apply Button (Mobile) -->
+    <button class="btn btn-primary full-width filter-apply-btn" onclick="closeMobileFilter()">
+      <i class="fas fa-check"></i> Apply Filters
+    </button>
+  </aside>
+
+  <!-- ===== MAIN LISTING ===== -->
+  <main class="prop-main">
+
+    <!-- Toolbar -->
+    <div class="prop-toolbar">
+      <div class="toolbar-left">
+        <button class="filter-toggle-btn" onclick="toggleMobileFilter()">
+          <i class="fas fa-sliders-h"></i> Filters
+          <span class="filter-count" id="filterCount" style="display:none">0</span>
+        </button>
+        <span class="result-count" id="resultCount">Loading...</span>
+      </div>
+      <div class="toolbar-right">
+        <!-- Search -->
+        <div class="inline-search">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Search properties..." oninput="debounceSearch()" />
+          <button class="clear-search" id="clearSearch" onclick="clearSearch()" style="display:none">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <!-- Sort -->
+        <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+          <option value="newest">Newest First</option>
+          <option value="price_asc">Price: Low to High</option>
+          <option value="price_desc">Price: High to Low</option>
+          <option value="area_desc">Area: Largest First</option>
+        </select>
+        <!-- View Toggle -->
+        <div class="view-toggle">
+          <button class="view-btn active" id="gridViewBtn" onclick="setView('grid')" title="Grid View">
+            <i class="fas fa-th"></i>
+          </button>
+          <button class="view-btn" id="listViewBtn" onclick="setView('list')" title="List View">
+            <i class="fas fa-list"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Filters Pills -->
+    <div class="active-filters" id="activeFilters" style="display:none">
+      <span class="af-label">Active:</span>
+      <div class="af-pills" id="afPills"></div>
+    </div>
+
+    <!-- Properties Grid/List -->
+    <div class="properties-grid" id="propertiesGrid">
+      <!-- Skeletons while loading -->
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display:none">
+      <i class="fas fa-search"></i>
+      <h3>कोणतीही Property सापडली नाही</h3>
+      <p>Filters बदला किंवा Search Term वेगळा वापरा</p>
+      <button class="btn btn-outline" onclick="clearAllFilters()">
+        <i class="fas fa-redo"></i> Reset Filters
+      </button>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination" style="display:none">
+      <button class="page-btn" id="prevBtn" onclick="changePage(-1)">
+        <i class="fas fa-chevron-left"></i> Previous
+      </button>
+      <div class="page-numbers" id="pageNumbers"></div>
+      <button class="page-btn" id="nextBtn" onclick="changePage(1)">
+        Next <i class="fas fa-chevron-right"></i>
+      </button>
+    </div>
+
+  </main>
+</div>
+
+<!-- INQUIRY MODAL -->
+<div class="modal-overlay" id="inquiryModal" onclick="closeModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="document.getElementById('inquiryModal').classList.remove('open')">
+      <i class="fas fa-times"></i>
+    </button>
+    <h3 id="modalTitle">Property Inquiry</h3>
+    <p id="modalSubtitle" class="modal-sub"></p>
+    <form id="modalForm" onsubmit="submitModalInquiry(event)">
+      <div class="form-group">
+        <label>पूर्ण नाव *</label>
+        <input type="text" id="mName" placeholder="तुमचे नाव" required />
+      </div>
+      <div class="form-group">
+        <label>Mobile Number *</label>
+        <input type="tel" id="mMobile" placeholder="9876543210" pattern="[0-9]{10}" required />
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea id="mMessage" rows="3" placeholder="तुमची query सांगा..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary full-width" id="modalSubmitBtn">
+        <i class="fas fa-paper-plane"></i> Send Inquiry
+      </button>
+      <div id="modalStatus"></div>
+    </form>
+    <div class="modal-actions">
+      <a href="#" class="modal-wa" id="modalWA" target="_blank">
+        <i class="fab fa-whatsapp"></i> WhatsApp करा
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile Filter Overlay -->
+<div class="filter-overlay" id="filterOverlay" onclick="closeMobileFilter()"></div>
+
+<!-- WhatsApp + Call Float -->
+<a href="https://wa.me/919876543210" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+<a href="tel:+919876543210" class="call-float"><i class="fas fa-phone"></i></a>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/properties.js"></script>
+</body>
+</html>

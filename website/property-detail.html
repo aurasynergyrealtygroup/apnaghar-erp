@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="pageTitle">Property Detail — ApnaGhar</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/properties.css" />
+  <link rel="stylesheet" href="css/detail.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar scrolled" id="navbar">
+  <div class="container nav-inner">
+    <a href="index.html" class="logo"><span class="logo-icon">🏠</span><span class="logo-text">ApnaGhar</span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="properties.html" class="active">Properties</a></li>
+      <li><a href="land.html">Land</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="tel:+919876543210" class="btn btn-outline btn-sm"><i class="fas fa-phone"></i> Call</a>
+    </div>
+    <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- LOADING STATE -->
+<div class="detail-loading" id="detailLoading">
+  <div class="container">
+    <div class="skel-breadcrumb"></div>
+    <div class="skel-gallery"></div>
+    <div class="detail-grid">
+      <div class="skel-body"></div>
+      <div class="skel-sidebar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN DETAIL (hidden until loaded) -->
+<div id="detailMain" style="display:none">
+
+  <!-- BREADCRUMB -->
+  <div class="detail-breadcrumb container">
+    <a href="index.html">Home</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="properties.html">Properties</a>
+    <i class="fas fa-chevron-right"></i>
+    <span id="bcTitle">Property</span>
+  </div>
+
+  <!-- GALLERY -->
+  <div class="gallery-section" id="gallerySection">
+    <div class="gallery-main" id="galleryMain">
+      <img id="mainImg" src="" alt="Property" />
+      <button class="gallery-nav prev" onclick="changeImage(-1)"><i class="fas fa-chevron-left"></i></button>
+      <button class="gallery-nav next" onclick="changeImage(1)"><i class="fas fa-chevron-right"></i></button>
+      <div class="gallery-counter" id="galleryCounter">1 / 1</div>
+    </div>
+    <div class="gallery-thumbs" id="galleryThumbs"></div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="container detail-grid">
+
+    <!-- LEFT: Details -->
+    <div class="detail-body">
+
+      <!-- Title & Badges -->
+      <div class="detail-title-row">
+        <div>
+          <div class="detail-badges" id="detailBadges"></div>
+          <h1 class="detail-title" id="detailTitle">Loading...</h1>
+          <div class="detail-location">
+            <i class="fas fa-map-marker-alt"></i>
+            <span id="detailAddress">—</span>
+          </div>
+        </div>
+        <div class="detail-price-box">
+          <div class="detail-price" id="detailPrice">—</div>
+          <div class="detail-price-sub" id="detailPriceSub"></div>
+        </div>
+      </div>
+
+      <!-- Key Info Cards -->
+      <div class="info-cards" id="infoCards"></div>
+
+      <!-- Tabs -->
+      <div class="detail-tabs">
+        <button class="dtab active" onclick="switchTab(this,'overview')">Overview</button>
+        <button class="dtab" onclick="switchTab(this,'amenities')">Amenities</button>
+        <button class="dtab" onclick="switchTab(this,'map')">Location</button>
+        <button class="dtab" onclick="switchTab(this,'video')">Video</button>
+      </div>
+
+      <!-- Overview Tab -->
+      <div class="tab-content active" id="tab-overview">
+        <h3 class="tab-heading">Property Description</h3>
+        <div class="detail-desc" id="detailDesc">—</div>
+
+        <h3 class="tab-heading" style="margin-top:28px">Property Details</h3>
+        <div class="prop-spec-grid" id="propSpecGrid"></div>
+      </div>
+
+      <!-- Amenities Tab -->
+      <div class="tab-content" id="tab-amenities">
+        <h3 class="tab-heading">Amenities & Features</h3>
+        <div class="amenities-grid" id="amenitiesGrid">
+          <div class="amenity-item"><i class="fas fa-swimming-pool"></i> Swimming Pool</div>
+          <div class="amenity-item"><i class="fas fa-dumbbell"></i> Gymnasium</div>
+          <div class="amenity-item"><i class="fas fa-shield-alt"></i> 24x7 Security</div>
+          <div class="amenity-item"><i class="fas fa-car"></i> Covered Parking</div>
+          <div class="amenity-item"><i class="fas fa-bolt"></i> Power Backup</div>
+          <div class="amenity-item"><i class="fas fa-tree"></i> Garden</div>
+          <div class="amenity-item"><i class="fas fa-child"></i> Play Area</div>
+          <div class="amenity-item"><i class="fas fa-video"></i> CCTV</div>
+          <div class="amenity-item"><i class="fas fa-charging-station"></i> EV Charging</div>
+          <div class="amenity-item"><i class="fas fa-building"></i> Club House</div>
+        </div>
+      </div>
+
+      <!-- Map Tab -->
+      <div class="tab-content" id="tab-map">
+        <h3 class="tab-heading">Location</h3>
+        <div class="map-wrap" id="mapWrap">
+          <iframe id="mapFrame" src="" width="100%" height="380" style="border:0;border-radius:12px" allowfullscreen loading="lazy"></iframe>
+        </div>
+        <a class="map-open-btn" id="mapOpenBtn" href="#" target="_blank">
+          <i class="fas fa-external-link-alt"></i> Google Maps मध्ये उघडा
+        </a>
+      </div>
+
+      <!-- Video Tab -->
+      <div class="tab-content" id="tab-video">
+        <h3 class="tab-heading">Property Video</h3>
+        <div class="video-wrap" id="videoWrap">
+          <div class="no-video"><i class="fas fa-video-slash"></i><p>Video उपलब्ध नाही</p></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Sidebar -->
+    <aside class="detail-sidebar">
+
+      <!-- Contact Agent Card -->
+      <div class="agent-card" id="agentCard">
+        <div class="agent-header">
+          <div class="agent-avatar"><i class="fas fa-user-tie"></i></div>
+          <div>
+            <div class="agent-name" id="agentName">ApnaGhar Agent</div>
+            <div class="agent-tag">Verified Agent</div>
+          </div>
+        </div>
+        <div class="agent-contact-btns">
+          <a href="tel:+919876543210" class="btn btn-primary full-width">
+            <i class="fas fa-phone"></i> Call Agent
+          </a>
+          <a href="#" class="btn btn-whatsapp full-width" id="agentWA" target="_blank">
+            <i class="fab fa-whatsapp"></i> WhatsApp
+          </a>
+        </div>
+      </div>
+
+      <!-- Inquiry Form Card -->
+      <div class="inquiry-card">
+        <h4>Inquiry पाठवा</h4>
+        <form id="detailInquiryForm" onsubmit="submitDetailInquiry(event)">
+          <div class="form-group">
+            <input type="text" id="diName" placeholder="पूर्ण नाव *" required />
+          </div>
+          <div class="form-group">
+            <input type="tel" id="diMobile" placeholder="Mobile Number *" pattern="[0-9]{10}" required />
+          </div>
+          <div class="form-group">
+            <input type="email" id="diEmail" placeholder="Email (optional)" />
+          </div>
+          <div class="form-group">
+            <select id="diVisit">
+              <option value="">Site Visit Schedule करायचे?</option>
+              <option value="This Week">या आठवड्यात</option>
+              <option value="Next Week">पुढच्या आठवड्यात</option>
+              <option value="This Month">या महिन्यात</option>
+              <option value="Just Inquiry">फक्त Inquiry</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <textarea id="diMessage" placeholder="तुमचा Message..." rows="3"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary full-width" id="diSubmitBtn">
+            <i class="fas fa-paper-plane"></i> Submit Inquiry
+          </button>
+          <div id="diStatus"></div>
+        </form>
+      </div>
+
+      <!-- Share Card -->
+      <div class="share-card">
+        <h4><i class="fas fa-share-alt"></i> Share Property</h4>
+        <div class="share-btns">
+          <button class="share-btn wa" onclick="shareProperty('whatsapp')"><i class="fab fa-whatsapp"></i></button>
+          <button class="share-btn fb" onclick="shareProperty('facebook')"><i class="fab fa-facebook"></i></button>
+          <button class="share-btn copy" onclick="copyLink()"><i class="fas fa-link"></i></button>
+        </div>
+        <span id="copyConfirm" style="font-size:12px;color:var(--green);display:none">Link copied!</span>
+      </div>
+
+      <!-- Similar Properties -->
+      <div class="similar-section">
+        <h4>Similar Properties</h4>
+        <div id="similarGrid"></div>
+      </div>
+
+    </aside>
+  </div>
+</div>
+
+<!-- Sticky Bottom Bar (Mobile) -->
+<div class="sticky-bottom" id="stickyBottom">
+  <div class="sticky-price" id="stickyPrice">—</div>
+  <div class="sticky-actions">
+    <a href="tel:+919876543210" class="btn btn-outline btn-sm"><i class="fas fa-phone"></i> Call</a>
+    <a href="#" class="btn btn-whatsapp btn-sm" id="stickyWA"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+  </div>
+</div>
+
+<a href="https://wa.me/919876543210" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+<a href="tel:+919876543210" class="call-float"><i class="fas fa-phone"></i></a>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/detail.js"></script>
+</body>
+</html>
