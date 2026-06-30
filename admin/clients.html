@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clients — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- SIDEBAR (reuse) -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span>🏠</span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v1.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+      <div class="nav-section-label">Property</div>
+      <a class="nav-item" href="properties.html"><i class="fas fa-home"></i> Properties</a>
+      <a class="nav-item" href="land.html"><i class="fas fa-map"></i> Land</a>
+      <div class="nav-section-label">CRM</div>
+      <a class="nav-item active" href="clients.html"><i class="fas fa-users"></i> Clients</a>
+      <a class="nav-item" href="agents.html"><i class="fas fa-user-tie"></i> Agents</a>
+      <a class="nav-item" href="followups.html"><i class="fas fa-phone-alt"></i> Follow-ups</a>
+      <a class="nav-item" href="site-visits.html"><i class="fas fa-car"></i> Site Visits</a>
+      <div class="nav-section-label">Transactions</div>
+      <a class="nav-item" href="agreements.html"><i class="fas fa-file-contract"></i> Agreements</a>
+      <a class="nav-item" href="rent-payments.html"><i class="fas fa-money-bill-wave"></i> Rent Payments</a>
+      <a class="nav-item" href="sale-deals.html"><i class="fas fa-handshake"></i> Sale Deals</a>
+      <div class="nav-section-label">Finance</div>
+      <a class="nav-item" href="expenses.html"><i class="fas fa-receipt"></i> Expenses</a>
+      <a class="nav-item" href="invoices.html"><i class="fas fa-file-invoice"></i> Invoices</a>
+      <a class="nav-item" href="ledger.html"><i class="fas fa-book"></i> Ledger</a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-item" href="users.html"><i class="fas fa-user-cog"></i> Users & Roles</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Clients</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openModal('clientModal')">
+          <i class="fas fa-user-plus"></i> Add Client
+        </button>
+      </div>
+    </header>
+
+    <main class="admin-content">
+
+      <!-- KPI Mini -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-icon purple"><i class="fas fa-users"></i></div><div><span class="kpi-val" id="cTotal">—</span><span class="kpi-label">Total Clients</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-star"></i></div><div><span class="kpi-val" id="cNew">—</span><span class="kpi-label">New Leads</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-fire"></i></div><div><span class="kpi-val" id="cFollowup">—</span><span class="kpi-label">In Follow-up</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-circle"></i></div><div><span class="kpi-val" id="cClosed">—</span><span class="kpi-label">Closed</span></div></div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-users"></i> All Clients</h3>
+          <button class="btn btn-outline btn-sm" onclick="exportCSV()"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200)">
+          <div class="toolbar" style="margin:0">
+            <div class="toolbar-search" style="flex:1">
+              <i class="fas fa-search"></i>
+              <input type="text" id="clientSearch" placeholder="Search name, mobile, email..." oninput="filterClients()" />
+            </div>
+            <select class="toolbar-select" id="typeFilter" onchange="filterClients()">
+              <option value="">All Types</option>
+              <option value="Buyer">Buyer</option>
+              <option value="Tenant">Tenant</option>
+              <option value="Investor">Investor</option>
+            </select>
+            <select class="toolbar-select" id="statusFilter" onchange="filterClients()">
+              <option value="">All Status</option>
+              <option value="New">New</option>
+              <option value="Followup">Followup</option>
+              <option value="Closed">Closed</option>
+              <option value="Lost">Lost</option>
+            </select>
+            <select class="toolbar-select" id="sourceFilter" onchange="filterClients()">
+              <option value="">All Sources</option>
+              <option value="Website">Website</option>
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="Referral">Referral</option>
+              <option value="Walk-in">Walk-in</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)" /></th>
+                <th>Client</th><th>Mobile</th><th>Type</th><th>Budget</th>
+                <th>Source</th><th>Status</th><th>Agent</th><th>Date</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="clientsTbody">
+              <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin fa-2x"></i><p style="margin-top:12px">Loading clients...</p></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer">
+          <span id="clientsFooterInfo">—</span>
+          <div class="tbl-pages" id="clientsPages"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ADD / EDIT CLIENT MODAL -->
+<div class="modal-overlay" id="clientModal" onclick="if(event.target===this)closeModal('clientModal')">
+  <div class="modal-box" style="max-width:680px">
+    <div class="modal-header">
+      <h3 id="clientModalTitle"><i class="fas fa-user-plus"></i> Add New Client</h3>
+      <button class="modal-close" onclick="closeModal('clientModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editClientId" />
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Client Type *</label>
+          <select id="cType"><option value="Buyer">Buyer</option><option value="Tenant">Tenant</option><option value="Investor">Investor</option></select>
+        </div>
+        <div class="form-group">
+          <label>Lead Status</label>
+          <select id="cLeadStatus"><option value="New">New</option><option value="Followup">Followup</option><option value="Closed">Closed</option><option value="Lost">Lost</option></select>
+        </div>
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="cName" placeholder="पूर्ण नाव" required />
+        </div>
+        <div class="form-group">
+          <label>Mobile *</label>
+          <input type="tel" id="cMobile" placeholder="9876543210" />
+        </div>
+        <div class="form-group">
+          <label>Alternate Mobile</label>
+          <input type="tel" id="cAltMobile" placeholder="Optional" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="cEmail" placeholder="email@example.com" />
+        </div>
+        <div class="form-group">
+          <label>Occupation</label>
+          <input type="text" id="cOccupation" placeholder="Job / Business" />
+        </div>
+        <div class="form-group">
+          <label>Company</label>
+          <input type="text" id="cCompany" placeholder="Company name" />
+        </div>
+        <div class="form-group">
+          <label>Min Budget (₹)</label>
+          <input type="number" id="cBudgetMin" placeholder="2000000" />
+        </div>
+        <div class="form-group">
+          <label>Max Budget (₹)</label>
+          <input type="number" id="cBudgetMax" placeholder="5000000" />
+        </div>
+        <div class="form-group">
+          <label>Preferred BHK</label>
+          <select id="cBHK"><option value="">Any</option><option value="1BHK">1BHK</option><option value="2BHK">2BHK</option><option value="3BHK">3BHK</option><option value="4BHK">4BHK</option><option value="Studio">Studio</option></select>
+        </div>
+        <div class="form-group">
+          <label>Preferred Location</label>
+          <input type="text" id="cLocation" placeholder="Baner, Wakad..." />
+        </div>
+        <div class="form-group">
+          <label>Property Interest</label>
+          <select id="cPropInterest"><option value="Sale">Sale</option><option value="Rent">Rent</option></select>
+        </div>
+        <div class="form-group">
+          <label>Loan Required</label>
+          <select id="cLoan"><option value="No">No</option><option value="Yes">Yes</option></select>
+        </div>
+        <div class="form-group">
+          <label>Lead Source</label>
+          <select id="cSource"><option value="Website">Website</option><option value="WhatsApp">WhatsApp</option><option value="Referral">Referral</option><option value="Walk-in">Walk-in</option><option value="99acres">99acres</option><option value="Facebook Ads">Facebook Ads</option><option value="Other">Other</option></select>
+        </div>
+        <div class="form-group">
+          <label>Assigned Agent ID</label>
+          <input type="text" id="cAgent" placeholder="Agent ID" />
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('clientModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveClient()" id="saveClientBtn">
+        <i class="fas fa-save"></i> Save Client
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- View Client Modal -->
+<div class="modal-overlay" id="viewClientModal" onclick="if(event.target===this)closeModal('viewClientModal')">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-header">
+      <h3><i class="fas fa-user"></i> Client Details</h3>
+      <button class="modal-close" onclick="closeModal('viewClientModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="viewClientBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('viewClientModal')">Close</button>
+      <button class="btn btn-primary" id="editFromViewBtn"><i class="fas fa-edit"></i> Edit</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="admin.js"></script>
+<script>
+  let allClients = [];
+  let filteredClients = [];
+  let currentPage = 1;
+  const PAGE_SIZE = 15;
+
+  document.addEventListener("DOMContentLoaded", loadClients);
+
+  async function loadClients() {
+    const result = await API.admin.getClients();
+    if (!result.success) { showToast("Error loading clients", "error"); return; }
+    allClients = result.data || [];
+
+    // KPIs
+    document.getElementById("cTotal").textContent    = allClients.length;
+    document.getElementById("cNew").textContent      = allClients.filter(c => c.lead_status === "New").length;
+    document.getElementById("cFollowup").textContent = allClients.filter(c => c.lead_status === "Followup").length;
+    document.getElementById("cClosed").textContent   = allClients.filter(c => c.lead_status === "Closed").length;
+
+    filterClients();
+  }
+
+  function filterClients() {
+    const q      = document.getElementById("clientSearch").value.toLowerCase();
+    const type   = document.getElementById("typeFilter").value;
+    const status = document.getElementById("statusFilter").value;
+    const source = document.getElementById("sourceFilter").value;
+
+    filteredClients = allClients.filter(c => {
+      const matchQ = !q || (c.full_name||"").toLowerCase().includes(q) || (c.mobile||"").includes(q) || (c.email||"").toLowerCase().includes(q);
+      const matchType   = !type   || c.client_type  === type;
+      const matchStatus = !status || c.lead_status   === status;
+      const matchSource = !source || c.lead_source   === source;
+      return matchQ && matchType && matchStatus && matchSource;
+    });
+
+    currentPage = 1;
+    renderClients();
+  }
+
+  function renderClients() {
+    const tbody = document.getElementById("clientsTbody");
+    const total = filteredClients.length;
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const page  = filteredClients.slice(start, start + PAGE_SIZE);
+
+    if (!total) {
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-search" style="font-size:28px;margin-bottom:8px;display:block"></i>No clients found</td></tr>`;
+      document.getElementById("clientsFooterInfo").textContent = "No records";
+      document.getElementById("clientsPages").innerHTML = "";
+      return;
+    }
+
+    tbody.innerHTML = page.map(c => `
+      <tr>
+        <td><input type="checkbox" class="row-check" value="${c.client_id}" /></td>
+        <td>
+          <div style="font-weight:600;color:var(--navy)">${c.full_name || "—"}</div>
+          <div style="font-size:11px;color:var(--text-light)">${c.email || ""}</div>
+        </td>
+        <td>
+          <a href="tel:${c.mobile}" style="font-weight:600;color:var(--navy)">${c.mobile || "—"}</a>
+          ${c.alternate_mobile ? `<div style="font-size:11px;color:var(--text-light)">${c.alternate_mobile}</div>` : ""}
+        </td>
+        <td>${statusBadge(c.client_type)}</td>
+        <td>
+          ${c.budget_min || c.budget_max ? `<div style="font-size:12px;font-weight:600;color:var(--navy)">${fmt(c.budget_min)} – ${fmt(c.budget_max)}</div>` : "—"}
+          ${c.preferred_bhk ? `<div style="font-size:11px;color:var(--text-light)">${c.preferred_bhk}</div>` : ""}
+        </td>
+        <td><span style="font-size:12px">${c.lead_source || "—"}</span></td>
+        <td>${statusBadge(c.lead_status)}</td>
+        <td><span style="font-size:12px">${c.assigned_agent_id || "—"}</span></td>
+        <td><span style="font-size:12px;color:var(--text-light)">${fmtDate(c.created_at)}</span></td>
+        <td>
+          <div style="display:flex;gap:5px">
+            <button class="btn btn-sm btn-outline btn-icon" onclick="viewClient('${c.client_id}')" title="View"><i class="fas fa-eye"></i></button>
+            <button class="btn btn-sm btn-primary btn-icon" onclick="editClient('${c.client_id}')" title="Edit"><i class="fas fa-edit"></i></button>
+            <a href="tel:${c.mobile}" class="btn btn-sm btn-success btn-icon" title="Call"><i class="fas fa-phone"></i></a>
+            <a href="https://wa.me/91${c.mobile}" target="_blank" class="btn btn-sm btn-icon" style="background:#25D366;color:#fff" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            <button class="btn btn-sm btn-danger btn-icon" onclick="deleteClient('${c.client_id}','${c.full_name}')" title="Delete"><i class="fas fa-trash"></i></button>
+          </div>
+        </td>
+      </tr>`).join("");
+
+    document.getElementById("clientsFooterInfo").textContent = `Showing ${start + 1}–${Math.min(start + PAGE_SIZE, total)} of ${total}`;
+    renderPagination(total, "clientsPages", currentPage, (p) => { currentPage = p; renderClients(); });
+  }
+
+  function renderPagination(total, containerId, current, onClick) {
+    const pages = Math.ceil(total / PAGE_SIZE);
+    const container = document.getElementById(containerId);
+    if (pages <= 1) { container.innerHTML = ""; return; }
+    let html = "";
+    for (let i = 1; i <= Math.min(pages, 7); i++) {
+      html += `<button class="tbl-page-btn ${i === current ? "active" : ""}" onclick="(${onClick})(${i})">${i}</button>`;
+    }
+    container.innerHTML = html;
+  }
+
+  function toggleSelectAll(cb) {
+    document.querySelectorAll(".row-check").forEach(c => c.checked = cb.checked);
+  }
+
+  // ---- CRUD ----
+  function openAddModal() {
+    document.getElementById("clientModalTitle").innerHTML = '<i class="fas fa-user-plus"></i> Add New Client';
+    document.getElementById("editClientId").value = "";
+    document.getElementById("saveClientBtn").innerHTML = '<i class="fas fa-save"></i> Save Client';
+    ["cType","cLeadStatus","cName","cMobile","cAltMobile","cEmail","cOccupation","cCompany","cBudgetMin","cBudgetMax","cBHK","cLocation","cPropInterest","cLoan","cSource","cAgent"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = el.tagName === "SELECT" ? el.options[0]?.value || "" : "";
+    });
+    openModal("clientModal");
+  }
+
+  // Override button to open properly
+  document.querySelector('[onclick="openModal(\'clientModal\')"]')?.addEventListener("click", e => {
+    e.preventDefault(); openAddModal();
+  });
+
+  function editClient(id) {
+    const c = allClients.find(x => String(x.client_id) === String(id));
+    if (!c) return;
+    document.getElementById("clientModalTitle").innerHTML = '<i class="fas fa-edit"></i> Edit Client';
+    document.getElementById("editClientId").value = c.client_id;
+    document.getElementById("cType").value = c.client_type || "Buyer";
+    document.getElementById("cLeadStatus").value = c.lead_status || "New";
+    document.getElementById("cName").value = c.full_name || "";
+    document.getElementById("cMobile").value = c.mobile || "";
+    document.getElementById("cAltMobile").value = c.alternate_mobile || "";
+    document.getElementById("cEmail").value = c.email || "";
+    document.getElementById("cOccupation").value = c.occupation || "";
+    document.getElementById("cCompany").value = c.company_name || "";
+    document.getElementById("cBudgetMin").value = c.budget_min || "";
+    document.getElementById("cBudgetMax").value = c.budget_max || "";
+    document.getElementById("cBHK").value = c.preferred_bhk || "";
+    document.getElementById("cLocation").value = c.preferred_location || "";
+    document.getElementById("cPropInterest").value = c.property_type_interest || "Sale";
+    document.getElementById("cLoan").value = c.loan_required || "No";
+    document.getElementById("cSource").value = c.lead_source || "Website";
+    document.getElementById("cAgent").value = c.assigned_agent_id || "";
+    openModal("clientModal");
+  }
+
+  async function saveClient() {
+    const id   = document.getElementById("editClientId").value;
+    const data = {
+      client_type: document.getElementById("cType").value,
+      lead_status: document.getElementById("cLeadStatus").value,
+      full_name: document.getElementById("cName").value,
+      mobile: document.getElementById("cMobile").value,
+      alternate_mobile: document.getElementById("cAltMobile").value,
+      email: document.getElementById("cEmail").value,
+      occupation: document.getElementById("cOccupation").value,
+      company_name: document.getElementById("cCompany").value,
+      budget_min: document.getElementById("cBudgetMin").value,
+      budget_max: document.getElementById("cBudgetMax").value,
+      preferred_bhk: document.getElementById("cBHK").value,
+      preferred_location: document.getElementById("cLocation").value,
+      property_type_interest: document.getElementById("cPropInterest").value,
+      loan_required: document.getElementById("cLoan").value,
+      lead_source: document.getElementById("cSource").value,
+      assigned_agent_id: document.getElementById("cAgent").value,
+    };
+
+    const btn = document.getElementById("saveClientBtn");
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+    let result;
+    if (id) { data.client_id = id; result = await API.admin.updateClient(data); }
+    else     { result = await API.admin.addClient(data); }
+
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save Client';
+
+    if (result.success) {
+      showToast(id ? "Client updated!" : "Client added!", "success");
+      closeModal("clientModal");
+      loadClients();
+    } else {
+      showToast(result.error || "Error saving", "error");
+    }
+  }
+
+  function viewClient(id) {
+    const c = allClients.find(x => String(x.client_id) === String(id));
+    if (!c) return;
+    document.getElementById("viewClientBody").innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        ${infoRow("Name", c.full_name)}
+        ${infoRow("Mobile", `<a href="tel:${c.mobile}">${c.mobile}</a>`)}
+        ${infoRow("Type", statusBadge(c.client_type))}
+        ${infoRow("Status", statusBadge(c.lead_status))}
+        ${infoRow("Budget", `${fmt(c.budget_min)} – ${fmt(c.budget_max)}`)}
+        ${infoRow("Preferred BHK", c.preferred_bhk)}
+        ${infoRow("Location", c.preferred_location)}
+        ${infoRow("Interest", c.property_type_interest)}
+        ${infoRow("Source", c.lead_source)}
+        ${infoRow("Loan", c.loan_required)}
+        ${infoRow("Agent", c.assigned_agent_id)}
+        ${infoRow("Joined", fmtDate(c.created_at))}
+      </div>
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--gray-200);display:flex;gap:10px">
+        <a href="tel:${c.mobile}" class="btn btn-success btn-sm"><i class="fas fa-phone"></i> Call</a>
+        <a href="https://wa.me/91${c.mobile}" target="_blank" class="btn btn-sm" style="background:#25D366;color:#fff"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+        <a href="followups.html?client=${c.client_id}" class="btn btn-primary btn-sm"><i class="fas fa-phone-alt"></i> Add Follow-up</a>
+      </div>`;
+    document.getElementById("editFromViewBtn").onclick = () => { closeModal("viewClientModal"); editClient(id); };
+    openModal("viewClientModal");
+  }
+
+  function infoRow(label, val) {
+    return `<div><div style="font-size:11px;font-weight:600;color:var(--text-light);text-transform:uppercase;margin-bottom:4px">${label}</div><div style="font-size:14px;color:var(--navy)">${val || "—"}</div></div>`;
+  }
+
+  async function deleteClient(id, name) {
+    confirmDelete(name, async () => {
+      const result = await API.admin.deleteClient(id);
+      if (result.success) { showToast("Client deleted", "success"); loadClients(); }
+      else showToast(result.error || "Error deleting", "error");
+    });
+  }
+
+  function exportCSV() {
+    const headers = ["ID","Name","Mobile","Email","Type","Budget Min","Budget Max","BHK","Location","Source","Status","Agent","Date"];
+    const rows = filteredClients.map(c => [c.client_id, c.full_name, c.mobile, c.email, c.client_type, c.budget_min, c.budget_max, c.preferred_bhk, c.preferred_location, c.lead_source, c.lead_status, c.assigned_agent_id, c.created_at]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${v || ""}"`).join(",")).join("\n");
+    const a = document.createElement("a");
+    a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+    a.download = "ApnaGhar_Clients.csv";
+    a.click();
+    showToast("CSV exported!", "success");
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">🏠</span>
+      <div>
+        <span class="sidebar-logo-text">ApnaGhar</span>
+        <span class="sidebar-logo-version">ERP v1.0</span>
+      </div>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div>
+        <div class="user-name" id="sidebarUserName">Admin</div>
+        <div class="user-role" id="sidebarUserRole">Administrator</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item active" href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+
+      <div class="nav-section-label">Property</div>
+      <a class="nav-item" href="properties.html"><i class="fas fa-home"></i> Properties</a>
+      <a class="nav-item" href="land.html"><i class="fas fa-map"></i> Land</a>
+      <a class="nav-item" href="societies.html"><i class="fas fa-city"></i> Societies</a>
+      <a class="nav-item" href="owners.html"><i class="fas fa-user-shield"></i> Owners</a>
+
+      <div class="nav-section-label">CRM</div>
+      <a class="nav-item" href="clients.html"><i class="fas fa-users"></i> Clients <span class="nav-badge" id="newClientsCount">0</span></a>
+      <a class="nav-item" href="agents.html"><i class="fas fa-user-tie"></i> Agents</a>
+      <a class="nav-item" href="followups.html"><i class="fas fa-phone-alt"></i> Follow-ups <span class="nav-badge" id="pendingFollowups">0</span></a>
+      <a class="nav-item" href="site-visits.html"><i class="fas fa-car"></i> Site Visits</a>
+
+      <div class="nav-section-label">Transactions</div>
+      <a class="nav-item" href="agreements.html"><i class="fas fa-file-contract"></i> Agreements</a>
+      <a class="nav-item" href="rent-payments.html"><i class="fas fa-money-bill-wave"></i> Rent Payments</a>
+      <a class="nav-item" href="sale-deals.html"><i class="fas fa-handshake"></i> Sale Deals</a>
+      <a class="nav-item" href="commissions.html"><i class="fas fa-percentage"></i> Commissions</a>
+
+      <div class="nav-section-label">Finance</div>
+      <a class="nav-item" href="expenses.html"><i class="fas fa-receipt"></i> Expenses</a>
+      <a class="nav-item" href="invoices.html"><i class="fas fa-file-invoice"></i> Invoices</a>
+      <a class="nav-item" href="ledger.html"><i class="fas fa-book"></i> Ledger</a>
+
+      <div class="nav-section-label">Operations</div>
+      <a class="nav-item" href="work-requests.html"><i class="fas fa-tools"></i> Work Requests</a>
+      <a class="nav-item" href="service-providers.html"><i class="fas fa-hard-hat"></i> Service Providers</a>
+      <a class="nav-item" href="construction.html"><i class="fas fa-building"></i> Construction</a>
+
+      <div class="nav-section-label">Services</div>
+      <a class="nav-item" href="vehicles.html"><i class="fas fa-car-side"></i> Vehicles</a>
+      <a class="nav-item" href="packers.html"><i class="fas fa-truck-moving"></i> Packers & Movers</a>
+
+      <div class="nav-section-label">Reports</div>
+      <a class="nav-item" href="reports.html"><i class="fas fa-chart-bar"></i> Reports</a>
+      <a class="nav-item" href="documents.html"><i class="fas fa-folder-open"></i> Documents</a>
+
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-item" href="users.html"><i class="fas fa-user-cog"></i> Users & Roles</a>
+      <a class="nav-item" href="settings.html"><i class="fas fa-cog"></i> Settings</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../index.html" style="padding:8px 0">
+        <i class="fas fa-globe"></i> View Website
+      </a>
+      <button class="logout-btn" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- Sidebar Overlay (Mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <!-- ===== MAIN ===== -->
+  <div class="admin-main">
+
+    <!-- TOPBAR -->
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div>
+          <div class="page-heading">Dashboard</div>
+          <div style="font-size:12px;color:var(--text-light)" id="todayDate">—</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-search">
+          <i class="fas fa-search"></i>
+          <input type="text" placeholder="Search clients, properties..." />
+        </div>
+        <button class="topbar-icon-btn" title="Notifications">
+          <i class="fas fa-bell"></i>
+          <span class="notif-dot"></span>
+        </button>
+        <button class="topbar-icon-btn" onclick="loadDashboard()" title="Refresh">
+          <i class="fas fa-sync-alt" id="refreshIcon"></i>
+        </button>
+        <a href="../index.html" class="topbar-icon-btn" title="View Website" target="_blank">
+          <i class="fas fa-external-link-alt"></i>
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="admin-content">
+
+      <!-- Welcome Banner -->
+      <div class="welcome-banner" id="welcomeBanner">
+        <div class="wb-text">
+          <h2 id="welcomeMsg">Good Morning! 👋</h2>
+          <p>येथे आजच्या ApnaGhar ERP चा Overview आहे</p>
+        </div>
+        <div class="wb-actions">
+          <a href="properties.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Add Property</a>
+          <a href="clients.html" class="btn btn-gold btn-sm"><i class="fas fa-user-plus"></i> Add Client</a>
+        </div>
+      </div>
+
+      <!-- KPI CARDS -->
+      <div class="kpi-grid" id="kpiGrid">
+        <!-- Loaded via JS -->
+        <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-home"></i></div><div><span class="kpi-val" id="kTotal">—</span><span class="kpi-label">Total Properties</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-circle"></i></div><div><span class="kpi-val" id="kAvail">—</span><span class="kpi-label">Available</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-key"></i></div><div><span class="kpi-val" id="kRented">—</span><span class="kpi-label">Rented Out</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon purple"><i class="fas fa-users"></i></div><div><span class="kpi-val" id="kClients">—</span><span class="kpi-label">Total Clients</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon gold"><i class="fas fa-rupee-sign"></i></div><div><span class="kpi-val" id="kRentIncome">—</span><span class="kpi-label">Monthly Rent Income</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon navy"><i class="fas fa-handshake"></i></div><div><span class="kpi-val" id="kDeals">—</span><span class="kpi-label">Total Deals</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon teal"><i class="fas fa-map"></i></div><div><span class="kpi-val" id="kLand">—</span><span class="kpi-label">Land Listings</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-phone-alt"></i></div><div><span class="kpi-val" id="kFollowups">—</span><span class="kpi-label">Pending Follow-ups</span></div></div>
+      </div>
+
+      <!-- MAIN GRID -->
+      <div class="dash-grid">
+
+        <!-- Recent Clients -->
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-users"></i> Recent Clients</h3>
+            <a href="clients.html" class="btn btn-outline btn-sm">View All</a>
+          </div>
+          <div class="table-wrap">
+            <table id="recentClientsTable">
+              <thead>
+                <tr>
+                  <th>Name</th><th>Mobile</th><th>Type</th><th>Source</th><th>Status</th><th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="recentClientsTbody">
+                <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-light)"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="dash-right">
+
+          <!-- Quick Actions -->
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-header"><h3><i class="fas fa-bolt"></i> Quick Actions</h3></div>
+            <div class="card-body">
+              <div class="quick-actions-grid">
+                <a href="properties.html?action=add" class="qa-btn">
+                  <i class="fas fa-home"></i><span>Add Property</span>
+                </a>
+                <a href="clients.html?action=add" class="qa-btn">
+                  <i class="fas fa-user-plus"></i><span>Add Client</span>
+                </a>
+                <a href="followups.html?action=add" class="qa-btn">
+                  <i class="fas fa-phone-alt"></i><span>Log Follow-up</span>
+                </a>
+                <a href="rent-payments.html?action=add" class="qa-btn">
+                  <i class="fas fa-money-bill-wave"></i><span>Record Rent</span>
+                </a>
+                <a href="sale-deals.html?action=add" class="qa-btn">
+                  <i class="fas fa-handshake"></i><span>Add Deal</span>
+                </a>
+                <a href="expenses.html?action=add" class="qa-btn">
+                  <i class="fas fa-receipt"></i><span>Add Expense</span>
+                </a>
+                <a href="work-requests.html?action=add" class="qa-btn">
+                  <i class="fas fa-tools"></i><span>Work Request</span>
+                </a>
+                <a href="site-visits.html?action=add" class="qa-btn">
+                  <i class="fas fa-car"></i><span>Site Visit</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pending Follow-ups -->
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fas fa-clock"></i> Pending Follow-ups</h3>
+              <a href="followups.html" class="btn btn-outline btn-sm">View All</a>
+            </div>
+            <div class="card-body" id="pendingFollowupsList" style="padding:0">
+              <div style="text-align:center;padding:32px;color:var(--text-light)">
+                <i class="fas fa-spinner fa-spin"></i> Loading...
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SECOND ROW -->
+      <div class="dash-grid" style="margin-top:20px">
+
+        <!-- Recent Properties -->
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-home"></i> Recent Properties</h3>
+            <a href="properties.html" class="btn btn-outline btn-sm">View All</a>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Property</th><th>Type</th><th>BHK</th><th>Price</th><th>Status</th><th>Action</th></tr>
+              </thead>
+              <tbody id="recentPropsTbody">
+                <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-light)"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Mini Stats -->
+        <div class="dash-right">
+
+          <!-- Property Status Breakdown -->
+          <div class="card" style="margin-bottom:20px">
+            <div class="card-header"><h3><i class="fas fa-chart-pie"></i> Property Status</h3></div>
+            <div class="card-body">
+              <div id="statusBreakdown"></div>
+            </div>
+          </div>
+
+          <!-- Recent Sale Deals -->
+          <div class="card">
+            <div class="card-header">
+              <h3><i class="fas fa-handshake"></i> Recent Deals</h3>
+              <a href="sale-deals.html" class="btn btn-outline btn-sm">All</a>
+            </div>
+            <div class="card-body" id="recentDealsList" style="padding:0">
+              <div style="text-align:center;padding:32px;color:var(--text-light)">
+                <i class="fas fa-spinner fa-spin"></i> Loading...
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="admin.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>
