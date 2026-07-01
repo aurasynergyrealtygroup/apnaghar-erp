@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rent Payments — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span>🏠</span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v1.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+      <div class="nav-section-label">Property</div>
+      <a class="nav-item" href="properties.html"><i class="fas fa-home"></i> Properties</a>
+      <a class="nav-item" href="land.html"><i class="fas fa-map"></i> Land</a>
+      <div class="nav-section-label">CRM</div>
+      <a class="nav-item" href="clients.html"><i class="fas fa-users"></i> Clients</a>
+      <a class="nav-item" href="agents.html"><i class="fas fa-user-tie"></i> Agents</a>
+      <a class="nav-item" href="followups.html"><i class="fas fa-phone-alt"></i> Follow-ups</a>
+      <a class="nav-item" href="site-visits.html"><i class="fas fa-car"></i> Site Visits</a>
+      <div class="nav-section-label">Transactions</div>
+      <a class="nav-item" href="agreements.html"><i class="fas fa-file-contract"></i> Agreements</a>
+      <a class="nav-item active" href="rent-payments.html"><i class="fas fa-money-bill-wave"></i> Rent Payments</a>
+      <a class="nav-item" href="sale-deals.html"><i class="fas fa-handshake"></i> Sale Deals</a>
+      <div class="nav-section-label">Finance</div>
+      <a class="nav-item" href="expenses.html"><i class="fas fa-receipt"></i> Expenses</a>
+      <a class="nav-item" href="invoices.html"><i class="fas fa-file-invoice"></i> Invoices</a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-item" href="users.html"><i class="fas fa-user-cog"></i> Users & Roles</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Rent Payments</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openAddPaymentModal()">
+          <i class="fas fa-plus"></i> Record Payment
+        </button>
+      </div>
+    </header>
+
+    <main class="admin-content">
+
+      <!-- KPI Mini -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-circle"></i></div><div><span class="kpi-val" id="rpPaidThisMonth">—</span><span class="kpi-label">Collected This Month</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-clock"></i></div><div><span class="kpi-val" id="rpPending">—</span><span class="kpi-label">Pending Amount</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-exclamation-circle"></i></div><div><span class="kpi-val" id="rpOverdue">—</span><span class="kpi-label">Overdue Payments</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-chart-line"></i></div><div><span class="kpi-val" id="rpCollectionRate">—</span><span class="kpi-label">Collection Rate</span></div></div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-money-bill-wave"></i> Payment History</h3>
+          <button class="btn btn-outline btn-sm" onclick="exportRentCSV()"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200)">
+          <div class="toolbar" style="margin:0">
+            <div class="toolbar-search" style="flex:1">
+              <i class="fas fa-search"></i>
+              <input type="text" id="rpSearch" placeholder="Search agreement, month..." oninput="filterRentPayments()" />
+            </div>
+            <select class="toolbar-select" id="rpStatusFilter" onchange="filterRentPayments()">
+              <option value="">All Status</option>
+              <option value="Paid">Paid</option>
+              <option value="Pending">Pending</option>
+              <option value="Partial">Partial</option>
+            </select>
+            <select class="toolbar-select" id="rpMonthFilter" onchange="filterRentPayments()">
+              <option value="">All Months</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Agreement</th><th>Month</th><th>Due Date</th><th>Amount</th><th>Late Fee</th><th>Mode</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="rentPaymentsTbody">
+              <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin fa-2x"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="rentPaymentsFooterInfo">—</span></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ADD PAYMENT MODAL -->
+<div class="modal-overlay" id="paymentModal" onclick="if(event.target===this)closeModal('paymentModal')">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-header">
+      <h3 id="paymentModalTitle"><i class="fas fa-money-bill-wave"></i> Record Rent Payment</h3>
+      <button class="modal-close" onclick="closeModal('paymentModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editPaymentId" />
+      <div class="form-group">
+        <label>Agreement *</label>
+        <select id="rpAgreementId" required onchange="autoFillRentAmount()"></select>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Month-Year *</label>
+          <input type="text" id="rpMonthYear" placeholder="e.g. Feb-2024" required />
+        </div>
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" id="rpDueDate" />
+        </div>
+        <div class="form-group">
+          <label>Paid Date</label>
+          <input type="date" id="rpPaidDate" />
+        </div>
+        <div class="form-group">
+          <label>Rent Amount (₹) *</label>
+          <input type="number" id="rpAmount" placeholder="22000" required />
+        </div>
+        <div class="form-group">
+          <label>Late Fee (₹)</label>
+          <input type="number" id="rpLateFee" placeholder="0" value="0" />
+        </div>
+        <div class="form-group">
+          <label>Payment Mode</label>
+          <select id="rpMode"><option value="">Select</option><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Bank Transfer">Bank Transfer</option><option value="Cheque">Cheque</option></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Transaction ID / UTR</label>
+        <input type="text" id="rpTxnId" placeholder="UPI123456 / Cheque No." />
+      </div>
+      <div class="form-group">
+        <label>Payment Status</label>
+        <select id="rpStatus"><option value="Pending">Pending</option><option value="Paid">Paid</option><option value="Partial">Partial</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('paymentModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRentPayment()" id="savePaymentBtn"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="admin.js"></script>
+<script src="rent-payments.js"></script>
+</body>
+</html>

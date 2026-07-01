@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Properties — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span>🏠</span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v1.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+      <div class="nav-section-label">Property</div>
+      <a class="nav-item active" href="properties.html"><i class="fas fa-home"></i> Properties</a>
+      <a class="nav-item" href="land.html"><i class="fas fa-map"></i> Land</a>
+      <a class="nav-item" href="societies.html"><i class="fas fa-city"></i> Societies</a>
+      <div class="nav-section-label">CRM</div>
+      <a class="nav-item" href="clients.html"><i class="fas fa-users"></i> Clients</a>
+      <a class="nav-item" href="agents.html"><i class="fas fa-user-tie"></i> Agents</a>
+      <a class="nav-item" href="followups.html"><i class="fas fa-phone-alt"></i> Follow-ups</a>
+      <a class="nav-item" href="site-visits.html"><i class="fas fa-car"></i> Site Visits</a>
+      <div class="nav-section-label">Transactions</div>
+      <a class="nav-item" href="agreements.html"><i class="fas fa-file-contract"></i> Agreements</a>
+      <a class="nav-item" href="rent-payments.html"><i class="fas fa-money-bill-wave"></i> Rent Payments</a>
+      <a class="nav-item" href="sale-deals.html"><i class="fas fa-handshake"></i> Sale Deals</a>
+      <div class="nav-section-label">Finance</div>
+      <a class="nav-item" href="expenses.html"><i class="fas fa-receipt"></i> Expenses</a>
+      <a class="nav-item" href="invoices.html"><i class="fas fa-file-invoice"></i> Invoices</a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-item" href="users.html"><i class="fas fa-user-cog"></i> Users & Roles</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Properties</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openAddModal()">
+          <i class="fas fa-plus"></i> Add Property
+        </button>
+      </div>
+    </header>
+
+    <main class="admin-content">
+
+      <!-- KPI Mini -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-icon navy"><i class="fas fa-home"></i></div><div><span class="kpi-val" id="pTotal">—</span><span class="kpi-label">Total</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-circle"></i></div><div><span class="kpi-val" id="pAvail">—</span><span class="kpi-label">Available</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-key"></i></div><div><span class="kpi-val" id="pRented">—</span><span class="kpi-label">Rented</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-tag"></i></div><div><span class="kpi-val" id="pSold">—</span><span class="kpi-label">Sold</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon gold"><i class="fas fa-rupee-sign"></i></div><div><span class="kpi-val" id="pValue">—</span><span class="kpi-label">Total Value</span></div></div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-home"></i> All Properties</h3>
+          <div style="display:flex;gap:8px">
+            <div class="view-toggle-admin">
+              <button class="vt-btn active" id="vtTable" onclick="setAdminView('table')"><i class="fas fa-list"></i></button>
+              <button class="vt-btn" id="vtCard" onclick="setAdminView('card')"><i class="fas fa-th-large"></i></button>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="exportPropertiesCSV()"><i class="fas fa-download"></i> Export</button>
+          </div>
+        </div>
+
+        <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200)">
+          <div class="toolbar" style="margin:0">
+            <div class="toolbar-search" style="flex:1">
+              <i class="fas fa-search"></i>
+              <input type="text" id="propSearch" placeholder="Search title, code, city..." oninput="filterProperties()" />
+            </div>
+            <select class="toolbar-select" id="listingTypeFilter" onchange="filterProperties()">
+              <option value="">All Listing</option>
+              <option value="Sale">Sale</option>
+              <option value="Rent">Rent</option>
+            </select>
+            <select class="toolbar-select" id="propTypeFilter" onchange="filterProperties()">
+              <option value="">All Types</option>
+              <option value="Apartment">Apartment</option>
+              <option value="Villa">Villa</option>
+              <option value="Shop">Shop</option>
+              <option value="Office">Office</option>
+            </select>
+            <select class="toolbar-select" id="statusFilterP" onchange="filterProperties()">
+              <option value="">All Status</option>
+              <option value="Available">Available</option>
+              <option value="Rented">Rented</option>
+              <option value="Sold">Sold</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- TABLE VIEW -->
+        <div class="table-wrap" id="tableViewWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Image</th><th>Property</th><th>Type</th><th>BHK</th><th>Area</th>
+                <th>Price/Rent</th><th>Society</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="propsTbody">
+              <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin fa-2x"></i><p style="margin-top:12px">Loading properties...</p></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- CARD VIEW -->
+        <div class="admin-props-grid" id="cardViewWrap" style="display:none;padding:20px"></div>
+
+        <div class="table-footer">
+          <span id="propsFooterInfo">—</span>
+          <div class="tbl-pages" id="propsPages"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ADD/EDIT PROPERTY MODAL -->
+<div class="modal-overlay" id="propModal" onclick="if(event.target===this)closeModal('propModal')">
+  <div class="modal-box" style="max-width:760px">
+    <div class="modal-header">
+      <h3 id="propModalTitle"><i class="fas fa-plus"></i> Add New Property</h3>
+      <button class="modal-close" onclick="closeModal('propModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editPropId" />
+
+      <!-- Tabs -->
+      <div class="form-tabs">
+        <button class="ftab active" onclick="switchFormTab(this,'basic')">Basic Info</button>
+        <button class="ftab" onclick="switchFormTab(this,'pricing')">Pricing</button>
+        <button class="ftab" onclick="switchFormTab(this,'media')">Images & Video</button>
+      </div>
+
+      <!-- Basic Info -->
+      <div class="ftab-content active" id="ftab-basic">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Property Code</label>
+            <input type="text" id="pCode" placeholder="Auto-generated if empty" />
+          </div>
+          <div class="form-group">
+            <label>Title *</label>
+            <input type="text" id="pTitle" placeholder="e.g. Aura Heights 2BHK" required />
+          </div>
+          <div class="form-group">
+            <label>Property Type *</label>
+            <select id="pType">
+              <option value="Apartment">Apartment</option>
+              <option value="Villa">Villa</option>
+              <option value="Row House">Row House</option>
+              <option value="Shop">Shop</option>
+              <option value="Office">Office</option>
+              <option value="Warehouse">Warehouse</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Listing Type *</label>
+            <select id="pListingType" onchange="togglePriceFields()">
+              <option value="Sale">Sale</option>
+              <option value="Rent">Rent</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>BHK</label>
+            <select id="pBHK">
+              <option value="">N/A</option>
+              <option value="1BHK">1BHK</option>
+              <option value="2BHK">2BHK</option>
+              <option value="3BHK">3BHK</option>
+              <option value="4BHK">4BHK</option>
+              <option value="Studio">Studio</option>
+              <option value="Shop">Shop</option>
+              <option value="Office">Office</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Furnished Status</label>
+            <select id="pFurnished">
+              <option value="Unfurnished">Unfurnished</option>
+              <option value="Semi-Furnished">Semi-Furnished</option>
+              <option value="Furnished">Furnished</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Carpet Area (SqFt)</label>
+            <input type="number" id="pCarpetArea" placeholder="850" />
+          </div>
+          <div class="form-group">
+            <label>Built-up Area (SqFt)</label>
+            <input type="number" id="pBuiltupArea" placeholder="1020" />
+          </div>
+          <div class="form-group">
+            <label>Floor</label>
+            <input type="number" id="pFloor" placeholder="5" />
+          </div>
+          <div class="form-group">
+            <label>Total Floors</label>
+            <input type="number" id="pTotalFloors" placeholder="14" />
+          </div>
+          <div class="form-group">
+            <label>Facing</label>
+            <select id="pFacing">
+              <option value="">Select</option>
+              <option value="East">East</option><option value="West">West</option>
+              <option value="North">North</option><option value="South">South</option>
+              <option value="North-East">North-East</option><option value="North-West">North-West</option>
+              <option value="South-East">South-East</option><option value="South-West">South-West</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>City *</label>
+            <input type="text" id="pCity" placeholder="Pune" value="Pune" required />
+          </div>
+          <div class="form-group full">
+            <label>Address</label>
+            <input type="text" id="pAddress" placeholder="Wing A, Flat 502, Society Name" />
+          </div>
+          <div class="form-group">
+            <label>Society ID</label>
+            <input type="text" id="pSocietyId" placeholder="1" />
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="pStatus">
+              <option value="Available">Available</option>
+              <option value="Rented">Rented</option>
+              <option value="Sold">Sold</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing -->
+      <div class="ftab-content" id="ftab-pricing">
+        <div class="form-grid">
+          <div class="form-group" id="saleFieldWrap">
+            <label>Expected Sale Price (₹)</label>
+            <input type="number" id="pExpectedPrice" placeholder="6500000" />
+          </div>
+          <div class="form-group" id="rentFieldWrap" style="display:none">
+            <label>Expected Rent (₹/month)</label>
+            <input type="number" id="pExpectedRent" placeholder="22000" />
+          </div>
+          <div class="form-group" id="depositFieldWrap" style="display:none">
+            <label>Deposit Amount (₹)</label>
+            <input type="number" id="pDeposit" placeholder="44000" />
+          </div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:16px;margin-top:8px">
+          <p style="font-size:13px;color:var(--text-light)"><i class="fas fa-info-circle"></i> Sale साठी फक्त Price भरा. Rent साठी Rent + Deposit दोन्ही भरा.</p>
+        </div>
+      </div>
+
+      <!-- Media -->
+      <div class="ftab-content" id="ftab-media">
+        <div class="form-group full">
+          <label>Image 1 URL (Cloudinary)</label>
+          <input type="text" id="pImage1" placeholder="https://res.cloudinary.com/.../image1.jpg" />
+        </div>
+        <div class="form-group full">
+          <label>Image 2 URL</label>
+          <input type="text" id="pImage2" placeholder="https://res.cloudinary.com/.../image2.jpg" />
+        </div>
+        <div class="form-group full">
+          <label>Image 3 URL</label>
+          <input type="text" id="pImage3" placeholder="https://res.cloudinary.com/.../image3.jpg" />
+        </div>
+        <div class="form-group full">
+          <label>YouTube Video URL</label>
+          <input type="text" id="pVideo" placeholder="https://www.youtube.com/watch?v=..." />
+        </div>
+        <div class="form-group full">
+          <label>Description</label>
+          <textarea id="pDescription" rows="4" placeholder="Property description..."></textarea>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:16px">
+          <p style="font-size:13px;color:var(--text-light)"><i class="fas fa-info-circle"></i> Images Cloudinary वर upload करा आणि त्याचा URL येथे paste करा. <a href="https://cloudinary.com" target="_blank" style="color:var(--navy);font-weight:600">Cloudinary उघडा →</a></p>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('propModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProperty()" id="savePropBtn">
+        <i class="fas fa-save"></i> Save Property
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- View Property Modal -->
+<div class="modal-overlay" id="viewPropModal" onclick="if(event.target===this)closeModal('viewPropModal')">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-header">
+      <h3><i class="fas fa-home"></i> Property Details</h3>
+      <button class="modal-close" onclick="closeModal('viewPropModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="viewPropBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('viewPropModal')">Close</button>
+      <button class="btn btn-primary" id="editFromViewPropBtn"><i class="fas fa-edit"></i> Edit</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="admin.js"></script>
+<script src="properties-admin.js"></script>
+</body>
+</html>

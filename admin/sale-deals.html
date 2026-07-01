@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sale Deals — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span>🏠</span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v1.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+      <div class="nav-section-label">Property</div>
+      <a class="nav-item" href="properties.html"><i class="fas fa-home"></i> Properties</a>
+      <a class="nav-item" href="land.html"><i class="fas fa-map"></i> Land</a>
+      <div class="nav-section-label">CRM</div>
+      <a class="nav-item" href="clients.html"><i class="fas fa-users"></i> Clients</a>
+      <a class="nav-item" href="agents.html"><i class="fas fa-user-tie"></i> Agents</a>
+      <a class="nav-item" href="followups.html"><i class="fas fa-phone-alt"></i> Follow-ups</a>
+      <a class="nav-item" href="site-visits.html"><i class="fas fa-car"></i> Site Visits</a>
+      <div class="nav-section-label">Transactions</div>
+      <a class="nav-item" href="agreements.html"><i class="fas fa-file-contract"></i> Agreements</a>
+      <a class="nav-item" href="rent-payments.html"><i class="fas fa-money-bill-wave"></i> Rent Payments</a>
+      <a class="nav-item active" href="sale-deals.html"><i class="fas fa-handshake"></i> Sale Deals</a>
+      <div class="nav-section-label">Finance</div>
+      <a class="nav-item" href="expenses.html"><i class="fas fa-receipt"></i> Expenses</a>
+      <a class="nav-item" href="invoices.html"><i class="fas fa-file-invoice"></i> Invoices</a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-item" href="users.html"><i class="fas fa-user-cog"></i> Users & Roles</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Sale Deals</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openAddDealModal()">
+          <i class="fas fa-plus"></i> New Deal
+        </button>
+      </div>
+    </header>
+
+    <main class="admin-content">
+
+      <!-- KPI Mini -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-icon navy"><i class="fas fa-handshake"></i></div><div><span class="kpi-val" id="sdTotal">—</span><span class="kpi-label">Total Deals</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon purple"><i class="fas fa-comments"></i></div><div><span class="kpi-val" id="sdNegotiation">—</span><span class="kpi-label">Negotiation</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-coins"></i></div><div><span class="kpi-val" id="sdTokenDone">—</span><span class="kpi-label">Token Done</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-double"></i></div><div><span class="kpi-val" id="sdRegistered">—</span><span class="kpi-label">Registered</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon gold"><i class="fas fa-percentage"></i></div><div><span class="kpi-val" id="sdCommission">—</span><span class="kpi-label">Total Commission</span></div></div>
+      </div>
+
+      <!-- Pipeline View -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><h3><i class="fas fa-stream"></i> Deal Pipeline</h3></div>
+        <div class="card-body">
+          <div class="pipeline-board" id="pipelineBoard"></div>
+        </div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-list"></i> All Deals</h3>
+          <button class="btn btn-outline btn-sm" onclick="exportDealsCSV()"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200)">
+          <div class="toolbar" style="margin:0">
+            <div class="toolbar-search" style="flex:1">
+              <i class="fas fa-search"></i>
+              <input type="text" id="sdSearch" placeholder="Search deal ID, property..." oninput="filterDeals()" />
+            </div>
+            <select class="toolbar-select" id="sdStatusFilter" onchange="filterDeals()">
+              <option value="">All Status</option>
+              <option value="Negotiation">Negotiation</option>
+              <option value="Token Done">Token Done</option>
+              <option value="Registered">Registered</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Deal ID</th><th>Property</th><th>Client</th><th>Final Price</th><th>Token Amt</th><th>Commission</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="dealsTbody">
+              <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin fa-2x"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="dealsFooterInfo">—</span></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ADD DEAL MODAL -->
+<div class="modal-overlay" id="dealModal" onclick="if(event.target===this)closeModal('dealModal')">
+  <div class="modal-box" style="max-width:600px">
+    <div class="modal-header">
+      <h3 id="dealModalTitle"><i class="fas fa-handshake"></i> New Sale Deal</h3>
+      <button class="modal-close" onclick="closeModal('dealModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editDealId" />
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Property *</label>
+          <select id="sdPropertyId" required onchange="autoFillOfferedPrice()"></select>
+        </div>
+        <div class="form-group">
+          <label>Client *</label>
+          <select id="sdClientId" required></select>
+        </div>
+        <div class="form-group">
+          <label>Offered Price (₹)</label>
+          <input type="number" id="sdOfferedPrice" placeholder="6800000" oninput="calcCommission()" />
+        </div>
+        <div class="form-group">
+          <label>Final Price (₹) *</label>
+          <input type="number" id="sdFinalPrice" placeholder="6500000" required oninput="calcCommission()" />
+        </div>
+        <div class="form-group">
+          <label>Token Amount (₹)</label>
+          <input type="number" id="sdTokenAmount" placeholder="200000" />
+        </div>
+        <div class="form-group">
+          <label>Token Date</label>
+          <input type="date" id="sdTokenDate" />
+        </div>
+        <div class="form-group">
+          <label>Registration Date</label>
+          <input type="date" id="sdRegDate" />
+        </div>
+        <div class="form-group">
+          <label>Deal Status</label>
+          <select id="sdStatus"><option value="Negotiation">Negotiation</option><option value="Token Done">Token Done</option><option value="Registered">Registered</option><option value="Cancelled">Cancelled</option></select>
+        </div>
+        <div class="form-group">
+          <label>Commission %</label>
+          <input type="number" id="sdCommissionPct" placeholder="2" step="0.1" value="2" oninput="calcCommission()" />
+        </div>
+        <div class="form-group">
+          <label>Commission Amount (₹)</label>
+          <input type="number" id="sdCommissionAmt" placeholder="Auto-calculated" readonly style="background:var(--bg)" />
+        </div>
+      </div>
+      <div class="commission-preview" id="commissionPreview"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('dealModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveDeal()" id="saveDealBtn"><i class="fas fa-save"></i> Save Deal</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="admin.js"></script>
+<script src="sale-deals.js"></script>
+</body>
+</html>

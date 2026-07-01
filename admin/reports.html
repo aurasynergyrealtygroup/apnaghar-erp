@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span>🏠</span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v1.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+      <div class="nav-section-label">Property</div>
+      <a class="nav-item" href="properties.html"><i class="fas fa-home"></i> Properties</a>
+      <a class="nav-item" href="land.html"><i class="fas fa-map"></i> Land</a>
+      <div class="nav-section-label">CRM</div>
+      <a class="nav-item" href="clients.html"><i class="fas fa-users"></i> Clients</a>
+      <a class="nav-item" href="agents.html"><i class="fas fa-user-tie"></i> Agents</a>
+      <a class="nav-item" href="followups.html"><i class="fas fa-phone-alt"></i> Follow-ups</a>
+      <a class="nav-item" href="site-visits.html"><i class="fas fa-car"></i> Site Visits</a>
+      <div class="nav-section-label">Transactions</div>
+      <a class="nav-item" href="agreements.html"><i class="fas fa-file-contract"></i> Agreements</a>
+      <a class="nav-item" href="rent-payments.html"><i class="fas fa-money-bill-wave"></i> Rent Payments</a>
+      <a class="nav-item" href="sale-deals.html"><i class="fas fa-handshake"></i> Sale Deals</a>
+      <div class="nav-section-label">Finance</div>
+      <a class="nav-item" href="expenses.html"><i class="fas fa-receipt"></i> Expenses</a>
+      <a class="nav-item" href="invoices.html"><i class="fas fa-file-invoice"></i> Invoices</a>
+      <div class="nav-section-label">Reports</div>
+      <a class="nav-item active" href="reports.html"><i class="fas fa-chart-bar"></i> Reports</a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-item" href="users.html"><i class="fas fa-user-cog"></i> Users & Roles</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Reports & Analytics</div>
+      </div>
+      <div class="topbar-right">
+        <select class="toolbar-select" id="reportPeriod" onchange="loadAllReports()">
+          <option value="all">All Time</option>
+          <option value="year">This Year</option>
+          <option value="quarter">Last 3 Months</option>
+          <option value="month" selected>This Month</option>
+        </select>
+        <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Print Report</button>
+      </div>
+    </header>
+
+    <main class="admin-content">
+
+      <!-- TOP KPI ROW -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+        <div class="kpi-card">
+          <div class="kpi-icon green"><i class="fas fa-rupee-sign"></i></div>
+          <div>
+            <span class="kpi-val" id="repTotalRevenue">—</span>
+            <span class="kpi-label">Total Revenue</span>
+            <div class="kpi-change up" id="repRevenueChange"><i class="fas fa-arrow-up"></i> —</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon blue"><i class="fas fa-handshake"></i></div>
+          <div>
+            <span class="kpi-val" id="repDealsClosed">—</span>
+            <span class="kpi-label">Deals Closed</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon gold"><i class="fas fa-percentage"></i></div>
+          <div>
+            <span class="kpi-val" id="repCommissionEarned">—</span>
+            <span class="kpi-label">Commission Earned</span>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-icon red"><i class="fas fa-wallet"></i></div>
+          <div>
+            <span class="kpi-val" id="repTotalExpenses">—</span>
+            <span class="kpi-label">Total Expenses</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW 1 -->
+      <div class="reports-grid">
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-chart-line"></i> Revenue Trend (Last 6 Months)</h3></div>
+          <div class="card-body"><canvas id="revenueChart" height="100"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-chart-pie"></i> Property Status</h3></div>
+          <div class="card-body"><canvas id="statusChart" height="100"></canvas></div>
+        </div>
+      </div>
+
+      <!-- CHARTS ROW 2 -->
+      <div class="reports-grid" style="margin-top:20px">
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-funnel-dollar"></i> Lead Funnel</h3></div>
+          <div class="card-body"><canvas id="funnelChart" height="100"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-users"></i> Lead Sources</h3></div>
+          <div class="card-body"><canvas id="sourceChart" height="100"></canvas></div>
+        </div>
+      </div>
+
+      <!-- AGENT PERFORMANCE -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-header"><h3><i class="fas fa-trophy"></i> Agent Performance</h3></div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Rank</th><th>Agent</th><th>Clients Assigned</th><th>Deals Closed</th><th>Commission Earned</th><th>Performance</th></tr>
+            </thead>
+            <tbody id="agentPerfTbody">
+              <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-light)"><i class="fas fa-spinner fa-spin"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PROPERTY TYPE BREAKDOWN -->
+      <div class="reports-grid" style="margin-top:20px">
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-home"></i> Properties by Type</h3></div>
+          <div class="card-body"><canvas id="typeChart" height="120"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-money-check-alt"></i> Rent Collection Status</h3></div>
+          <div class="card-body"><canvas id="rentStatusChart" height="120"></canvas></div>
+        </div>
+      </div>
+
+      <!-- DOWNLOAD REPORTS -->
+      <div class="card" style="margin-top:20px">
+        <div class="card-header"><h3><i class="fas fa-download"></i> Export Reports</h3></div>
+        <div class="card-body">
+          <div class="export-grid">
+            <button class="export-btn" onclick="downloadReport('clients')">
+              <i class="fas fa-users"></i><span>Clients Report</span>
+            </button>
+            <button class="export-btn" onclick="downloadReport('properties')">
+              <i class="fas fa-home"></i><span>Properties Report</span>
+            </button>
+            <button class="export-btn" onclick="downloadReport('deals')">
+              <i class="fas fa-handshake"></i><span>Sales Report</span>
+            </button>
+            <button class="export-btn" onclick="downloadReport('rent')">
+              <i class="fas fa-money-bill-wave"></i><span>Rent Collection</span>
+            </button>
+            <button class="export-btn" onclick="downloadReport('expenses')">
+              <i class="fas fa-receipt"></i><span>Expenses Report</span>
+            </button>
+            <button class="export-btn" onclick="downloadReport('full')">
+              <i class="fas fa-file-archive"></i><span>Full ERP Export</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="admin.js"></script>
+<script src="reports.js"></script>
+</body>
+</html>

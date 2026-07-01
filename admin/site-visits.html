@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Site Visits — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span>🏠</span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v1.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+      <div class="nav-section-label">Property</div>
+      <a class="nav-item" href="properties.html"><i class="fas fa-home"></i> Properties</a>
+      <a class="nav-item" href="land.html"><i class="fas fa-map"></i> Land</a>
+      <div class="nav-section-label">CRM</div>
+      <a class="nav-item" href="clients.html"><i class="fas fa-users"></i> Clients</a>
+      <a class="nav-item" href="agents.html"><i class="fas fa-user-tie"></i> Agents</a>
+      <a class="nav-item" href="followups.html"><i class="fas fa-phone-alt"></i> Follow-ups</a>
+      <a class="nav-item active" href="site-visits.html"><i class="fas fa-car"></i> Site Visits</a>
+      <div class="nav-section-label">Transactions</div>
+      <a class="nav-item" href="agreements.html"><i class="fas fa-file-contract"></i> Agreements</a>
+      <a class="nav-item" href="rent-payments.html"><i class="fas fa-money-bill-wave"></i> Rent Payments</a>
+      <a class="nav-item" href="sale-deals.html"><i class="fas fa-handshake"></i> Sale Deals</a>
+      <div class="nav-section-label">Finance</div>
+      <a class="nav-item" href="expenses.html"><i class="fas fa-receipt"></i> Expenses</a>
+      <a class="nav-item" href="invoices.html"><i class="fas fa-file-invoice"></i> Invoices</a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-item" href="users.html"><i class="fas fa-user-cog"></i> Users & Roles</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Site Visits</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openAddVisitModal()">
+          <i class="fas fa-plus"></i> Schedule Visit
+        </button>
+      </div>
+    </header>
+
+    <main class="admin-content">
+
+      <!-- KPI Mini -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-calendar-day"></i></div><div><span class="kpi-val" id="vToday">—</span><span class="kpi-label">Today's Visits</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-calendar"></i></div><div><span class="kpi-val" id="vScheduled">—</span><span class="kpi-label">Scheduled</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-circle"></i></div><div><span class="kpi-val" id="vCompleted">—</span><span class="kpi-label">Completed</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-times-circle"></i></div><div><span class="kpi-val" id="vCancelled">—</span><span class="kpi-label">Cancelled</span></div></div>
+      </div>
+
+      <!-- Calendar Strip -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><h3><i class="fas fa-calendar-week"></i> This Week</h3></div>
+        <div class="card-body">
+          <div class="week-strip" id="weekStrip"></div>
+        </div>
+      </div>
+
+      <!-- Table Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-car"></i> All Site Visits</h3>
+        </div>
+        <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200)">
+          <div class="toolbar" style="margin:0">
+            <div class="toolbar-search" style="flex:1">
+              <i class="fas fa-search"></i>
+              <input type="text" id="vSearch" placeholder="Search client, property..." oninput="filterVisits()" />
+            </div>
+            <select class="toolbar-select" id="vStatusFilter" onchange="filterVisits()">
+              <option value="">All Status</option>
+              <option value="Scheduled">Scheduled</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Client</th><th>Property</th><th>Agent</th><th>Visit Date</th><th>Status</th><th>Feedback</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="visitsTbody">
+              <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin fa-2x"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="visitsFooterInfo">—</span></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ADD VISIT MODAL -->
+<div class="modal-overlay" id="visitModal" onclick="if(event.target===this)closeModal('visitModal')">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-header">
+      <h3 id="visitModalTitle"><i class="fas fa-car"></i> Schedule Site Visit</h3>
+      <button class="modal-close" onclick="closeModal('visitModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editVisitId" />
+      <div class="form-group">
+        <label>Client *</label>
+        <select id="vClientId" required></select>
+      </div>
+      <div class="form-group">
+        <label>Property *</label>
+        <select id="vPropertyId" required></select>
+      </div>
+      <div class="form-group">
+        <label>Agent</label>
+        <select id="vAgentId"></select>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Visit Date</label>
+          <input type="date" id="vVisitDate" />
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="vStatus"><option value="Scheduled">Scheduled</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Feedback</label>
+        <textarea id="vFeedback" rows="3" placeholder="Visit नंतरचा अभिप्राय..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Next Follow-up Date</label>
+        <input type="date" id="vNextFollowup" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('visitModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveVisit()" id="saveVisitBtn"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="admin.js"></script>
+<script src="site-visits.js"></script>
+</body>
+</html>
