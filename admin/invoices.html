@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invoices — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo"><span>🏠</span><div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v1.0</span></div></div>
+    <div class="sidebar-user"><div class="user-avatar"><i class="fas fa-user-tie"></i></div><div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+      <div class="nav-section-label">Finance</div>
+      <a class="nav-item" href="expenses.html"><i class="fas fa-receipt"></i> Expenses</a>
+      <a class="nav-item active" href="invoices.html"><i class="fas fa-file-invoice"></i> Invoices</a>
+      <a class="nav-item" href="ledger.html"><i class="fas fa-book"></i> Ledger</a>
+      <div class="nav-section-label">Transactions</div>
+      <a class="nav-item" href="rent-payments.html"><i class="fas fa-money-bill-wave"></i> Rent Payments</a>
+      <a class="nav-item" href="sale-deals.html"><i class="fas fa-handshake"></i> Sale Deals</a>
+      <div class="nav-section-label">Reports</div>
+      <a class="nav-item" href="reports.html"><i class="fas fa-chart-bar"></i> Reports</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Invoices</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openAddInvoiceModal()"><i class="fas fa-plus"></i> Create Invoice</button>
+      </div>
+    </header>
+
+    <main class="admin-content">
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-icon navy"><i class="fas fa-file-invoice"></i></div><div><span class="kpi-val" id="invTotal">—</span><span class="kpi-label">Total Invoices</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-circle"></i></div><div><span class="kpi-val" id="invPaid">—</span><span class="kpi-label">Paid Amount</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-clock"></i></div><div><span class="kpi-val" id="invUnpaid">—</span><span class="kpi-label">Unpaid Amount</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon gold"><i class="fas fa-percent"></i></div><div><span class="kpi-val" id="invGST">—</span><span class="kpi-label">Total GST Collected</span></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-file-invoice"></i> All Invoices</h3>
+          <button class="btn btn-outline btn-sm" onclick="exportInvoicesCSV()"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200)">
+          <div class="toolbar" style="margin:0">
+            <div class="toolbar-search" style="flex:1">
+              <i class="fas fa-search"></i>
+              <input type="text" id="invSearch" placeholder="Search invoice no, client..." oninput="filterInvoices()" />
+            </div>
+            <select class="toolbar-select" id="invTypeFilter" onchange="filterInvoices()">
+              <option value="">All Types</option>
+              <option value="Commission">Commission</option>
+              <option value="Rent">Rent</option>
+              <option value="Service">Service</option>
+            </select>
+            <select class="toolbar-select" id="invStatusFilter" onchange="filterInvoices()">
+              <option value="">All Status</option>
+              <option value="Paid">Paid</option>
+              <option value="Unpaid">Unpaid</option>
+              <option value="Partial">Partial</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Invoice No</th><th>Client</th><th>Type</th><th>Taxable Amt</th><th>GST</th><th>Total</th><th>Date</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="invoicesTbody">
+              <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin fa-2x"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="invFooterInfo">—</span></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ADD INVOICE MODAL -->
+<div class="modal-overlay" id="invoiceModal" onclick="if(event.target===this)closeModal('invoiceModal')">
+  <div class="modal-box" style="max-width:540px">
+    <div class="modal-header">
+      <h3 id="invModalTitle"><i class="fas fa-file-invoice"></i> Create Invoice</h3>
+      <button class="modal-close" onclick="closeModal('invoiceModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editInvoiceId" />
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Invoice Number *</label>
+          <input type="text" id="invNumber" placeholder="INV-2024-001" required />
+        </div>
+        <div class="form-group">
+          <label>Invoice Type</label>
+          <select id="invType"><option value="Commission">Commission</option><option value="Rent">Rent</option><option value="Service">Service</option></select>
+        </div>
+        <div class="form-group full">
+          <label>Client *</label>
+          <select id="invClientId" required></select>
+        </div>
+        <div class="form-group">
+          <label>Taxable Amount (₹) *</label>
+          <input type="number" id="invTaxable" placeholder="130000" required oninput="calcInvoiceGST()" />
+        </div>
+        <div class="form-group">
+          <label>GST % </label>
+          <select id="invGSTPct" onchange="calcInvoiceGST()">
+            <option value="0">0% (Exempt)</option>
+            <option value="5">5%</option>
+            <option value="12">12%</option>
+            <option value="18" selected>18%</option>
+            <option value="28">28%</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>GST Amount (₹)</label>
+          <input type="number" id="invGSTAmt" readonly style="background:var(--bg)" />
+        </div>
+        <div class="form-group">
+          <label>Total Amount (₹)</label>
+          <input type="number" id="invTotalAmt" readonly style="background:var(--bg);font-weight:700" />
+        </div>
+        <div class="form-group">
+          <label>Invoice Date</label>
+          <input type="date" id="invDate" />
+        </div>
+        <div class="form-group full">
+          <label>Payment Status</label>
+          <select id="invPayStatus"><option value="Unpaid">Unpaid</option><option value="Paid">Paid</option><option value="Partial">Partial</option></select>
+        </div>
+      </div>
+      <!-- GST Preview -->
+      <div id="gstPreview" style="background:var(--bg);border-radius:8px;padding:14px;margin-top:8px;display:none">
+        <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:8px">Invoice Summary</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>Taxable Amount</span><span id="gpTaxable">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>GST</span><span id="gpGST" style="color:var(--orange)">—</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;border-top:1px solid var(--gray-200);padding-top:8px;margin-top:4px"><span>Total Payable</span><span id="gpTotal" style="color:var(--navy)">—</span></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('invoiceModal')">Cancel</button>
+      <button class="btn btn-gold" onclick="printInvoice()" style="display:none" id="printInvBtn"><i class="fas fa-print"></i> Print</button>
+      <button class="btn btn-primary" onclick="saveInvoice()" id="saveInvoiceBtn"><i class="fas fa-save"></i> Save Invoice</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="admin.js"></script>
+<script src="invoices.js"></script>
+</body>
+</html>

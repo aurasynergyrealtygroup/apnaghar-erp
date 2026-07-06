@@ -433,3 +433,29 @@ tbody tr:last-child td { border-bottom: none; }
   .admin-main { margin-left: 0 !important; }
   .card { break-inside: avoid; }
 }
+
+/* ---- WORK REQUESTS ---- */
+.wr-kanban-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.work-type-icon { font-size: 16px; }
+
+/* ---- SERVICE PROVIDERS CARDS ---- */
+.sp-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.sp-card { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-sm); transition: var(--transition); }
+.sp-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+.sp-card-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.sp-avatar { width: 44px; height: 44px; border-radius: 10px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.sp-card-info { flex: 1; min-width: 0; }
+.sp-card-name { font-size: 14px; font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sp-card-type { font-size: 11px; color: var(--text-light); margin: 2px 0; }
+.sp-card-rating { margin-top: 4px; }
+.sp-card-details { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.sp-detail { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-light); }
+.sp-detail i { color: var(--gold); width: 14px; font-size: 12px; }
+.sp-card-actions { display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid var(--gray-100); }
+
+@media (max-width: 1024px) { .wr-kanban-board { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .wr-kanban-board { grid-template-columns: 1fr; } }
+
+/* ---- FINANCE PAGES ---- */
+.finance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .finance-grid { grid-template-columns: 1fr; } }

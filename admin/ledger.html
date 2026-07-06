@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Ledger — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo"><span>🏠</span><div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v1.0</span></div></div>
+    <div class="sidebar-user"><div class="user-avatar"><i class="fas fa-user-tie"></i></div><div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div></div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+      <div class="nav-section-label">Finance</div>
+      <a class="nav-item" href="expenses.html"><i class="fas fa-receipt"></i> Expenses</a>
+      <a class="nav-item" href="invoices.html"><i class="fas fa-file-invoice"></i> Invoices</a>
+      <a class="nav-item active" href="ledger.html"><i class="fas fa-book"></i> Ledger</a>
+      <div class="nav-section-label">Transactions</div>
+      <a class="nav-item" href="rent-payments.html"><i class="fas fa-money-bill-wave"></i> Rent Payments</a>
+      <a class="nav-item" href="sale-deals.html"><i class="fas fa-handshake"></i> Sale Deals</a>
+      <div class="nav-section-label">Reports</div>
+      <a class="nav-item" href="reports.html"><i class="fas fa-chart-bar"></i> Reports</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Account Ledger</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openAddLedgerModal()"><i class="fas fa-plus"></i> Add Entry</button>
+      </div>
+    </header>
+
+    <main class="admin-content">
+
+      <!-- Summary Cards -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-arrow-down"></i></div><div><span class="kpi-val" id="ledIncome">—</span><span class="kpi-label">Total Income</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-arrow-up"></i></div><div><span class="kpi-val" id="ledExpense">—</span><span class="kpi-label">Total Expense</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon navy"><i class="fas fa-balance-scale"></i></div><div><span class="kpi-val" id="ledBalance">—</span><span class="kpi-label">Net Balance</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon gold"><i class="fas fa-calendar-alt"></i></div><div><span class="kpi-val" id="ledThisMonth">—</span><span class="kpi-label">This Month Net</span></div></div>
+      </div>
+
+      <!-- Balance Chart -->
+      <div class="finance-grid" style="margin-bottom:20px">
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-chart-area"></i> Income vs Expense (6 Months)</h3></div>
+          <div class="card-body"><canvas id="ledgerChart" height="100"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-running-balance"></i> Running Balance</h3></div>
+          <div class="card-body" id="runningBalance" style="padding:12px"></div>
+        </div>
+      </div>
+
+      <!-- Ledger Table -->
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-book"></i> Ledger Entries</h3>
+          <button class="btn btn-outline btn-sm" onclick="exportLedgerCSV()"><i class="fas fa-download"></i> Export</button>
+        </div>
+        <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200)">
+          <div class="toolbar" style="margin:0">
+            <div class="toolbar-search" style="flex:1">
+              <i class="fas fa-search"></i>
+              <input type="text" id="ledSearch" placeholder="Search description, reference..." oninput="filterLedger()" />
+            </div>
+            <select class="toolbar-select" id="ledTypeFilter" onchange="filterLedger()">
+              <option value="">All</option>
+              <option value="Income">Income</option>
+              <option value="Expense">Expense</option>
+            </select>
+            <select class="toolbar-select" id="ledRefFilter" onchange="filterLedger()">
+              <option value="">All References</option>
+              <option value="Rent">Rent</option>
+              <option value="Sale">Sale</option>
+              <option value="Commission">Commission</option>
+              <option value="Work">Work</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Type</th><th>Reference</th><th>Description</th><th>Mode</th><th>Income</th><th>Expense</th><th>Balance</th></tr>
+            </thead>
+            <tbody id="ledgerTbody">
+              <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin fa-2x"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="ledFooterInfo">—</span></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ADD LEDGER ENTRY MODAL -->
+<div class="modal-overlay" id="ledgerModal" onclick="if(event.target===this)closeModal('ledgerModal')">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <h3><i class="fas fa-book"></i> Add Ledger Entry</h3>
+      <button class="modal-close" onclick="closeModal('ledgerModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Transaction Type *</label>
+          <select id="ledTxnType"><option value="Income">Income</option><option value="Expense">Expense</option></select>
+        </div>
+        <div class="form-group">
+          <label>Amount (₹) *</label>
+          <input type="number" id="ledAmount" placeholder="22000" required />
+        </div>
+        <div class="form-group">
+          <label>Reference Type</label>
+          <select id="ledRefType"><option value="Rent">Rent</option><option value="Sale">Sale</option><option value="Commission">Commission</option><option value="Work">Work</option><option value="Other">Other</option></select>
+        </div>
+        <div class="form-group">
+          <label>Payment Mode</label>
+          <select id="ledMode"><option value="UPI">UPI</option><option value="Cash">Cash</option><option value="Bank Transfer">Bank Transfer</option><option value="Cheque">Cheque</option></select>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="ledDate" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description *</label>
+        <input type="text" id="ledDesc" placeholder="Entry description..." required />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('ledgerModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLedgerEntry()" id="saveLedgerBtn"><i class="fas fa-save"></i> Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="admin.js"></script>
+<script src="ledger.js"></script>
+</body>
+</html>

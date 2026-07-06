@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Service Providers — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span>🏠</span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v1.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+      <div class="nav-section-label">Property</div>
+      <a class="nav-item" href="properties.html"><i class="fas fa-home"></i> Properties</a>
+      <a class="nav-item" href="land.html"><i class="fas fa-map"></i> Land</a>
+      <div class="nav-section-label">CRM</div>
+      <a class="nav-item" href="clients.html"><i class="fas fa-users"></i> Clients</a>
+      <a class="nav-item" href="agents.html"><i class="fas fa-user-tie"></i> Agents</a>
+      <a class="nav-item" href="followups.html"><i class="fas fa-phone-alt"></i> Follow-ups</a>
+      <a class="nav-item" href="site-visits.html"><i class="fas fa-car"></i> Site Visits</a>
+      <div class="nav-section-label">Transactions</div>
+      <a class="nav-item" href="agreements.html"><i class="fas fa-file-contract"></i> Agreements</a>
+      <a class="nav-item" href="rent-payments.html"><i class="fas fa-money-bill-wave"></i> Rent Payments</a>
+      <a class="nav-item" href="sale-deals.html"><i class="fas fa-handshake"></i> Sale Deals</a>
+      <div class="nav-section-label">Finance</div>
+      <a class="nav-item" href="expenses.html"><i class="fas fa-receipt"></i> Expenses</a>
+      <a class="nav-item" href="invoices.html"><i class="fas fa-file-invoice"></i> Invoices</a>
+      <div class="nav-section-label">Operations</div>
+      <a class="nav-item" href="work-requests.html"><i class="fas fa-tools"></i> Work Requests</a>
+      <a class="nav-item active" href="service-providers.html"><i class="fas fa-hard-hat"></i> Service Providers</a>
+      <div class="nav-section-label">Reports</div>
+      <a class="nav-item" href="reports.html"><i class="fas fa-chart-bar"></i> Reports</a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-item" href="users.html"><i class="fas fa-user-cog"></i> Users & Roles</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Service Providers</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openAddSPModal()">
+          <i class="fas fa-plus"></i> Add Provider
+        </button>
+      </div>
+    </header>
+
+    <main class="admin-content">
+
+      <!-- KPI -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-hard-hat"></i></div><div><span class="kpi-val" id="spTotal">—</span><span class="kpi-label">Total Providers</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-circle"></i></div><div><span class="kpi-val" id="spActive">—</span><span class="kpi-label">Active</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon gold"><i class="fas fa-star"></i></div><div><span class="kpi-val" id="spAvgRating">—</span><span class="kpi-label">Avg Rating</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon navy"><i class="fas fa-bolt"></i></div><div><span class="kpi-val" id="spElectrical">—</span><span class="kpi-label">Electricians</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon teal"><i class="fas fa-tint"></i></div><div><span class="kpi-val" id="spPlumber">—</span><span class="kpi-label">Plumbers</span></div></div>
+      </div>
+
+      <!-- Provider Cards + Table toggle -->
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-hard-hat"></i> All Service Providers</h3>
+          <div style="display:flex;gap:8px">
+            <div class="view-toggle-admin">
+              <button class="vt-btn active" id="vtSPTable" onclick="setSPView('table')"><i class="fas fa-list"></i></button>
+              <button class="vt-btn" id="vtSPCard" onclick="setSPView('card')"><i class="fas fa-th-large"></i></button>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="exportSPCSV()"><i class="fas fa-download"></i> Export</button>
+          </div>
+        </div>
+        <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200)">
+          <div class="toolbar" style="margin:0">
+            <div class="toolbar-search" style="flex:1">
+              <i class="fas fa-search"></i>
+              <input type="text" id="spSearch" placeholder="Search name, mobile, type..." oninput="filterSP()" />
+            </div>
+            <select class="toolbar-select" id="spTypeFilter" onchange="filterSP()">
+              <option value="">All Types</option>
+              <option value="Wireman">Wireman</option>
+              <option value="Plumber">Plumber</option>
+              <option value="Builder">Builder</option>
+              <option value="Contractor">Contractor</option>
+              <option value="Cleaning">Cleaning</option>
+              <option value="Painter">Painter</option>
+              <option value="Carpenter">Carpenter</option>
+            </select>
+            <select class="toolbar-select" id="spStatusFilter" onchange="filterSP()">
+              <option value="">All Status</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- TABLE VIEW -->
+        <div id="spTableWrap">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Provider</th><th>Type</th><th>Mobile</th><th>City</th><th>Rating</th><th>GST</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="spTbody">
+                <tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin fa-2x"></i></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- CARD VIEW -->
+        <div id="spCardWrap" style="display:none;padding:20px">
+          <div class="sp-cards-grid" id="spCardsGrid"></div>
+        </div>
+
+        <div class="table-footer"><span id="spFooterInfo">—</span></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ADD/EDIT SERVICE PROVIDER MODAL -->
+<div class="modal-overlay" id="spModal" onclick="if(event.target===this)closeModal('spModal')">
+  <div class="modal-box" style="max-width:680px">
+    <div class="modal-header">
+      <h3 id="spModalTitle"><i class="fas fa-hard-hat"></i> Add Service Provider</h3>
+      <button class="modal-close" onclick="closeModal('spModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editSPId" />
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Provider Type *</label>
+          <select id="spType"><option value="Wireman">Wireman</option><option value="Plumber">Plumber</option><option value="Builder">Builder</option><option value="Contractor">Contractor</option><option value="Cleaning">Cleaning</option><option value="Painter">Painter</option><option value="Carpenter">Carpenter</option></select>
+        </div>
+        <div class="form-group">
+          <label>Company Name</label>
+          <input type="text" id="spCompany" placeholder="Singh Plumbing Works" />
+        </div>
+        <div class="form-group">
+          <label>Contact Person *</label>
+          <input type="text" id="spContact" placeholder="Ramesh Singh" required />
+        </div>
+        <div class="form-group">
+          <label>Mobile *</label>
+          <input type="tel" id="spMobile" placeholder="9876543210" required />
+        </div>
+        <div class="form-group">
+          <label>Alternate Mobile</label>
+          <input type="tel" id="spAltMobile" placeholder="Optional" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="spEmail" placeholder="email@example.com" />
+        </div>
+        <div class="form-group">
+          <label>PAN No</label>
+          <input type="text" id="spPAN" placeholder="ABCDE1234F" />
+        </div>
+        <div class="form-group">
+          <label>GST No</label>
+          <input type="text" id="spGST" placeholder="27ABCDE1234F1Z5" />
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" id="spCity" placeholder="Pune" value="Pune" />
+        </div>
+        <div class="form-group">
+          <label>Rating (1–5)</label>
+          <input type="number" id="spRating" min="1" max="5" step="0.1" placeholder="4.5" />
+        </div>
+        <div class="form-group">
+          <label>Bank Account</label>
+          <input type="text" id="spBank" placeholder="Account Number" />
+        </div>
+        <div class="form-group">
+          <label>IFSC Code</label>
+          <input type="text" id="spIFSC" placeholder="HDFC0001234" />
+        </div>
+        <div class="form-group full">
+          <label>Address</label>
+          <input type="text" id="spAddress" placeholder="Workshop address" />
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="spStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('spModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSP()" id="saveSPBtn"><i class="fas fa-save"></i> Save Provider</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="admin.js"></script>
+<script src="service-providers.js"></script>
+</body>
+</html>

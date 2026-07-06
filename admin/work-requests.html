@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Work Requests — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span>🏠</span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v1.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main</div>
+      <a class="nav-item" href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
+      <div class="nav-section-label">Property</div>
+      <a class="nav-item" href="properties.html"><i class="fas fa-home"></i> Properties</a>
+      <a class="nav-item" href="land.html"><i class="fas fa-map"></i> Land</a>
+      <div class="nav-section-label">CRM</div>
+      <a class="nav-item" href="clients.html"><i class="fas fa-users"></i> Clients</a>
+      <a class="nav-item" href="agents.html"><i class="fas fa-user-tie"></i> Agents</a>
+      <a class="nav-item" href="followups.html"><i class="fas fa-phone-alt"></i> Follow-ups</a>
+      <a class="nav-item" href="site-visits.html"><i class="fas fa-car"></i> Site Visits</a>
+      <div class="nav-section-label">Transactions</div>
+      <a class="nav-item" href="agreements.html"><i class="fas fa-file-contract"></i> Agreements</a>
+      <a class="nav-item" href="rent-payments.html"><i class="fas fa-money-bill-wave"></i> Rent Payments</a>
+      <a class="nav-item" href="sale-deals.html"><i class="fas fa-handshake"></i> Sale Deals</a>
+      <div class="nav-section-label">Finance</div>
+      <a class="nav-item" href="expenses.html"><i class="fas fa-receipt"></i> Expenses</a>
+      <a class="nav-item" href="invoices.html"><i class="fas fa-file-invoice"></i> Invoices</a>
+      <div class="nav-section-label">Operations</div>
+      <a class="nav-item active" href="work-requests.html"><i class="fas fa-tools"></i> Work Requests</a>
+      <a class="nav-item" href="service-providers.html"><i class="fas fa-hard-hat"></i> Service Providers</a>
+      <div class="nav-section-label">Reports</div>
+      <a class="nav-item" href="reports.html"><i class="fas fa-chart-bar"></i> Reports</a>
+      <div class="nav-section-label">Admin</div>
+      <a class="nav-item" href="users.html"><i class="fas fa-user-cog"></i> Users & Roles</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Work Requests</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openAddWorkModal()">
+          <i class="fas fa-plus"></i> New Request
+        </button>
+      </div>
+    </header>
+
+    <main class="admin-content">
+
+      <!-- KPI Mini -->
+      <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-icon blue"><i class="fas fa-clipboard-list"></i></div><div><span class="kpi-val" id="wrTotal">—</span><span class="kpi-label">Total Requests</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon red"><i class="fas fa-exclamation-circle"></i></div><div><span class="kpi-val" id="wrOpen">—</span><span class="kpi-label">Open</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-spinner"></i></div><div><span class="kpi-val" id="wrInProgress">—</span><span class="kpi-label">In Progress</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon green"><i class="fas fa-check-circle"></i></div><div><span class="kpi-val" id="wrCompleted">—</span><span class="kpi-label">Completed</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon gold"><i class="fas fa-rupee-sign"></i></div><div><span class="kpi-val" id="wrTotalCost">—</span><span class="kpi-label">Total Cost</span></div></div>
+      </div>
+
+      <!-- Priority Kanban -->
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <h3><i class="fas fa-columns"></i> Status Board</h3>
+          <div class="view-toggle-admin">
+            <button class="vt-btn active" id="vtWRTable" onclick="setWRView('table')"><i class="fas fa-list"></i></button>
+            <button class="vt-btn" id="vtWRKanban" onclick="setWRView('kanban')"><i class="fas fa-columns"></i></button>
+          </div>
+        </div>
+
+        <!-- KANBAN -->
+        <div id="wrKanbanWrap" style="display:none;padding:20px">
+          <div class="wr-kanban-board">
+            <div class="kanban-col">
+              <div class="kanban-col-header"><span class="kc-dot" style="background:var(--red)"></span> Open <span class="kc-count" id="kOpen">0</span></div>
+              <div class="kanban-cards" id="kanbanOpen"></div>
+            </div>
+            <div class="kanban-col">
+              <div class="kanban-col-header"><span class="kc-dot" style="background:var(--orange)"></span> In Progress <span class="kc-count" id="kInProgress">0</span></div>
+              <div class="kanban-cards" id="kanbanInProgress"></div>
+            </div>
+            <div class="kanban-col">
+              <div class="kanban-col-header"><span class="kc-dot" style="background:var(--green)"></span> Completed <span class="kc-count" id="kCompleted">0</span></div>
+              <div class="kanban-cards" id="kanbanCompleted"></div>
+            </div>
+            <div class="kanban-col">
+              <div class="kanban-col-header"><span class="kc-dot" style="background:var(--gray-400)"></span> Cancelled <span class="kc-count" id="kCancelled">0</span></div>
+              <div class="kanban-cards" id="kanbanCancelled"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLE -->
+        <div id="wrTableWrap">
+          <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200)">
+            <div class="toolbar" style="margin:0">
+              <div class="toolbar-search" style="flex:1">
+                <i class="fas fa-search"></i>
+                <input type="text" id="wrSearch" placeholder="Search property, work type..." oninput="filterWR()" />
+              </div>
+              <select class="toolbar-select" id="wrStatusFilter" onchange="filterWR()">
+                <option value="">All Status</option>
+                <option value="Open">Open</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <select class="toolbar-select" id="wrPriorityFilter" onchange="filterWR()">
+                <option value="">All Priority</option>
+                <option value="High">🔴 High</option>
+                <option value="Medium">🟡 Medium</option>
+                <option value="Low">🟢 Low</option>
+              </select>
+              <select class="toolbar-select" id="wrTypeFilter" onchange="filterWR()">
+                <option value="">All Types</option>
+                <option value="Electrical">Electrical</option>
+                <option value="Plumbing">Plumbing</option>
+                <option value="Cleaning">Cleaning</option>
+                <option value="Construction">Construction</option>
+                <option value="Repair">Repair</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>ID</th><th>Property</th><th>Work Type</th><th>Priority</th><th>Requested By</th><th>Est. Cost</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="wrTbody">
+                <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-light)"><i class="fas fa-spinner fa-spin fa-2x"></i></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer"><span id="wrFooterInfo">—</span></div>
+        </div>
+      </div>
+
+      <!-- WORK ASSIGNMENTS -->
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fas fa-user-hard-hat"></i> Work Assignments</h3>
+          <button class="btn btn-outline btn-sm" onclick="openAddAssignmentModal()"><i class="fas fa-plus"></i> Assign Work</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Assignment ID</th><th>Work Request</th><th>Service Provider</th><th>Assigned Date</th><th>Expected Completion</th><th>Labour Cost</th><th>Material Cost</th><th>Total</th><th>Status</th></tr>
+            </thead>
+            <tbody id="assignmentTbody">
+              <tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text-light)"><i class="fas fa-spinner fa-spin"></i></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ADD WORK REQUEST MODAL -->
+<div class="modal-overlay" id="workModal" onclick="if(event.target===this)closeModal('workModal')">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-header">
+      <h3 id="workModalTitle"><i class="fas fa-tools"></i> New Work Request</h3>
+      <button class="modal-close" onclick="closeModal('workModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editWorkId" />
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Property *</label>
+          <select id="wrPropertyId" required></select>
+        </div>
+        <div class="form-group">
+          <label>Requested By</label>
+          <select id="wrRequestedBy"><option value="Owner">Owner</option><option value="Agent">Agent</option><option value="Tenant">Tenant</option></select>
+        </div>
+        <div class="form-group">
+          <label>Work Type *</label>
+          <select id="wrWorkType">
+            <option value="Electrical">Electrical</option>
+            <option value="Plumbing">Plumbing</option>
+            <option value="Cleaning">Cleaning</option>
+            <option value="Construction">Construction</option>
+            <option value="Repair">Repair</option>
+            <option value="Painting">Painting</option>
+            <option value="Carpentry">Carpentry</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select id="wrPriority"><option value="Medium">Medium</option><option value="High">High</option><option value="Low">Low</option></select>
+        </div>
+        <div class="form-group">
+          <label>Request Date</label>
+          <input type="date" id="wrRequestDate" />
+        </div>
+        <div class="form-group">
+          <label>Estimated Cost (₹)</label>
+          <input type="number" id="wrEstCost" placeholder="5000" />
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="wrStatus"><option value="Open">Open</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option><option value="Cancelled">Cancelled</option></select>
+        </div>
+        <div class="form-group">
+          <label>Approved By</label>
+          <input type="text" id="wrApprovedBy" placeholder="Manager Name" />
+        </div>
+        <div class="form-group full">
+          <label>Description *</label>
+          <textarea id="wrDescription" rows="3" placeholder="काम काय करायचे ते सांगा..." required></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('workModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWorkRequest()" id="saveWorkBtn"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ASSIGN WORK MODAL -->
+<div class="modal-overlay" id="assignModal" onclick="if(event.target===this)closeModal('assignModal')">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-header">
+      <h3><i class="fas fa-user-hard-hat"></i> Assign Work</h3>
+      <button class="modal-close" onclick="closeModal('assignModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Work Request *</label>
+        <select id="aWorkRequestId" required></select>
+      </div>
+      <div class="form-group">
+        <label>Service Provider *</label>
+        <select id="aServiceProviderId" required></select>
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Assigned Date</label>
+          <input type="date" id="aAssignedDate" />
+        </div>
+        <div class="form-group">
+          <label>Expected Completion</label>
+          <input type="date" id="aExpectedDate" />
+        </div>
+        <div class="form-group">
+          <label>Labour Cost (₹)</label>
+          <input type="number" id="aLabourCost" placeholder="1500" oninput="calcTotalCost()" />
+        </div>
+        <div class="form-group">
+          <label>Material Cost (₹)</label>
+          <input type="number" id="aMaterialCost" placeholder="2000" oninput="calcTotalCost()" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Total Cost (₹)</label>
+        <input type="number" id="aTotalCost" readonly style="background:var(--bg);font-weight:700" />
+      </div>
+      <div class="form-group">
+        <label>Work Status</label>
+        <select id="aWorkStatus"><option value="Assigned">Assigned</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('assignModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAssignment()" id="saveAssignBtn"><i class="fas fa-save"></i> Assign</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="admin.js"></script>
+<script src="work-requests.js"></script>
+</body>
+</html>
