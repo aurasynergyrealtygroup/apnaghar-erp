@@ -5,7 +5,7 @@
 // ============================================================
 
 // ⚠️ IMPORTANT: Replace these IDs with your actual Google Sheet IDs
-const SPREADSHEET_ID = "14SH_L0fsknVQRNqrNPcfSS0lODipe-7mlnFt1pvFFG8";
+const SPREADSHEET_ID = "https://docs.google.com/spreadsheets/d/14SH_L0fsknVQRNqrNPcfSS0lODipe-7mlnFt1pvFFG8/edit?gid=137535373#gid=137535373";
 
 // Sheet Names
 const SHEETS = {
@@ -119,6 +119,7 @@ function doGet(e) {
 
       // Maintenance
       case "getWorkRequests":    result = getAllRows(SHEETS.WORK_REQUEST); break;
+      case "getWorkAssignments": result = getAllRows(SHEETS.WORK_ASSIGNMENT); break;
       case "getServiceProviders": result = getAllRows(SHEETS.SERVICE_PROVIDERS); break;
 
       // Services
@@ -190,9 +191,16 @@ function doPost(e) {
       case "updateLand":          result = updateRow(SHEETS.LAND, data, "land_id"); break;
 
       // Maintenance
-      case "addWorkRequest":      result = addRow(SHEETS.WORK_REQUEST, data); break;
-      case "updateWorkRequest":   result = updateRow(SHEETS.WORK_REQUEST, data, "work_request_id"); break;
-      case "addWorkAssignment":   result = addRow(SHEETS.WORK_ASSIGNMENT, data); break;
+      case "addWorkRequest":         result = addRow(SHEETS.WORK_REQUEST, data); break;
+      case "updateWorkRequest":      result = updateRow(SHEETS.WORK_REQUEST, data, "work_request_id"); break;
+      case "addWorkAssignment":      result = addRow(SHEETS.WORK_ASSIGNMENT, data); break;
+      case "addServiceProvider":     result = addRow(SHEETS.SERVICE_PROVIDERS, data); break;
+      case "updateServiceProvider":  result = updateRow(SHEETS.SERVICE_PROVIDERS, data, "service_provider_id"); break;
+
+      // Finance
+      case "updateExpense":          result = updateRow(SHEETS.EXPENSES, data, "expense_id"); break;
+      case "addInvoice":             result = addRow(SHEETS.INVOICES, data); break;
+      case "updateInvoice":          result = updateRow(SHEETS.INVOICES, data, "invoice_id"); break;
 
       // Finance
       case "addExpense":          result = addRow(SHEETS.EXPENSES, data); break;
@@ -528,3 +536,11 @@ function jsonResponse(data) {
     .createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }
+
+// Additional endpoints added in Phase 9
+// Add to doPost switch:
+// case "updateExpense":    result = updateRow(SHEETS.EXPENSES, data, "expense_id"); break;
+// case "updateInvoice":   result = updateRow(SHEETS.INVOICES, data, "invoice_id"); break;
+// case "addServiceProvider": result = addRow(SHEETS.SERVICE_PROVIDERS, data); break;
+// case "updateServiceProvider": result = updateRow(SHEETS.SERVICE_PROVIDERS, data, "service_provider_id"); break;
+// (Add these cases to the doPost switch in Code.gs)
