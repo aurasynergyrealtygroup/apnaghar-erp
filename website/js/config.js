@@ -12,16 +12,16 @@ const CONFIG = {
   // Company Info
   COMPANY: {
     name: "ApnaGhar Realty",
-    phone: "+919876543210",
-    whatsapp: "919876543210",
-    email: "info@apnaghar.in",
-    address: "Baner Road, Pune – 411045",
-    maps_url: "https://maps.google.com/?q=Baner+Road+Pune",
+    phone: "+917507163733",
+    whatsapp: "917507163733",
+    email: "aurasynergyrealtygroup@gmail.com",
+    address: "Sasane Nagar, Hadapsar, Pune – 411028",
+    maps_url: "",
   },
 
   // Cloudinary (for images)
   CLOUDINARY: {
-    cloud_name: "YOUR_CLOUD_NAME",
+    cloud_name: "Aurasynergyrealtygroup",
     base_url: "https://res.cloudinary.com/YOUR_CLOUD_NAME/image/upload/",
     placeholder: "https://placehold.co/600x400/1e3a5f/ffffff?text=ApnaGhar",
   },
