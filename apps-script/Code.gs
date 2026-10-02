@@ -5,7 +5,7 @@
 // ============================================================
 
 // ⚠️ IMPORTANT: Replace these IDs with your actual Google Sheet IDs
-const SPREADSHEET_ID = "https://docs.google.com/spreadsheets/d/14SH_L0fsknVQRNqrNPcfSS0lODipe-7mlnFt1pvFFG8/edit?gid=137535373#gid=137535373";
+const SPREADSHEET_ID = "14SH_L0fsknVQRNqrNPcfSS0lODipe-7mlnFt1pvFFG8";
 
 // Sheet Names
 const SHEETS = {
@@ -61,6 +61,7 @@ const SHEETS = {
   JOINT_VENTURE: "JOINT_VENTURE",
   INVESTOR_TXN: "INVESTOR_TRANSACTIONS",
   USER_LOG: "USER_ACTIVITY_LOG",
+  BOOKINGS: "PROPERTY_BOOKINGS",
 };
 
 // ============================================================
@@ -103,6 +104,10 @@ function doGet(e) {
       // Sales
       case "getSaleDeals":       result = getAllRows(SHEETS.SALE_DEALS); break;
       case "getCommissions":     result = getAllRows(SHEETS.AGENT_COMMISSION); break;
+
+      // Bookings
+      case "getBookings":        result = getAllRows(SHEETS.BOOKINGS); break;
+      case "getBooking":         result = getById(SHEETS.BOOKINGS, id, "booking_id"); break;
 
       // Land
       case "getLandPlots":       result = getAllRows(SHEETS.LAND_PLOTS); break;
@@ -178,6 +183,11 @@ function doPost(e) {
       // Sale Deals
       case "addSaleDeal":         result = addRow(SHEETS.SALE_DEALS, data); break;
       case "updateSaleDeal":      result = updateRow(SHEETS.SALE_DEALS, data, "deal_id"); break;
+
+      // Bookings
+      case "addBooking":          result = addRow(SHEETS.BOOKINGS, data); break;
+      case "updateBooking":       result = updateRow(SHEETS.BOOKINGS, data, "booking_id"); break;
+      case "deleteBooking":       result = deleteRow(SHEETS.BOOKINGS, data.booking_id, "booking_id"); break;
 
       // CRM
       case "addFollowup":         result = addRow(SHEETS.FOLLOWUPS, data); break;

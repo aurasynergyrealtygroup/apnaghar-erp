@@ -5,6 +5,7 @@
 let allPayments = [];
 let filteredPayments = [];
 let agreementsCache = [];
+let propertiesCache = [];
 
 document.addEventListener("DOMContentLoaded", () => {
   loadRentPayments();
@@ -12,15 +13,38 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function loadAgreementsDropdown() {
-  const result = await API.admin.getAgreements();
-  if (!result.success) return;
-  agreementsCache = result.data || [];
+  const [agrRes, propsRes] = await Promise.all([
+    API.admin.getAgreements(),
+    API.getProperties({ limit: 500 }),
+  ]);
+  agreementsCache = agrRes.success ? agrRes.data : [];
+  propertiesCache = propsRes.success ? propsRes.data : [];
+
   document.getElementById("rpAgreementId").innerHTML = '<option value="">Select Agreement</option>' +
     agreementsCache.map(a => `<option value="${a.agreement_id}" data-rent="${a.rent_amount}">${a.agreement_id} (₹${a.rent_amount}/mo)</option>`).join("");
+
+  renderRentPayments(); // property thumbnails may now resolve
 }
 
 function getAgreementInfo(id) {
   return agreementsCache.find(a => String(a.agreement_id) === String(id));
+}
+
+function getPropertyForAgreement(agreementId) {
+  const a = getAgreementInfo(agreementId);
+  if (!a) return null;
+  const propId = a.property_id || a.asset_id;
+  return propertiesCache.find(p => String(p.property_id) === String(propId)) || null;
+}
+
+function getAgreementPropertyTitle(agreementId) {
+  const p = getPropertyForAgreement(agreementId);
+  return p ? p.title : "—";
+}
+
+function getAgreementPropertyThumb(agreementId) {
+  const p = getPropertyForAgreement(agreementId);
+  return getImageUrl(p ? (p.image1_url || "") : "");
 }
 
 function autoFillRentAmount() {
@@ -28,6 +52,49 @@ function autoFillRentAmount() {
   const opt = sel.options[sel.selectedIndex];
   const rent = opt?.dataset.rent;
   if (rent) document.getElementById("rpAmount").value = rent;
+  showRentPropertyMedia(sel.value);
+}
+
+// ---- VIDEO HELPERS (YouTube + Cloudflare Stream) — same pattern as bookings.js ----
+function extractYouTubeId(url) {
+  if (!url) return null;
+  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
+  return m ? m[1] : null;
+}
+function buildVideoEmbedHtml(videoUrl) {
+  if (!videoUrl) return "";
+  const ytId = extractYouTubeId(videoUrl);
+  if (ytId) return `<div class="media-video-wrap"><iframe src="https://www.youtube.com/embed/${ytId}" allowfullscreen></iframe></div>`;
+  if (videoUrl.includes("cloudflarestream.com") || videoUrl.includes("videodelivery.net")) {
+    let src = videoUrl;
+    const idMatch = videoUrl.match(/([a-f0-9]{32})/i);
+    if (idMatch && !videoUrl.includes("/iframe")) src = `https://customer-.cloudflarestream.com/${idMatch[1]}/iframe`;
+    return `<div class="media-video-wrap"><iframe src="${src}" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen></iframe></div>`;
+  }
+  return `<div class="media-video-wrap"><video src="${videoUrl}" controls style="width:100%;height:100%;object-fit:cover"></video></div>`;
+}
+
+// ---- MEDIA PREVIEW (images + video for the rented property) ----
+function showRentPropertyMedia(agreementId) {
+  const preview = document.getElementById("rpMediaPreview");
+  const gallery = document.getElementById("rpMediaGallery");
+  const videoWrap = document.getElementById("rpMediaVideoWrap");
+  const empty = document.getElementById("rpMediaEmpty");
+
+  const p = getPropertyForAgreement(agreementId);
+  if (!p) { preview.classList.remove("show"); return; }
+
+  const images = [p.image1_url, p.image2_url, p.image3_url, p.image4_url].filter(Boolean).map(getImageUrl);
+  gallery.innerHTML = images.map(src => `<img src="${src}" onclick="openLightbox('${src}')" onerror="this.style.display='none'" />`).join("");
+  videoWrap.innerHTML = buildVideoEmbedHtml(p.video_url);
+
+  empty.style.display = (!images.length && !p.video_url) ? "block" : "none";
+  preview.classList.add("show");
+}
+
+function openLightbox(src) {
+  document.getElementById("lightboxImg").src = src;
+  document.getElementById("lightboxOverlay").classList.add("show");
 }
 
 // ---- LOAD ----
@@ -92,7 +159,7 @@ function renderRentPayments() {
   document.getElementById("rentPaymentsFooterInfo").textContent = total === 0 ? "No records" : `${total} payments`;
 
   if (!total) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-light)">No payments found</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-light)">No payments found</td></tr>`;
     return;
   }
 
@@ -103,6 +170,10 @@ function renderRentPayments() {
     const isOverdue = p.payment_status === "Pending" && p.due_date && new Date(p.due_date) < today;
     return `
     <tr style="${isOverdue ? 'background:#fef2f2' : ''}">
+      <td>
+        <img class="rp-thumb" src="${getAgreementPropertyThumb(p.agreement_id)}" onerror="this.style.visibility='hidden'" />
+        <span style="font-size:12px">${getAgreementPropertyTitle(p.agreement_id)}</span>
+      </td>
       <td><div style="font-weight:600;color:var(--navy)">${p.agreement_id || "—"}</div></td>
       <td><span style="font-size:13px;font-weight:600">${p.month_year || "—"}</span></td>
       <td>
@@ -136,6 +207,7 @@ function openAddPaymentModal() {
   document.getElementById("rpMode").value = "";
   document.getElementById("rpTxnId").value = "";
   document.getElementById("rpStatus").value = "Pending";
+  document.getElementById("rpMediaPreview").classList.remove("show");
   openModal("paymentModal");
 }
 
@@ -153,6 +225,7 @@ function editPayment(id) {
   document.getElementById("rpMode").value = p.payment_mode || "";
   document.getElementById("rpTxnId").value = p.transaction_id || "";
   document.getElementById("rpStatus").value = p.payment_status || "Pending";
+  showRentPropertyMedia(p.agreement_id);
   openModal("paymentModal");
 }
 

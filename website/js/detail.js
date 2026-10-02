@@ -139,14 +139,27 @@ function renderPropertyDetail(p) {
   document.getElementById("mapOpenBtn").href =
     `https://maps.google.com/?q=${mapQuery}`;
 
-  // Video
+  // Video (YouTube, Cloudflare Stream, or a direct video file)
   if (p.video_url) {
-    const videoId = extractYouTubeId(p.video_url);
-    if (videoId) {
-      document.getElementById("videoWrap").innerHTML =
-        `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`;
-    }
+    document.getElementById("videoWrap").innerHTML = buildVideoEmbedHtml(p.video_url);
   }
+}
+
+// ---- VIDEO EMBED HELPER (supports YouTube + Cloudflare Stream + direct file) ----
+function buildVideoEmbedHtml(videoUrl) {
+  const ytId = extractYouTubeId(videoUrl);
+  if (ytId) {
+    return `<iframe src="https://www.youtube.com/embed/${ytId}" allowfullscreen></iframe>`;
+  }
+  if (videoUrl.includes("cloudflarestream.com") || videoUrl.includes("videodelivery.net")) {
+    let src = videoUrl;
+    const idMatch = videoUrl.match(/([a-f0-9]{32})/i);
+    if (idMatch && !videoUrl.includes("/iframe")) {
+      src = `https://customer-.cloudflarestream.com/${idMatch[1]}/iframe`;
+    }
+    return `<iframe src="${src}" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen></iframe>`;
+  }
+  return `<video src="${videoUrl}" controls style="width:100%;height:100%;border-radius:12px"></video>`;
 }
 
 // ---- GALLERY ----

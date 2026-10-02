@@ -102,6 +102,13 @@ const API = {
     getUsers: () => API.get({ action: "getUsers" }),
     getProjects: () => API.get({ action: "getProjects" }),
     getCommissions: () => API.get({ action: "getCommissions" }),
+
+    // Bookings
+    getBookings: () => API.get({ action: "getBookings" }),
+    getBooking: (id) => API.get({ action: "getBooking", id }),
+    addBooking: (data) => API.post("addBooking", data),
+    updateBooking: (data) => API.post("updateBooking", data),
+    deleteBooking: (id) => API.post("deleteBooking", { booking_id: id }),
   }
 };
 
@@ -133,6 +140,7 @@ function buildPropertyCard(p) {
         <img src="${img}" alt="${p.title}" loading="lazy" onerror="this.src='${CONFIG.CLOUDINARY.placeholder}'" />
         <span class="listing-badge ${badge}">${p.listing_type === "Rent" ? "भाडे" : "विक्री"}</span>
         ${p.status === "Available" ? '<span class="avail-badge">Available</span>' : ""}
+        ${p.video_url ? '<span class="video-indicator" title="Video available"><i class="fas fa-play"></i></span>' : ""}
       </div>
       <div class="card-body">
         <h3 class="card-title">${p.title || "Property"}</h3>

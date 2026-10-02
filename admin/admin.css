@@ -52,6 +52,7 @@ ul { list-style: none; }
   display: flex; align-items: center; gap: 12px;
 }
 .sidebar-logo-icon { font-size: 26px; }
+.sidebar-logo .logo-icon img, .login-logo-icon img { height: 36px; width: auto; display: block; border-radius: 6px; }
 .sidebar-logo-text { font-size: 18px; font-weight: 700; color: var(--white); }
 .sidebar-logo-version { font-size: 10px; color: rgba(255,255,255,0.4); display: block; }
 

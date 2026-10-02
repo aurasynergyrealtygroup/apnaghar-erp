@@ -74,6 +74,8 @@ input, select, textarea { font-family: inherit; }
 .nav-inner { display: flex; align-items: center; gap: 32px; }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 22px; color: var(--white); }
 .logo-icon { font-size: 26px; }
+.logo-icon img { height: 40px; width: auto; display: block; border-radius: 6px; }
+.footer-brand .logo-icon img { height: 48px; }
 .nav-links { display: flex; gap: 28px; margin-left: auto; }
 .nav-links a { color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 500; transition: var(--transition); }
 .nav-links a:hover, .nav-links a.active { color: var(--gold); }
@@ -148,6 +150,7 @@ input, select, textarea { font-family: inherit; }
 .rent-badge { background: var(--gold); color: var(--navy-dark); }
 .sale-badge { background: var(--navy); color: var(--white); }
 .avail-badge { position: absolute; top: 12px; right: 12px; background: var(--green); color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.video-indicator { position: absolute; bottom: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; }
 .card-body { padding: 18px; }
 .card-title { font-size: 16px; font-weight: 600; color: var(--navy); margin-bottom: 10px; line-height: 1.35; }
 .card-meta { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--text-light); margin-bottom: 14px; }
