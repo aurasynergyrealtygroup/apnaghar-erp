@@ -6,7 +6,7 @@
 // ============================================================
 
 const CONFIG = {
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwVTakNXFQ_rW7UpNVfNhmrvNrZJRJADaGlpAMU8pWGjk3XwjoB23zcvo48GlQNmfqZ/exec",
 
   // Google Sheet that stores all data (for the "Open Sheet" button in admin)
   SHEET_URL: "https://docs.google.com/spreadsheets/d/14SH_L0fsknVQRNqrNPcfSS0lODipe-7mlnFt1pvFFG8/edit",
