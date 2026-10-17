@@ -85,6 +85,7 @@ The URL stays the same. (If you skip this, the website keeps using the old code.
 
 | Message | Fix |
 |---|---|
+| "An unknown error has occurred" when running `setupSheets` | 1) Use the **v2.1** Code.gs (fixes the 26-column limit). 2) If it still appears: you are signed in to **more than one Google account** in the browser — open the Sheet in an **Incognito window** signed in only as aurasynergyrealtygroup@gmail.com and run again. 3) Run **`diagnose`** and read the Execution log. |
 | "Backend not connected" | Step 4 not done — URL missing in `config.js` |
 | "Network error" | Web App access is not **Anyone**, or URL copied wrong |
 | "Unknown action: ping" / "getNewProjects" | The **old** Code.gs is still deployed — redo Step 1 and deploy a **New version** |

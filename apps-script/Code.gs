@@ -1,8 +1,8 @@
 // ============================================================
-// ApnaGhar ERP — Google Apps Script Backend  (v2.0)
+// ApnaGhar ERP — Google Apps Script Backend  (v2.1)
 // Aura Synergy Realty Group
 // ------------------------------------------------------------
-// FIRST-TIME SETUP (do this once):
+// FIRST-TIME SETUP (do this once):   (if anything fails, run "diagnose" and read the log)
 //   1. Paste this whole file into Extensions → Apps Script of your Google Sheet.
 //   2. Select function "setupSheets" in the toolbar → click Run → Allow permissions.
 //      This creates every sheet tab + headers, a Drive media folder and the admin user.
@@ -212,45 +212,100 @@ function checkSheet(key) {
 // SETUP — creates/repairs every tab. Safe to run again any time.
 // ============================================================
 function setupSheets() {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const report = [];
+  const report = [], errors = [];
+  const ss = getSS();
+  report.push("Spreadsheet: " + ss.getName());
+
   Object.keys(SCHEMA).forEach(function (key) {
-    const def = SCHEMA[key];
-    let sh = ss.getSheetByName(key);
-    if (!sh) {
-      sh = ss.insertSheet(key);
-      sh.getRange(1, 1).setValue(def.title).setFontWeight("bold").setFontSize(13);
-      sh.getRange(2, 1, 1, def.headers.length).setValues([def.headers])
-        .setFontWeight("bold").setBackground("#1e3a5f").setFontColor("#ffffff");
-      sh.setFrozenRows(2);
-      report.push("Created " + key);
-    } else {
-      const added = ensureColumns(sh, def.headers);
-      if (added.length) report.push(key + ": added columns " + added.join(", "));
+    try {
+      const def = SCHEMA[key];
+      let sh = ss.getSheetByName(key);
+      if (!sh) {
+        sh = createTab(ss, key);
+        report.push("Created " + key);
+      } else {
+        const added = ensureColumns(sh, def.headers);
+        if (added.length) report.push(key + ": added columns " + added.join(", "));
+      }
+    } catch (e) {
+      errors.push(key + " → " + e.message);
     }
   });
+  SpreadsheetApp.flush();
 
-  // Roles + default admin user
-  if (sheetToJSON(getSheet("ROLES")).length === 0) {
-    ["Admin", "Manager", "Agent", "Accountant"].forEach(function (r) {
-      addRow("ROLES", { role_name: r, description: r + " role" }, "SETUP");
-    });
-    report.push("Added default roles");
-  }
-  const roles = sheetToJSON(getSheet("ROLES"));
-  const adminRole = roles.find(function (r) { return r.role_name === "Admin"; });
-  const users = sheetToJSON(getSheet("USERS"));
-  if (!users.some(function (u) { return String(u.username) === "admin"; })) {
-    addRow("USERS", { username: "admin", full_name: "Admin User", email: NOTIFY_EMAIL,
-      password_hash: hashPassword("admin123"), role_id: adminRole ? adminRole.role_id : "", status: "Active" }, "SETUP");
-    report.push("Created user admin / admin123  (please change after first login)");
-  }
+  try {
+    if (sheetToJSON(getSheet("ROLES")).length === 0) {
+      ["Admin", "Manager", "Agent", "Accountant"].forEach(function (r) {
+        addRow("ROLES", { role_name: r, description: r + " role" }, "SETUP");
+      });
+      report.push("Added default roles");
+    }
+    const roles = sheetToJSON(getSheet("ROLES"));
+    const adminRole = roles.find(function (r) { return r.role_name === "Admin"; });
+    const users = sheetToJSON(getSheet("USERS"));
+    if (!users.some(function (u) { return String(u.username) === "admin"; })) {
+      addRow("USERS", { username: "admin", full_name: "Admin User", email: NOTIFY_EMAIL,
+        password_hash: hashPassword("admin123"), role_id: adminRole ? adminRole.role_id : "", status: "Active" }, "SETUP");
+      report.push("Created user admin / admin123  (please change after first login)");
+    } else report.push("Admin user already exists");
+  } catch (e) { errors.push("Users/Roles → " + e.message); }
 
-  getMediaFolder("General");
-  getSecret();
-  report.push("Media folder ready in Google Drive: " + MEDIA_ROOT_FOLDER);
-  Logger.log(report.join("\n"));
-  return { success: true, message: "Setup complete", report: report };
+  try { getSecret(); report.push("Login security key ready"); }
+  catch (e) { errors.push("Security key → " + e.message); }
+
+  try { getMediaFolder("General"); report.push("Google Drive folder ready: " + MEDIA_ROOT_FOLDER); }
+  catch (e) { errors.push("Drive folder (uploads) → " + e.message + "  (sheets still work; run setupDrive later)"); }
+
+  Logger.log("✅ DONE\n" + report.join("\n") + (errors.length ? "\n\n❌ PROBLEMS:\n" + errors.join("\n") : "\n\nNo problems 🎉"));
+  return { success: errors.length === 0, message: errors.length ? "Setup finished with problems" : "Setup complete", report: report, errors: errors };
+}
+
+// Run separately if the Drive step failed in setupSheets
+function setupDrive() {
+  const f = getMediaFolder("General");
+  Logger.log("Drive folder OK: " + f.getUrl());
+}
+
+// Quick diagnosis — run this if anything fails and share the log
+function diagnose() {
+  const out = [];
+  try { const ss = getSS(); out.push("✅ Sheet opened: " + ss.getName() + " (" + ss.getSheets().length + " tabs)"); }
+  catch (e) { out.push("❌ Cannot open sheet: " + e.message); }
+  try { DriveApp.getRootFolder().getName(); out.push("✅ Drive access OK"); }
+  catch (e) { out.push("❌ Drive: " + e.message); }
+  try { PropertiesService.getScriptProperties().getKeys(); out.push("✅ Script properties OK"); }
+  catch (e) { out.push("❌ Properties: " + e.message); }
+  try { out.push("✅ Email quota left today: " + MailApp.getRemainingDailyQuota()); }
+  catch (e) { out.push("⚠️ Email: " + e.message); }
+  out.push("Account: " + Session.getEffectiveUser().getEmail());
+  Logger.log(out.join("\n"));
+}
+
+// Opens the Sheet by ID; falls back to the Sheet this script is attached to.
+function getSS() {
+  try { return SpreadsheetApp.openById(SPREADSHEET_ID); }
+  catch (e) {
+    const active = SpreadsheetApp.getActiveSpreadsheet();
+    if (active) return active;
+    throw new Error("Cannot open spreadsheet " + SPREADSHEET_ID + ": " + e.message);
+  }
+}
+
+// New tabs have only 26 columns (A–Z); widen before writing more headers.
+function ensureWidth(sheet, n) {
+  const max = sheet.getMaxColumns();
+  if (max < n) sheet.insertColumnsAfter(max, n - max);
+}
+
+function createTab(ss, key) {
+  const def = SCHEMA[key];
+  const sh = ss.insertSheet(key);
+  ensureWidth(sh, def.headers.length);
+  sh.getRange(1, 1).setValue(def.title).setFontWeight("bold").setFontSize(13);
+  sh.getRange(2, 1, 1, def.headers.length).setValues([def.headers])
+    .setFontWeight("bold").setBackground("#1e3a5f").setFontColor("#ffffff");
+  sh.setFrozenRows(2);
+  return sh;
 }
 
 // Adds any missing header columns at the end of row 2. Returns names added.
@@ -260,6 +315,7 @@ function ensureColumns(sheet, wanted) {
   if (headers.every(function (h) { return h === ""; })) headers = [];
   const missing = wanted.filter(function (h) { return h && /^[a-z0-9_]+$/.test(h) && headers.indexOf(h) === -1; });
   if (missing.length) {
+    ensureWidth(sheet, headers.length + missing.length);
     sheet.getRange(2, headers.length + 1, 1, missing.length).setValues([missing])
       .setFontWeight("bold").setBackground("#1e3a5f").setFontColor("#ffffff");
   }
@@ -271,14 +327,9 @@ function ensureColumns(sheet, wanted) {
 // ============================================================
 let _ss = null;
 function getSheet(key) {
-  if (!_ss) _ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  if (!_ss) _ss = getSS();
   let sh = _ss.getSheetByName(key);
-  if (!sh && SCHEMA[key]) {           // auto-create on first use
-    sh = _ss.insertSheet(key);
-    sh.getRange(1, 1).setValue(SCHEMA[key].title).setFontWeight("bold");
-    sh.getRange(2, 1, 1, SCHEMA[key].headers.length).setValues([SCHEMA[key].headers]).setFontWeight("bold");
-    sh.setFrozenRows(2);
-  }
+  if (!sh && SCHEMA[key]) sh = createTab(_ss, key);   // auto-create on first use
   if (!sh) throw new Error("Sheet not found: " + key);
   return sh;
 }
