@@ -90,7 +90,7 @@ function renderTableView(page, total) {
       <td><span style="font-size:12px">${p.carpet_area ? p.carpet_area + " sqft" : "—"}</span></td>
       <td style="font-weight:700;color:var(--navy)">${p.listing_type === "Rent" ? fmt(p.expected_rent) + "/mo" : fmt(p.expected_price)}</td>
       <td><span style="font-size:12px">${p.society_id || "—"}</span></td>
-      <td>${statusBadge(p.status)}</td>
+      <td>${statusBadge(p.status)}${p.approval_status && p.approval_status !== "Approved" ? "<br>" + statusBadge(p.approval_status) : ""}${p.posted_by_name ? `<div style="font-size:10px;color:var(--text-light)">by ${escapeHtml(p.posted_by_name)}</div>` : ""}</td>
       <td>
         <div style="display:flex;gap:5px">
           <a href="../website/property-detail.html?id=${p.property_id}" target="_blank" class="btn btn-sm btn-outline btn-icon" title="View Live"><i class="fas fa-external-link-alt"></i></a>
@@ -112,7 +112,7 @@ function renderCardView(page, total) {
     <div class="admin-prop-card">
       <div class="apc-img">
         <img src="${getImageUrl(p.image1_url)}" onerror="this.src='${CONFIG.CLOUDINARY.placeholder}'" />
-        <span class="apc-badge">${p.listing_type === "Rent" ? "भाडे" : "विक्री"}</span>
+        <span class="apc-badge">${p.listing_type === "Rent" ? "किराया" : "बिक्री"}</span>
       </div>
       <div class="apc-body">
         <h4>${escapeHtml(p.title || "—")}</h4>
@@ -239,7 +239,7 @@ function editProperty(id) {
 
 async function saveProperty() {
   const title = document.getElementById("pTitle").value.trim();
-  if (!title) { showToast("Title आवश्यक आहे", "error"); return; }
+  if (!title) { showToast("Title ज़रूरी है", "error"); return; }
 
   const id = document.getElementById("editPropId").value;
   const data = {

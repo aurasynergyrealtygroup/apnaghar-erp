@@ -140,7 +140,7 @@ function editInvoice(id) {
 async function saveInvoice() {
   const clientId = document.getElementById("invClientId").value;
   const taxable = document.getElementById("invTaxable").value;
-  if (!clientId || !taxable) { showToast("Client आणि Amount आवश्यक आहे", "error"); return; }
+  if (!clientId || !taxable) { showToast("Client और Amount ज़रूरी है", "error"); return; }
 
   const id = document.getElementById("editInvoiceId").value;
   const data = {

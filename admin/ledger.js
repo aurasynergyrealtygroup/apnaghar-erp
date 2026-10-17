@@ -140,7 +140,7 @@ function openAddLedgerModal() {
 async function saveLedgerEntry() {
   const amount = document.getElementById("ledAmount").value;
   const desc = document.getElementById("ledDesc").value.trim();
-  if (!amount || !desc) { showToast("Amount आणि Description आवश्यक आहे", "error"); return; }
+  if (!amount || !desc) { showToast("Amount और Description ज़रूरी है", "error"); return; }
 
   const btn = document.getElementById("saveLedgerBtn");
   btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';

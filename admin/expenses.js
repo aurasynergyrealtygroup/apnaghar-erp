@@ -137,7 +137,7 @@ function editExpense(id) {
 
 async function saveExpense() {
   const amount = document.getElementById("expAmount").value;
-  if (!amount) { showToast("Amount आवश्यक आहे", "error"); return; }
+  if (!amount) { showToast("Amount ज़रूरी है", "error"); return; }
 
   const id = document.getElementById("editExpenseId").value;
   const data = {

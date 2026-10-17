@@ -23,7 +23,7 @@ const AGLead = {
         <h3 id="agLeadTitle">Inquiry</h3>
         <p class="ag-modal-sub" id="agLeadSub"></p>
         <form id="agLeadForm" onsubmit="AGLead.submit(event)">
-          <div class="form-group"><input type="text" id="agName" placeholder="पूर्ण नाव *" required /></div>
+          <div class="form-group"><input type="text" id="agName" placeholder="पूरा नाम *" required /></div>
           <div class="form-row">
             <div class="form-group"><input type="tel" id="agMobile" placeholder="Mobile (10 digits) *" pattern="[6-9][0-9]{9}" maxlength="10" required /></div>
             <div class="form-group"><input type="email" id="agEmail" placeholder="Email (optional)" /></div>
@@ -34,11 +34,11 @@ const AGLead = {
             <div class="form-group"><label>Time</label><select id="agTime"><option>10:00 AM</option><option>12:00 PM</option><option>3:00 PM</option><option>5:00 PM</option></select></div>
           </div>
           <div class="form-group"><textarea id="agMsg" rows="2" placeholder="Message (optional)"></textarea></div>
-          <label class="ag-consent"><input type="checkbox" required checked /> मला Call / WhatsApp द्वारे संपर्क करण्यास परवानगी आहे.</label>
+          <label class="ag-consent"><input type="checkbox" required checked /> मुझे Call / WhatsApp द्वारा संपर्क करने की अनुमति है।</label>
           <button type="submit" class="btn btn-primary full-width" id="agSubmit"><i class="fas fa-paper-plane"></i> Submit</button>
           <div id="agStatus" class="form-status"></div>
         </form>
-        <a class="ag-wa" id="agWA" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> किंवा WhatsApp वर बोला</a>
+        <a class="ag-wa" id="agWA" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> या WhatsApp पर बात करें</a>
       </div>`;
     document.body.appendChild(d);
     AGLead.el = d;
@@ -50,13 +50,13 @@ const AGLead = {
     AGLead.build();
     AGLead.ctx = opts;
     const mode = opts.mode || "inquiry";
-    const titles = { inquiry: "Property Inquiry", visit: "Free Site Visit बुक करा", booking: "Book Now — Booking Request" };
+    const titles = { inquiry: "Property Inquiry", visit: "Free Site Visit बुक करें", booking: "Book Now — Booking Request" };
     document.getElementById("agLeadTitle").textContent = titles[mode];
     document.getElementById("agLeadSub").textContent = opts.title || "";
     document.getElementById("agVisitWrap").style.display = mode === "visit" ? "" : "none";
     const cfgs = (opts.configs || []).filter(Boolean);
     document.getElementById("agConfigWrap").style.display = mode === "booking" && cfgs.length ? "" : "none";
-    document.getElementById("agConfig").innerHTML = `<option value="">Configuration निवडा</option>` + cfgs.map(c => `<option>${escapeHtml(c)}</option>`).join("");
+    document.getElementById("agConfig").innerHTML = `<option value="">Configuration चुनें</option>` + cfgs.map(c => `<option>${escapeHtml(c)}</option>`).join("");
     const t = new Date(); t.setDate(t.getDate() + 1);
     document.getElementById("agDate").min = new Date().toISOString().slice(0, 10);
     document.getElementById("agDate").value = t.toISOString().slice(0, 10);
@@ -90,7 +90,7 @@ const AGLead = {
       st.innerHTML = `<div class="status-success"><i class="fas fa-check-circle"></i> ${escapeHtml(r.message)}</div>`;
       document.getElementById("agLeadForm").reset();
     } else {
-      st.innerHTML = `<div class="status-error"><i class="fas fa-exclamation-circle"></i> ${escapeHtml(r.error || "काहीतरी चुकले. पुन्हा प्रयत्न करा.")}<br><small>किंवा थेट call करा: ${escapeHtml(CONFIG.COMPANY.phone_display)}</small></div>`;
+      st.innerHTML = `<div class="status-error"><i class="fas fa-exclamation-circle"></i> ${escapeHtml(r.error || "कुछ गलत हो गया। फिर से कोशिश करें।")}<br><small>या सीधे call करें: ${escapeHtml(CONFIG.COMPANY.phone_display)}</small></div>`;
     }
   },
 };

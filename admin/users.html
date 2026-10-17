@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="mr">
+<html lang="hi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -48,7 +48,7 @@
 
 CRUD.init({
   sheet: "USERS", idField: "user_id", title: "User", plural: "Users", icon: "fa-user-cog",
-  intro: "Only <b>Admin</b> users can add or edit users. Passwords are stored encrypted (SHA-256) in the USERS sheet. Leave the password empty when editing to keep the current one.",
+  intro: "Only <b>Admin</b> users can add or edit users. <b>Staff</b> roles (Admin, Manager, Agent, Accountant) use this ERP. <b>Partner Agent / Builder / Owner</b> roles can only post their own ads in the <a href='../website/partner.html' target='_blank'>Partner Portal</a> — set Account Type and Role together. New website registrations appear in <a href='approvals.html'>Approvals</a>. Passwords are stored encrypted (SHA-256) in the USERS sheet. Leave the password empty when editing to keep the current one.",
   lookups: { roles: () => API.admin.getRoles(), agents: () => API.admin.getAgents() },
   load: () => API.admin.getUsers(),
   save: (data) => API.admin.saveUser(data),
@@ -58,15 +58,18 @@ CRUD.init({
     if (!id && !d.password) return "Password is required for a new user";
     if (d.password && d.password.length < 6) return "Password must be at least 6 characters";
   },
+  filters: [{ field: "status", label: "All Status", options: ["Active","Pending","Inactive","Rejected"] }, { field: "user_type", label: "All Types", options: ["Staff","Agent","Builder","Owner"] }],
+  rowActions: r => r.status === "Pending" ? `<button class="btn btn-sm btn-success btn-icon" title="Approve" onclick="API.admin.approveUser('${escapeHtml(r.user_id)}').then(x=>{showToast(x.success?'Approved':x.error,x.success?'success':'error');CRUD.load()})"><i class="fas fa-check"></i></button>` : "",
   columns: [
     { label: "User", render: R.title("full_name", r => "@" + escapeHtml(r.username)) },
     { label: "Role", render: R.lookup("role_id", "roles", "role_id", "role_name") },
+    { label: "Company", render: r => escapeHtml(r.company_name || "—") },
     { label: "Email", field: "email" },
     { label: "Mobile", field: "mobile" },
     { label: "Last Login", render: r => escapeHtml(r.last_login || "—") },
     { label: "Status", render: R.badge("status") },
   ],
-  defaults: { status: "Active" },
+  defaults: { status: "Active", user_type: "Staff", city: "Pune" },
   fields: [
     { name: "username", label: "Username", required: true },
     { name: "full_name", label: "Full Name", required: true },
@@ -75,8 +78,17 @@ CRUD.init({
     { name: "email", label: "Email", type: "email" },
     { name: "mobile", label: "Mobile", type: "tel" },
     { name: "agent_id", label: "Linked Agent", type: "select", options: L => L.agents.map(a => ({ v: a.agent_id, t: a.full_name })) },
-    { name: "status", label: "Status", type: "select", options: ["Active","Inactive"], blank: false },
+    { name: "user_type", label: "Account Type", type: "select", options: [{ v: "Staff", t: "Staff (ERP access)" }, { v: "Agent", t: "Partner Agent (post ads only)" }, { v: "Builder", t: "Builder (post ads + projects)" }, { v: "Owner", t: "Owner (post ads only)" }], blank: false },
+    { name: "company_name", label: "Company / Firm" },
+    { name: "rera_number", label: "MahaRERA No." },
+    { name: "city", label: "City" },
+    { name: "status", label: "Status", type: "select", options: ["Active","Pending","Inactive","Rejected"], blank: false },
   ],
+  onOpen: () => {
+    const t = document.getElementById("f_user_type"), role = document.getElementById("f_role_id");
+    const map = { Agent: "Partner Agent", Builder: "Builder", Owner: "Owner" };
+    t.onchange = () => { const want = map[t.value]; const r = CRUD.lookups.roles.find(x => x.role_name === want); if (r) role.value = r.role_id; };
+  },
 });
 
 </script>

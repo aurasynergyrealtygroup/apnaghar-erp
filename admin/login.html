@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="mr">
+<html lang="hi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -97,7 +97,7 @@
     <span class="login-logo-text">ApnaGhar ERP</span>
   </div>
   <h1 class="login-tagline">Real Estate<br><span>Management</span><br>System</h1>
-  <p class="login-desc">Properties, Clients, Agents, Rent, Sales — सर्व एकाच ठिकाणी Manage करा. Powered by Google Sheets.</p>
+  <p class="login-desc">Properties, Clients, Agents, Rent, Sales — सब एक ही जगह Manage करें। Powered by Google Sheets.</p>
   <div class="login-features">
     <div class="lf-item"><div class="lf-icon"><i class="fas fa-home"></i></div> Property & Land Management</div>
     <div class="lf-item"><div class="lf-icon"><i class="fas fa-users"></i></div> Client CRM & Follow-ups</div>
@@ -109,7 +109,7 @@
 
 <div class="login-right">
   <h2>Welcome Back 👋</h2>
-  <p>ApnaGhar Admin Panel मध्ये Login करा</p>
+  <p>ApnaGhar Admin Panel में Login करें</p>
 
   <div class="demo-hint">
     <strong>First login:</strong> use the admin account created by setup, then change the password in <em>Settings &amp; Setup</em>.
@@ -151,6 +151,8 @@
   <div class="login-footer">
     <a href="../website/index.html">← Back to Website</a>
     &nbsp;|&nbsp;
+    <a href="../website/post-ad.html">Agent / Builder? Register to post ads</a>
+    &nbsp;|&nbsp;
     <span>© 2024 ApnaGhar ERP</span>
   </div>
 </div>
@@ -160,7 +162,7 @@
 <script>
   // Check if already logged in
   if (API.token()) {
-    window.location.href = "dashboard.html";
+    window.location.href = API.isPartnerRole(API.user().role) ? "../website/partner.html" : "dashboard.html";
   }
 
   async function handleLogin(e) {
@@ -184,6 +186,11 @@
 
     // API login
     const result = await API.admin.login({ username, password });
+    if (result.success && API.isPartnerRole(result.user.role)) {
+      sessionStorage.setItem("ag_user", JSON.stringify(result.user));
+      window.location.href = "../website/partner.html";
+      return;
+    }
     if (result.success) {
       sessionStorage.setItem("ag_user", JSON.stringify(result.user));
       if (document.getElementById("rememberMe").checked) {

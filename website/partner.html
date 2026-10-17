@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="pageTitle">Partner Portal — Post & Manage Ads | ApnaGhar</title>
+  <meta name="description" content="Login to post and manage your property ads and new launch projects." />
+  <link rel="icon" href="images/logo-small.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/site.css" />
+</head>
+<body>
+<nav class="navbar scrolled" id="navbar" data-solid="1">
+  <div class="container nav-inner">
+    <a href="index.html" class="logo">
+      <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+      <span class="logo-text">ApnaGhar</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="properties.html">Properties</a></li>
+      <li><a href="projects.html">New Projects</a></li>
+      <li><a href="land.html">Land</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="post-ad.html" class="btn btn-sm btn-post"><i class="fas fa-plus-circle"></i> Post Ad</a>
+      <a href="tel:+917507163733" class="btn btn-outline btn-sm"><i class="fas fa-phone"></i> Call Now</a>
+      <a href="../admin/login.html" class="btn btn-primary btn-sm">Admin</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<section class="portal-wrap"><div class="container">
+  <!-- LOGIN -->
+  <div id="loginView" style="max-width:440px;margin:0 auto;display:none">
+    <form class="contact-form" onsubmit="doLogin(event)">
+      <h3><i class="fas fa-sign-in-alt"></i> Partner Login</h3>
+      <p style="font-size:13px;color:var(--text-light);margin:-14px 0 18px">Agents, Builders &amp; Owners — login to post and manage your ads</p>
+      <div class="form-group"><label>Username</label><input type="text" id="lUser" required autocomplete="username" /></div>
+      <div class="form-group"><label>Password</label><input type="password" id="lPass" required autocomplete="current-password" /></div>
+      <label class="ag-consent"><input type="checkbox" id="lRemember" /> Remember me on this device</label>
+      <button class="btn btn-primary full-width" id="lBtn"><i class="fas fa-sign-in-alt"></i> Login</button>
+      <div id="lStatus" class="form-status"></div>
+      <p style="text-align:center;margin-top:16px;font-size:14px">New here? <a href="post-ad.html" style="color:var(--navy);font-weight:700">Register free →</a></p>
+    </form>
+  </div>
+
+  <!-- PORTAL -->
+  <div id="portalView" style="display:none">
+    <div class="portal-head">
+      <div><h1 id="pWelcome">My Ads</h1><div id="pSub" style="color:var(--text-light);font-size:14px"></div></div>
+      <button class="btn btn-outline btn-sm" onclick="logoutPartner()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+    <div class="portal-tabs" id="pTabs">
+      <button data-tab="ads" class="active"><i class="fas fa-list"></i> My Ads</button>
+      <button data-tab="prop"><i class="fas fa-plus"></i> Post Property</button>
+      <button data-tab="proj" id="projTabBtn" style="display:none"><i class="fas fa-rocket"></i> Post New Project</button>
+      <button data-tab="leads"><i class="fas fa-inbox"></i> My Leads</button>
+      <button data-tab="acct"><i class="fas fa-key"></i> Account</button>
+    </div>
+    <div class="ptab" id="tab-ads"><div class="p-list" id="adsList"><p><i class="fas fa-spinner fa-spin"></i> Loading…</p></div></div>
+    <div class="ptab" id="tab-prop" style="display:none"><div class="portal-card"><h3 id="propFormTitle" style="color:var(--navy);margin-bottom:14px">Post Property</h3>
+      <input type="hidden" id="prop_property_id" /><div class="pf-grid" id="propForm"></div>
+      <button class="btn btn-primary" id="propSave" onclick="saveAd('PROPERTIES')"><i class="fas fa-paper-plane"></i> Submit Ad</button>
+      <span style="font-size:12px;color:var(--text-light);margin-left:10px">Ad goes live after admin approval.</span></div></div>
+    <div class="ptab" id="tab-proj" style="display:none"><div class="portal-card"><h3 id="projFormTitle" style="color:var(--navy);margin-bottom:14px">Post New Launch Project</h3>
+      <input type="hidden" id="proj_project_id" /><div class="pf-grid" id="projForm"></div>
+      <button class="btn btn-primary" id="projSave" onclick="saveAd('NEW_PROJECTS')"><i class="fas fa-paper-plane"></i> Submit Project</button>
+      <span style="font-size:12px;color:var(--text-light);margin-left:10px">Project goes live after admin approval.</span></div></div>
+    <div class="ptab" id="tab-leads" style="display:none"><div class="portal-card"><h3 style="color:var(--navy);margin-bottom:6px">Leads on my ads</h3>
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:14px">Inquiries, site-visit requests and bookings received on your live ads.</p>
+      <div style="overflow-x:auto" id="leadsBox"></div></div></div>
+    <div class="ptab" id="tab-acct" style="display:none"><div class="portal-card" style="max-width:520px"><h3 style="color:var(--navy);margin-bottom:14px">Change Password</h3>
+      <div class="form-group"><label>Current Password</label><input type="password" id="oPw" /></div>
+      <div class="form-group"><label>New Password (min 6)</label><input type="password" id="nPw" autocomplete="new-password" /></div>
+      <button class="btn btn-primary" onclick="changePw()"><i class="fas fa-save"></i> Update</button><div id="pwStatus" class="form-status"></div></div></div>
+  </div>
+</div></section>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="logo logo-white">
+          <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+          <span class="logo-text">ApnaGhar</span>
+        </a>
+        <p>Pune का भरोसेमंद Real Estate Partner. खरीद, बिक्री, किराया, New Launch Projects — सभी सेवाएँ एक ही जगह।</p>
+        <div class="social-links">
+          <a href="https://wa.me/917507163733" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+          <a href="mailto:aurasynergyrealtygroup@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
+          <a href="tel:+917507163733" aria-label="Call"><i class="fas fa-phone"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Properties</h4>
+        <ul>
+          <li><a href="projects.html">New Launch Projects</a></li>
+          <li><a href="properties.html?listing_type=Sale">Flat for Sale</a></li>
+          <li><a href="properties.html?listing_type=Rent">Flat for Rent</a></li>
+          <li><a href="properties.html?type=Shop">Shop & Office</a></li>
+          <li><a href="land.html">Land & Plots</a></li>
+          <li><a href="post-ad.html">Post Your Ad (Free)</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Services</h4>
+        <ul>
+          <li><a href="services.html#loan">Home Loans</a></li>
+          <li><a href="services.html#legal">Legal & Documentation</a></li>
+          <li><a href="services.html#rental">Rental Management</a></li>
+          <li><a href="services.html#packers">Packers & Movers</a></li>
+          <li><a href="services.html#interior">Interior Design</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul class="footer-contact">
+          <li><i class="fas fa-phone"></i> <a href="tel:+917507163733">+91 75071 63733</a></li>
+          <li><i class="fab fa-whatsapp"></i> <a href="https://wa.me/917507163733">+91 75071 63733</a></li>
+          <li><i class="fas fa-envelope"></i> <a href="mailto:aurasynergyrealtygroup@gmail.com">aurasynergyrealtygroup@gmail.com</a></li>
+          <li><i class="fas fa-map-marker-alt"></i> Sasane Nagar, Hadapsar, Pune – 411028</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Aura Synergy Realty Group. All Rights Reserved.</p>
+      <div class="footer-links">
+        <a href="about.html#privacy">Privacy Policy</a>
+        <a href="about.html#terms">Terms of Use</a>
+        <a href="about.html#rera">RERA Disclosure</a>
+      </div>
+    </div>
+  </div>
+</footer>
+<a href="https://wa.me/917507163733?text=Hello! I'm interested in properties." class="whatsapp-float" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+<a href="tel:+917507163733" class="call-float" aria-label="Call"><i class="fas fa-phone"></i></a>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/site.js"></script>
+<script src="../admin/media-upload.js"></script>
+<script>
+initSiteNav();
+
+const U = () => API.user();
+let MY = { properties: [], projects: [] };
+const SEL = (o) => o.map(x => typeof x === "string" ? { v: x, t: x || "—" } : x);
+const PROP_FIELDS = [
+  { sec: "Basic Details" },
+  { n: "title", l: "Ad Title *", full: 1, ph: "e.g. 2BHK Flat for Sale in Hadapsar" },
+  { n: "listing_type", l: "For", type: "select", o: ["Sale", "Rent"] },
+  { n: "property_type", l: "Property Type", type: "select", o: ["Apartment", "Villa", "Row House", "Shop", "Office", "Plot", "Warehouse"] },
+  { n: "bhk", l: "BHK", type: "select", o: ["", "1RK", "1BHK", "2BHK", "3BHK", "4BHK", "5BHK", "Studio"] },
+  { n: "furnished_status", l: "Furnishing", type: "select", o: ["Unfurnished", "Semi-Furnished", "Furnished"] },
+  { n: "carpet_area", l: "Carpet Area (SqFt)", type: "number" }, { n: "builtup_area", l: "Built-up Area (SqFt)", type: "number" },
+  { n: "floor", l: "Floor", type: "number" }, { n: "total_floors", l: "Total Floors", type: "number" },
+  { n: "facing", l: "Facing", type: "select", o: ["", "East", "West", "North", "South", "North-East", "North-West", "South-East", "South-West"] },
+  { n: "status", l: "Availability", type: "select", o: ["Available", "Booked", "Sold", "Rented"] },
+  { sec: "Location & Price" },
+  { n: "city", l: "City", def: "Pune" }, { n: "project_id", l: "Part of my project (Builders)", type: "select", builderOnly: 1 },
+  { n: "address", l: "Address / Area / Society", full: 1 },
+  { n: "expected_price", l: "Sale Price (₹)", type: "number" }, { n: "expected_rent", l: "Monthly Rent (₹)", type: "number" },
+  { n: "deposit_amount", l: "Deposit (₹)", type: "number" },
+  { sec: "Description" },
+  { n: "amenities", l: "Amenities (comma separated)", full: 1, ph: "Lift, Parking, Gym, Security" },
+  { n: "description", l: "Description", type: "textarea", full: 1 },
+  { sec: "Photos, Video & Brochure (Upload or paste link)" },
+  { n: "image1_url", l: "Main Photo *", up: "image" }, { n: "image2_url", l: "Photo 2", up: "image" }, { n: "image3_url", l: "Photo 3", up: "image" },
+  { n: "image4_url", l: "Photo 4", up: "image" }, { n: "image5_url", l: "Photo 5", up: "image" }, { n: "image6_url", l: "Photo 6", up: "image" },
+  { n: "video_url", l: "Video (≤35 MB or YouTube link)", up: "video" }, { n: "brochure_url", l: "Brochure (PDF)", up: "doc" },
+  { sec: "Contact for this ad (shared with ApnaGhar team)" },
+  { n: "contact_name", l: "Contact Name" }, { n: "contact_mobile", l: "Contact Mobile", type: "tel" },
+];
+const PROJ_FIELDS = [
+  { sec: "Project Details" },
+  { n: "project_name", l: "Project Name *" }, { n: "builder_name", l: "Builder / Developer" },
+  { n: "project_type", l: "Project Type", type: "select", o: ["Residential", "Commercial", "Mixed Use", "Plotting / NA Plots", "Villa / Row House"] },
+  { n: "launch_status", l: "Stage", type: "select", o: ["Pre-Launch", "New Launch", "Under Construction", "Ready to Move", "Sold Out"], def: "New Launch" },
+  { n: "rera_number", l: "MahaRERA No. *" }, { n: "location", l: "Location / Area *" }, { n: "city", l: "City", def: "Pune" },
+  { n: "map_url", l: "Google Maps Link" },
+  { sec: "Pricing & Inventory" },
+  { n: "configurations", l: "Configurations", ph: "1BHK, 2BHK, 3BHK" }, { n: "booking_amount", l: "Booking Amount (₹)", type: "number" },
+  { n: "price_from", l: "Price From (₹)", type: "number" }, { n: "price_to", l: "Price To (₹)", type: "number" },
+  { n: "carpet_from", l: "Carpet From (SqFt)", type: "number" }, { n: "carpet_to", l: "Carpet To (SqFt)", type: "number" },
+  { n: "total_towers", l: "Towers / Wings", type: "number" }, { n: "total_units", l: "Total Units", type: "number" },
+  { n: "available_units", l: "Available Units", type: "number" }, { n: "launch_date", l: "Launch Date", type: "date" },
+  { n: "possession_date", l: "Possession", ph: "Dec 2028" }, { n: "offer", l: "Launch Offer", ph: "No floor rise for first 50 bookings" },
+  { sec: "Description" },
+  { n: "highlights", l: "Highlights (one per line)", type: "textarea", full: 1 },
+  { n: "amenities", l: "Amenities (comma separated)", type: "textarea", full: 1 },
+  { n: "description", l: "Description", type: "textarea", full: 1 },
+  { sec: "Photos, Video, Brochure, Floor Plan" },
+  { n: "image1_url", l: "Cover Photo *", up: "image" }, { n: "image2_url", l: "Photo 2", up: "image" }, { n: "image3_url", l: "Photo 3", up: "image" },
+  { n: "image4_url", l: "Photo 4", up: "image" }, { n: "image5_url", l: "Photo 5", up: "image" }, { n: "image6_url", l: "Photo 6", up: "image" },
+  { n: "video_url", l: "Walkthrough Video", up: "video" }, { n: "brochure_url", l: "Brochure (PDF)", up: "doc" }, { n: "floor_plan_url", l: "Floor Plan", up: "doc" },
+  { sec: "Sales Contact" },
+  { n: "contact_name", l: "Contact Name" }, { n: "contact_mobile", l: "Contact Mobile", type: "tel" },
+];
+
+function buildForm(boxId, fields, prefix, module) {
+  document.getElementById(boxId).innerHTML = fields.map(f => {
+    if (f.sec) return `<div class="pf-sec">${f.sec}</div>`;
+    if (f.builderOnly && U().role !== "Builder") return "";
+    const id = prefix + f.n, full = f.full || f.up ? " full" : "", ph = f.ph ? ` placeholder="${escapeHtml(f.ph)}"` : "";
+    let inp;
+    if (f.up) inp = `<input type="text" id="${id}" data-upload="${f.up}" data-module="${module}" />`;
+    else if (f.type === "select") inp = `<select id="${id}">${f.n === "project_id" ? `<option value="">— Not in a project —</option>` + MY.projects.map(p => `<option value="${escapeHtml(p.project_id)}">${escapeHtml(p.project_name)}</option>`).join("") : SEL(f.o).map(o => `<option value="${escapeHtml(o.v)}">${escapeHtml(o.t)}</option>`).join("")}</select>`;
+    else if (f.type === "textarea") inp = `<textarea id="${id}" rows="3"${ph}></textarea>`;
+    else inp = `<input type="${f.type || "text"}" id="${id}"${ph} />`;
+    return `<div class="form-group${full}"><label>${f.l}</label>${inp}</div>`;
+  }).join("");
+  fields.forEach(f => { if (f.def) { const el = document.getElementById(prefix + f.n); if (el) el.value = f.def; } });
+  const u = U();
+  if (document.getElementById(prefix + "contact_name")) { document.getElementById(prefix + "contact_name").value = u.full_name || ""; document.getElementById(prefix + "contact_mobile").value = u.mobile || ""; }
+  if (prefix === "proj_" && u.company_name) document.getElementById("proj_builder_name").value = u.company_name;
+  AGUpload.enhance(document.getElementById(boxId));
+}
+
+function showTab(t) {
+  document.querySelectorAll("#pTabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === t));
+  document.querySelectorAll(".ptab").forEach(x => x.style.display = x.id === "tab-" + t ? "" : "none");
+  if (t === "leads") loadLeads();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+document.querySelectorAll("#pTabs button").forEach(b => b.onclick = () => {
+  if (b.dataset.tab === "prop") resetForm("PROPERTIES");
+  if (b.dataset.tab === "proj") resetForm("NEW_PROJECTS");
+  showTab(b.dataset.tab);
+});
+
+function resetForm(sheet) {
+  if (sheet === "PROPERTIES") { buildForm("propForm", PROP_FIELDS, "prop_", "Partner Ads"); document.getElementById("prop_property_id").value = ""; document.getElementById("propFormTitle").textContent = "Post Property"; }
+  else { buildForm("projForm", PROJ_FIELDS, "proj_", "Partner Projects"); document.getElementById("proj_project_id").value = ""; document.getElementById("projFormTitle").textContent = "Post New Launch Project"; }
+}
+
+function editAd(sheet, id) {
+  const isP = sheet === "PROPERTIES", rec = (isP ? MY.properties : MY.projects).find(x => String(x[isP ? "property_id" : "project_id"]) === String(id));
+  if (!rec) return;
+  resetForm(sheet);
+  const prefix = isP ? "prop_" : "proj_";
+  (isP ? PROP_FIELDS : PROJ_FIELDS).forEach(f => { if (!f.n) return; const el = document.getElementById(prefix + f.n); if (el && rec[f.n] != null) el.value = rec[f.n]; });
+  document.getElementById(isP ? "prop_property_id" : "proj_project_id").value = id;
+  document.getElementById(isP ? "propFormTitle" : "projFormTitle").textContent = "Edit: " + (rec.title || rec.project_name);
+  AGUpload.refresh();
+  showTab(isP ? "prop" : "proj");
+}
+
+async function saveAd(sheet) {
+  const isP = sheet === "PROPERTIES", prefix = isP ? "prop_" : "proj_", fields = isP ? PROP_FIELDS : PROJ_FIELDS;
+  const d = {};
+  fields.forEach(f => { if (!f.n) return; const el = document.getElementById(prefix + f.n); if (el) d[f.n] = el.value.trim(); });
+  if (isP && !d.title) return alert("Ad Title ज़रूरी है");
+  if (isP && d.listing_type === "Sale" && !d.expected_price) return alert("Sale Price भरें");
+  if (isP && d.listing_type === "Rent" && !d.expected_rent) return alert("Monthly Rent भरें");
+  if (!isP && (!d.project_name || !d.location || !d.rera_number)) return alert("Project Name, Location और MahaRERA No. ज़रूरी हैं");
+  if (!d.image1_url) return alert("कम से कम 1 photo upload करें");
+  const id = document.getElementById(isP ? "prop_property_id" : "proj_project_id").value;
+  if (id) d[isP ? "property_id" : "project_id"] = id;
+  const btn = document.getElementById(isP ? "propSave" : "projSave"), orig = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+  const r = await API.partner.save(sheet, d);
+  btn.disabled = false; btn.innerHTML = orig;
+  if (!r.success) return alert(r.error || "Error");
+  alert(r.message);
+  await loadAds(); showTab("ads");
+}
+
+async function deleteAd(sheet, id, name) {
+  if (!confirm(`"${name}" delete करनी है?`)) return;
+  const r = await API.partner.remove(sheet, id);
+  if (!r.success) return alert(r.error);
+  loadAds();
+}
+
+function adItem(rec, sheet) {
+  const isP = sheet === "PROPERTIES", id = rec[isP ? "property_id" : "project_id"], name = rec.title || rec.project_name;
+  const ap = rec.approval_status || "Approved";
+  const price = isP ? (rec.listing_type === "Rent" ? formatPrice(rec.expected_rent) + "/mo" : formatPrice(rec.expected_price)) : (rec.price_from ? formatPrice(rec.price_from) + "+" : "");
+  const live = ap === "Approved" ? `<a class="btn btn-sm btn-outline" target="_blank" href="${isP ? "property-detail" : "project-detail"}.html?id=${encodeURIComponent(id)}"><i class="fas fa-eye"></i> View</a>` : "";
+  return `<div class="p-item"><img src="${escapeHtml(getImageUrl(rec.image1_url))}" referrerpolicy="no-referrer" onerror="this.src='${CONFIG.CLOUDINARY.placeholder}'" />
+    <div><h4>${escapeHtml(name)}</h4>
+      <div class="meta"><span class="ap-badge ap-${ap}">${ap === "Pending" ? "⏳ Waiting approval" : ap === "Rejected" ? "✖ Rejected" : "✔ Live"}</span>
+      ${isP ? "🏠 " + escapeHtml([rec.bhk, rec.listing_type, rec.status].filter(Boolean).join(" • ")) : "🚀 " + escapeHtml([rec.launch_status, rec.configurations].filter(Boolean).join(" • "))} ${price ? "• <b>" + price + "</b>" : ""}</div>
+      ${ap === "Rejected" && rec.approval_note ? `<div class="meta" style="color:var(--red);margin-top:4px">Admin note: ${escapeHtml(rec.approval_note)} — edit & resubmit</div>` : ""}
+      <div class="meta">ID ${escapeHtml(id)} • Updated ${escapeHtml(rec.updated_at || rec.created_at || "")}</div></div>
+    <div class="acts">${live}
+      <button class="btn btn-sm btn-primary" onclick="editAd('${sheet}','${escapeHtml(id)}')"><i class="fas fa-edit"></i> Edit</button>
+      <button class="btn btn-sm btn-outline" onclick="deleteAd('${sheet}','${escapeHtml(id)}','${escapeHtml(name).replace(/'/g, "")}')"><i class="fas fa-trash"></i></button></div></div>`;
+}
+
+async function loadAds() {
+  const r = await API.partner.myListings();
+  if (!r.success) { document.getElementById("adsList").innerHTML = `<div class="status-error">${escapeHtml(r.error)}</div>`; return; }
+  MY = r.data;
+  const items = MY.projects.map(p => adItem(p, "NEW_PROJECTS")).concat(MY.properties.map(p => adItem(p, "PROPERTIES")));
+  document.getElementById("adsList").innerHTML = items.length ? items.join("") :
+    `<div class="portal-card" style="text-align:center"><i class="fas fa-bullhorn" style="font-size:40px;color:var(--gold)"></i><h3 style="margin:10px 0">No ads yet</h3>
+     <p style="color:var(--text-light);margin-bottom:14px">Post your first ad — it's free.</p>
+     <button class="btn btn-primary" onclick="document.querySelector('[data-tab=prop]').click()"><i class="fas fa-plus"></i> Post Property</button>
+     ${U().role === "Builder" ? `<button class="btn btn-gold" style="margin-left:8px" onclick="document.querySelector('[data-tab=proj]').click()"><i class="fas fa-rocket"></i> Post Project</button>` : ""}</div>`;
+  const pend = [...MY.projects, ...MY.properties].filter(x => x.approval_status === "Pending").length;
+  document.getElementById("pSub").innerHTML = `${escapeHtml(U().role)}${U().company_name ? " • " + escapeHtml(U().company_name) : ""} • ${MY.properties.length + MY.projects.length} ads${pend ? ` • <b style="color:#b26a00">${pend} waiting approval</b>` : ""}`;
+}
+
+async function loadLeads() {
+  const box = document.getElementById("leadsBox");
+  box.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  const r = await API.partner.myLeads();
+  if (!r.success) { box.innerHTML = escapeHtml(r.error); return; }
+  box.innerHTML = r.data.length ? `<table class="leads-table"><tr><th>Date</th><th>Type</th><th>Ad</th><th>Name</th><th>Mobile</th><th>Details</th></tr>
+    ${r.data.map(l => `<tr><td>${escapeHtml(String(l.date || "").slice(0, 10))}</td><td>${escapeHtml(l.type)}</td><td>${escapeHtml(l.listing)}</td><td>${escapeHtml(l.name || "")}</td>
+      <td>${l.mobile ? `<a href="tel:${escapeHtml(l.mobile)}">${escapeHtml(l.mobile)}</a> <a target="_blank" href="https://wa.me/91${String(l.mobile).replace(/\D/g, "").slice(-10)}" style="color:#25d366"><i class="fab fa-whatsapp"></i></a>` : ""}</td><td>${escapeHtml(l.detail || "")}</td></tr>`).join("")}</table>`
+    : `<p style="color:var(--text-light)">No leads yet. Leads appear here once your ads are live and buyers inquire.</p>`;
+}
+
+async function changePw() {
+  const r = await API.partner.changePassword({ old_password: oPw.value, new_password: nPw.value });
+  document.getElementById("pwStatus").innerHTML = r.success ? `<div class="status-success">Password updated</div>` : `<div class="status-error">${escapeHtml(r.error)}</div>`;
+  if (r.success) oPw.value = nPw.value = "";
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const b = document.getElementById("lBtn"), st = document.getElementById("lStatus");
+  b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+  const r = await API.partner.login({ username: lUser.value.trim(), password: lPass.value });
+  b.disabled = false; b.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+  if (!r.success) { st.innerHTML = `<div class="status-error"><i class="fas fa-exclamation-circle"></i> ${escapeHtml(r.error)}</div>`; return; }
+  if (!API.isPartnerRole(r.user.role)) { st.innerHTML = `<div class="status-success">Staff account — opening Admin panel…</div>`; sessionStorage.setItem("ag_user", JSON.stringify(r.user)); setTimeout(() => location.href = "../admin/dashboard.html", 600); return; }
+  sessionStorage.setItem("ag_user", JSON.stringify(r.user));
+  if (lRemember.checked) localStorage.setItem("ag_user", JSON.stringify(r.user));
+  startPortal();
+}
+function logoutPartner() { sessionStorage.removeItem("ag_user"); localStorage.removeItem("ag_user"); location.reload(); }
+
+async function startPortal() {
+  const u = U();
+  document.getElementById("loginView").style.display = "none";
+  document.getElementById("portalView").style.display = "";
+  document.getElementById("pWelcome").textContent = "Namaste, " + (u.full_name || u.username).split(" ")[0] + " 👋";
+  document.getElementById("projTabBtn").style.display = u.role === "Builder" ? "" : "none";
+  await loadAds();
+  resetForm("PROPERTIES");
+  if (u.role === "Builder") resetForm("NEW_PROJECTS");
+}
+
+(function init() {
+  const u = U();
+  if (u && u.token && API.isPartnerRole(u.role)) startPortal();
+  else document.getElementById("loginView").style.display = "";
+})();
+
+</script>
+</body>
+</html>

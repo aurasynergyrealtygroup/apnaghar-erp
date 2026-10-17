@@ -76,6 +76,27 @@ for longer videos upload to YouTube (Unlisted) and paste the link instead.
 
 ---
 
+## Post Your Ad — Agents, Builders, Owners (v2.3)
+
+**After updating Code.gs to v2.3, run `setupSheets` once more** (adds the new roles
+Partner Agent / Builder / Owner and the new columns), then **Deploy → Manage deployments → Edit → New version**.
+
+**How it works**
+1. Agent / Builder / Owner clicks **Post Ad** on the website → registers at `website/post-ad.html`.
+2. You get an email. Open **Admin → Approvals** → **Approve** the account (they get an approval email if they gave one).
+3. They log in at `website/partner.html` (or the normal admin login — partners are sent to their portal automatically).
+4. They post ads with photos / video / brochure. **Builders** can also post **New Launch Projects** and add units to their own projects.
+5. Each ad waits in **Admin → Approvals** → **Approve** = live on website, **Reject** = they see your reason and can fix & resubmit.
+   Editing a live ad sends it back for approval.
+6. Inquiries, site-visit requests and bookings on their ads show in their **My Leads** tab (and in your admin as usual).
+
+**What partners can and can't do:** they only see and edit **their own ads and leads**. They cannot open the admin panel,
+see clients, deals, other partners' ads or any other data.
+
+**Create a partner yourself:** Admin → Users & Roles → Add User → Account Type = Agent / Builder / Owner and the matching Role.
+
+**Skip approval (optional):** in `Code.gs` set `AUTO_APPROVE_PARTNERS = true` (accounts) and/or `AUTO_APPROVE_ADS = true` (ads), then deploy a new version.
+
 ## When you change Code.gs later
 
 **Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy.**
@@ -89,6 +110,7 @@ The URL stays the same. (If you skip this, the website keeps using the old code.
 | "Backend not connected" | Step 4 not done — URL missing in `config.js` |
 | "Network error" | Web App access is not **Anyone**, or URL copied wrong |
 | "Unknown action: ping" / "getNewProjects" | The **old** Code.gs is still deployed — redo Step 1 and deploy a **New version** |
+| "Invalid username or password" for admin | In Apps Script run **`resetAdmin`** → log shows "Login test PASSED" → log in with admin / admin123 |
 | "Login required" / "Session expired" | Log in again (sessions last 7 days) |
 | Upload: "could not be made public" | Your Google account blocks public link sharing — use a normal Gmail account or ask your Workspace admin |
 | Images don't show | Make sure the Drive file is shared "Anyone with the link" (uploads through the admin do this automatically) |

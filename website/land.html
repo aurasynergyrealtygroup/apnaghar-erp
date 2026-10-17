@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="mr">
+<html lang="hi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -28,6 +28,7 @@
       <li><a href="contact.html">Contact</a></li>
     </ul>
     <div class="nav-actions">
+      <a href="post-ad.html" class="btn btn-sm btn-post"><i class="fas fa-plus-circle"></i> Post Ad</a>
       <a href="tel:+917507163733" class="btn btn-outline btn-sm"><i class="fas fa-phone"></i> Call Now</a>
       <a href="../admin/login.html" class="btn btn-primary btn-sm">Admin</a>
     </div>
@@ -36,7 +37,7 @@
 </nav>
 <section class="page-hero"><div class="container">
   <div class="breadcrumb"><a href="index.html">Home</a><i class="fas fa-chevron-right"></i><span>Land</span></div>
-  <h1>Land & Plots</h1><p>NA Plot, शेत जमीन, Commercial Land — Verified 7/12 सह</p></div></section>
+  <h1>Land & Plots</h1><p>NA Plot, खेती की ज़मीन, Commercial Land — Verified 7/12 के साथ</p></div></section>
 <section class="section" style="padding-top:40px"><div class="container">
   <div class="filter-bar">
     <input type="text" id="lSearch" placeholder="Search village, taluka, title..." />
@@ -53,7 +54,7 @@
           <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
           <span class="logo-text">ApnaGhar</span>
         </a>
-        <p>Pune मधील विश्वासू Real Estate Partner. खरेदी, विक्री, भाडे, New Launch Projects — सर्व सेवा एकाच ठिकाणी.</p>
+        <p>Pune का भरोसेमंद Real Estate Partner. खरीद, बिक्री, किराया, New Launch Projects — सभी सेवाएँ एक ही जगह।</p>
         <div class="social-links">
           <a href="https://wa.me/917507163733" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
           <a href="mailto:aurasynergyrealtygroup@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
@@ -130,7 +131,7 @@ function landCard(l) {
 function renderLand() {
   const q = document.getElementById("lSearch").value.toLowerCase(), t = document.getElementById("lType").value, s = document.getElementById("lStatus").value;
   const list = LAND.filter(l => (!t || l.land_type === t) && (!s || l.status === s) && (!q || [l.title, l.village, l.taluka, l.district, l.survey_no].join(" ").toLowerCase().includes(q)));
-  document.getElementById("landGrid").innerHTML = list.length ? list.map(landCard).join("") : `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-map"></i><p>Land listings लवकरच उपलब्ध होतील. तुमची requirement सांगा.</p><button class="btn btn-primary" style="margin-top:12px" onclick="AGLead.open({mode:'inquiry',title:'Land requirement'})">Post Requirement</button></div>`;
+  document.getElementById("landGrid").innerHTML = list.length ? list.map(landCard).join("") : `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-map"></i><p>Land listings जल्द ही उपलब्ध होंगी। अपनी requirement बताएँ।</p><button class="btn btn-primary" style="margin-top:12px" onclick="AGLead.open({mode:'inquiry',title:'Land requirement'})">Post Requirement</button></div>`;
 }
 API.getLand().then(r => { LAND = r.success ? r.data : []; renderLand(); });
 

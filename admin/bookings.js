@@ -183,10 +183,10 @@ function editBooking(id) {
 async function saveBooking() {
   const v = id => document.getElementById(id).value.trim();
   const isProj = v("bFor") === "Project";
-  if (isProj && !v("bProjectId")) return showToast("Project निवडा", "error");
-  if (!isProj && !v("bPropertyId")) return showToast("Property निवडा", "error");
-  if (!v("bCustName") || !/^\d{10}$/.test(v("bCustMobile").replace(/\D/g, "").slice(-10))) return showToast("Customer name आणि 10-digit mobile भरा", "error");
-  if (v("bStatus") !== "Enquiry" && !v("bTokenAmount")) return showToast("Token Amount भरा (or set status Enquiry)", "error");
+  if (isProj && !v("bProjectId")) return showToast("Project चुनें", "error");
+  if (!isProj && !v("bPropertyId")) return showToast("Property चुनें", "error");
+  if (!v("bCustName") || !/^\d{10}$/.test(v("bCustMobile").replace(/\D/g, "").slice(-10))) return showToast("Customer name और 10-digit mobile भरें", "error");
+  if (v("bStatus") !== "Enquiry" && !v("bTokenAmount")) return showToast("Token Amount भरें (or set status Enquiry)", "error");
 
   const btn = document.getElementById("saveBookingBtn");
   btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';

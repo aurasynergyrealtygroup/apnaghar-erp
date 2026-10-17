@@ -29,9 +29,9 @@ async function loadPropertyDetail(id) {
     document.getElementById("detailLoading").innerHTML =
       `<div class="container" style="text-align:center;padding:120px 20px">
         <i class="fas fa-exclamation-circle" style="font-size:48px;color:var(--gray-400);margin-bottom:16px"></i>
-        <h2>Property सापडली नाही</h2>
-        <p style="color:var(--text-light);margin:12px 0 24px">ही property उपलब्ध नाही किंवा काढून टाकली आहे.</p>
-        <a href="properties.html" class="btn btn-primary">← Properties पाहा</a>
+        <h2>Property नहीं मिली</h2>
+        <p style="color:var(--text-light);margin:12px 0 24px">यह property उपलब्ध नहीं है या हटा दी गई है।</p>
+        <a href="properties.html" class="btn btn-primary">← Properties देखें</a>
       </div>`;
     return;
   }
@@ -60,8 +60,8 @@ function renderPropertyDetail(p) {
 
   // Badges
   const listBadge = p.listing_type === "Rent"
-    ? `<span class="detail-badge db-rent">भाडे</span>`
-    : `<span class="detail-badge db-sale">विक्री</span>`;
+    ? `<span class="detail-badge db-rent">किराया</span>`
+    : `<span class="detail-badge db-sale">बिक्री</span>`;
   const statusBadge = p.status === "Available"
     ? `<span class="detail-badge db-available">Available</span>`
     : p.status === "Rented"
@@ -111,7 +111,7 @@ function renderPropertyDetail(p) {
 
   // Description
   document.getElementById("detailDesc").textContent =
-    p.description || `${p.title} — ${p.city} मधील उत्तम Property. ${p.bhk || ""} ${p.property_type || ""}, ${p.furnished_status || ""}. आजच Inquiry करा.`;
+    p.description || `${p.title} — ${p.city} में बेहतरीन Property. ${p.bhk || ""} ${p.property_type || ""}, ${p.furnished_status || ""}. आज ही Inquiry करें।`;
 
   // Spec Grid
   const specs = [
@@ -199,7 +199,7 @@ async function loadSimilarProperties(p) {
   if (!result.success) return;
   const similar = result.data.filter(r => r.property_id !== p.property_id).slice(0, 3);
   const grid = document.getElementById("similarGrid");
-  if (!similar.length) { grid.innerHTML = "<p style='font-size:13px;color:var(--text-light)'>Similar properties उपलब्ध नाहीत</p>"; return; }
+  if (!similar.length) { grid.innerHTML = "<p style='font-size:13px;color:var(--text-light)'>Similar properties उपलब्ध नहीं हैं</p>"; return; }
   grid.innerHTML = similar.map(s => {
     const img = getImageUrl(s.image1_url);
     const price = s.listing_type === "Rent" ? formatPrice(s.expected_rent) + "/mo" : formatPrice(s.expected_price);
@@ -234,7 +234,7 @@ async function submitDetailInquiry(e) {
     status.innerHTML = `<div class="status-success" style="margin-top:12px"><i class="fas fa-check-circle"></i> ${result.message}</div>`;
     document.getElementById("detailInquiryForm").reset();
   } else {
-    status.innerHTML = `<div class="status-error" style="margin-top:12px"><i class="fas fa-exclamation-circle"></i> Error. पुन्हा प्रयत्न करा.</div>`;
+    status.innerHTML = `<div class="status-error" style="margin-top:12px"><i class="fas fa-exclamation-circle"></i> Error. फिर से कोशिश करें।</div>`;
   }
   btn.disabled = false;
   btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Inquiry';

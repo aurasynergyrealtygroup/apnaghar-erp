@@ -188,7 +188,7 @@ function editWorkRequest(id) {
 async function saveWorkRequest() {
   const desc = document.getElementById("wrDescription").value.trim();
   const propId = document.getElementById("wrPropertyId").value;
-  if (!desc || !propId) { showToast("Property आणि Description आवश्यक आहे", "error"); return; }
+  if (!desc || !propId) { showToast("Property और Description ज़रूरी है", "error"); return; }
 
   const id = document.getElementById("editWorkId").value;
   const data = {
@@ -249,7 +249,7 @@ function calcTotalCost() {
 async function saveAssignment() {
   const wrId = document.getElementById("aWorkRequestId").value;
   const spId = document.getElementById("aServiceProviderId").value;
-  if (!wrId || !spId) { showToast("Work Request आणि Service Provider निवडा", "error"); return; }
+  if (!wrId || !spId) { showToast("Work Request और Service Provider चुनें", "error"); return; }
 
   const btn = document.getElementById("saveAssignBtn");
   btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';

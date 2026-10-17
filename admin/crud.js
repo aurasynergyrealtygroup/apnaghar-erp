@@ -179,7 +179,7 @@ const CRUD = {
       if (f.type === "section") continue;
       const el = document.getElementById("f_" + f.name); if (!el) continue;
       const v = el.value.trim();
-      if (f.required && !v) { showToast(`${f.label} आवश्यक आहे`, "error"); el.focus(); return; }
+      if (f.required && !v) { showToast(`${f.label} ज़रूरी है`, "error"); el.focus(); return; }
       if (f.type === "password" && !v) continue;
       data[f.name] = v;
     }

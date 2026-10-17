@@ -161,7 +161,7 @@ function kanbanCard(f) {
 }
 
 function emptyKanban() {
-  return `<div style="text-align:center;padding:30px;color:var(--text-light);font-size:13px">कोणतेही records नाहीत</div>`;
+  return `<div style="text-align:center;padding:30px;color:var(--text-light);font-size:13px">कोई records नहीं हैं</div>`;
 }
 
 function setFollowupView(v) {
@@ -204,8 +204,8 @@ function editFollowup(id) {
 async function saveFollowup() {
   const clientId = document.getElementById("fClientId").value;
   const note = document.getElementById("fNote").value.trim();
-  if (!clientId) { showToast("Client निवडा", "error"); return; }
-  if (!note) { showToast("Discussion note आवश्यक आहे", "error"); return; }
+  if (!clientId) { showToast("Client चुनें", "error"); return; }
+  if (!note) { showToast("Discussion note ज़रूरी है", "error"); return; }
 
   const id = document.getElementById("editFollowupId").value;
   const data = {

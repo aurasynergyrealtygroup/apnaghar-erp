@@ -28,6 +28,16 @@
 - Dashboard: Projects / Bookings / Website Leads cards and new quick actions.
 - Every list has search, filters and CSV export.
 
+## v2.4 — Hindi
+- All Marathi text on the website, admin panel, popups and server messages replaced with Hindi (139 phrases, 56 files). Page language set to `hi`.
+
+## v2.3 — Post Your Ad (Agents / Builders / Owners)
+- Website "Post Ad" button → registration (post-ad.html) → admin approval → Partner Portal (partner.html).
+- Partners post property ads; Builders also post New Launch Projects + units. Upload photos/video/brochure.
+- Admin → Approvals page for accounts and ads (approve / reject with reason). Unapproved ads never show on the website.
+- Partners see their own leads (inquiries, site visits, bookings). Server blocks partners from all ERP data.
+- New roles: Partner Agent, Builder, Owner. Users page: account type, company, RERA, approve button.
+
 ## Website
 - New pages: projects.html, project-detail.html, land.html, services.html, about.html, contact.html, /404.html.
 - Homepage shows New Launch Projects. Project page: gallery + lightbox, video, brochure, floor plan, amenities,

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="pageTitle">Post Your Property Ad Free — Agents, Builders, Owners | ApnaGhar</title>
+  <meta name="description" content="Register free as Agent, Builder or Owner and post property ads and new launch projects on ApnaGhar Pune." />
+  <link rel="icon" href="images/logo-small.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/site.css" />
+</head>
+<body>
+<nav class="navbar scrolled" id="navbar" data-solid="1">
+  <div class="container nav-inner">
+    <a href="index.html" class="logo">
+      <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+      <span class="logo-text">ApnaGhar</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="properties.html">Properties</a></li>
+      <li><a href="projects.html">New Projects</a></li>
+      <li><a href="land.html">Land</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="post-ad.html" class="btn btn-sm btn-post"><i class="fas fa-plus-circle"></i> Post Ad</a>
+      <a href="tel:+917507163733" class="btn btn-outline btn-sm"><i class="fas fa-phone"></i> Call Now</a>
+      <a href="../admin/login.html" class="btn btn-primary btn-sm">Admin</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<section class="page-hero"><div class="container">
+  <div class="breadcrumb"><a href="index.html">Home</a><i class="fas fa-chevron-right"></i><span>Post Your Ad</span></div>
+  <h1>Post Your Property Ad — Free</h1><p>Agents, Builders और Owners — अपनी property / project ApnaGhar पर list करें और सीधे leads पाएँ</p></div></section>
+<section class="section" style="padding:48px 0 20px"><div class="container">
+  <div class="steps-row">
+    <div class="step-box"><div class="n">1</div><h4>Register</h4><p style="font-size:13px;color:var(--text-light)">Agent / Builder / Owner के रूप में account बनाएँ</p></div>
+    <div class="step-box"><div class="n">2</div><h4>Verification</h4><p style="font-size:13px;color:var(--text-light)">हमारी टीम 24 घंटों में account verify करेगी</p></div>
+    <div class="step-box"><div class="n">3</div><h4>Post Ads</h4><p style="font-size:13px;color:var(--text-light)">Photos, video, brochure के साथ ad post करें</p></div>
+    <div class="step-box"><div class="n">4</div><h4>Get Leads</h4><p style="font-size:13px;color:var(--text-light)">Inquiries, site visits, bookings आपके portal में</p></div>
+  </div>
+</div></section>
+<section class="section" style="padding-top:20px"><div class="container" style="max-width:760px">
+  <form class="contact-form" id="regForm" onsubmit="register(event)">
+    <h3>Create your free account</h3>
+    <div class="type-cards" id="typeCards">
+      <div class="type-card" data-type="Agent"><i class="fas fa-user-tie"></i><b>Agent / Broker</b><small>Resale, rent listings</small></div>
+      <div class="type-card" data-type="Builder"><i class="fas fa-building"></i><b>Builder</b><small>New launch projects + units</small></div>
+      <div class="type-card" data-type="Owner"><i class="fas fa-home"></i><b>Owner</b><small>Sell / rent my property</small></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>पूरा नाम *</label><input type="text" id="rName" required minlength="3" /></div>
+      <div class="form-group"><label>Mobile *</label><input type="tel" id="rMobile" pattern="[6-9][0-9]{9}" maxlength="10" required /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Email</label><input type="email" id="rEmail" placeholder="Approval email आएगा" /></div>
+      <div class="form-group"><label>City</label><input type="text" id="rCity" value="Pune" /></div>
+    </div>
+    <div class="form-row" id="bizRow">
+      <div class="form-group"><label id="rCompanyLbl">Company / Firm Name</label><input type="text" id="rCompany" /></div>
+      <div class="form-group"><label>MahaRERA No. <small>(Agent / Builder)</small></label><input type="text" id="rRera" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Username *</label><input type="text" id="rUser" pattern="[A-Za-z0-9_.]{3,30}" title="3–30 letters / numbers, no spaces" required autocomplete="username" /></div>
+      <div class="form-group"><label>Password * <small>(min 6)</small></label><input type="password" id="rPass" minlength="6" required autocomplete="new-password" /></div>
+    </div>
+    <div class="form-group"><label>Confirm Password *</label><input type="password" id="rPass2" minlength="6" required autocomplete="new-password" /></div>
+    <label class="ag-consent"><input type="checkbox" required /> मैं confirm करता/करती हूँ कि दी गई जानकारी सही है और मैं <a href="about.html#terms" target="_blank" style="color:var(--navy);font-weight:600">Terms</a> मानता/मानती हूँ। Ads admin approval के बाद live होंगे।</label>
+    <button type="submit" class="btn btn-primary full-width" id="rBtn"><i class="fas fa-user-plus"></i> Register</button>
+    <div id="rStatus" class="form-status"></div>
+    <p style="text-align:center;margin-top:16px;font-size:14px">Already registered? <a href="partner.html" style="color:var(--navy);font-weight:700">Login to post ads →</a></p>
+  </form>
+</div></section>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="logo logo-white">
+          <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+          <span class="logo-text">ApnaGhar</span>
+        </a>
+        <p>Pune का भरोसेमंद Real Estate Partner. खरीद, बिक्री, किराया, New Launch Projects — सभी सेवाएँ एक ही जगह।</p>
+        <div class="social-links">
+          <a href="https://wa.me/917507163733" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+          <a href="mailto:aurasynergyrealtygroup@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
+          <a href="tel:+917507163733" aria-label="Call"><i class="fas fa-phone"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Properties</h4>
+        <ul>
+          <li><a href="projects.html">New Launch Projects</a></li>
+          <li><a href="properties.html?listing_type=Sale">Flat for Sale</a></li>
+          <li><a href="properties.html?listing_type=Rent">Flat for Rent</a></li>
+          <li><a href="properties.html?type=Shop">Shop & Office</a></li>
+          <li><a href="land.html">Land & Plots</a></li>
+          <li><a href="post-ad.html">Post Your Ad (Free)</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Services</h4>
+        <ul>
+          <li><a href="services.html#loan">Home Loans</a></li>
+          <li><a href="services.html#legal">Legal & Documentation</a></li>
+          <li><a href="services.html#rental">Rental Management</a></li>
+          <li><a href="services.html#packers">Packers & Movers</a></li>
+          <li><a href="services.html#interior">Interior Design</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul class="footer-contact">
+          <li><i class="fas fa-phone"></i> <a href="tel:+917507163733">+91 75071 63733</a></li>
+          <li><i class="fab fa-whatsapp"></i> <a href="https://wa.me/917507163733">+91 75071 63733</a></li>
+          <li><i class="fas fa-envelope"></i> <a href="mailto:aurasynergyrealtygroup@gmail.com">aurasynergyrealtygroup@gmail.com</a></li>
+          <li><i class="fas fa-map-marker-alt"></i> Sasane Nagar, Hadapsar, Pune – 411028</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Aura Synergy Realty Group. All Rights Reserved.</p>
+      <div class="footer-links">
+        <a href="about.html#privacy">Privacy Policy</a>
+        <a href="about.html#terms">Terms of Use</a>
+        <a href="about.html#rera">RERA Disclosure</a>
+      </div>
+    </div>
+  </div>
+</footer>
+<a href="https://wa.me/917507163733?text=Hello! I'm interested in properties." class="whatsapp-float" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+<a href="tel:+917507163733" class="call-float" aria-label="Call"><i class="fas fa-phone"></i></a>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/site.js"></script>
+<script>
+initSiteNav();
+
+let rType = new URLSearchParams(location.search).get("type") || "Agent";
+function setType(t) {
+  rType = t;
+  document.querySelectorAll(".type-card").forEach(c => c.classList.toggle("active", c.dataset.type === t));
+  document.getElementById("rCompanyLbl").textContent = t === "Builder" ? "Builder / Company Name *" : "Company / Firm Name";
+  document.getElementById("rCompany").required = t === "Builder";
+  document.getElementById("bizRow").style.display = t === "Owner" ? "none" : "";
+}
+document.querySelectorAll(".type-card").forEach(c => c.onclick = () => setType(c.dataset.type));
+setType(["Agent", "Builder", "Owner"].includes(rType) ? rType : "Agent");
+async function register(e) {
+  e.preventDefault();
+  const st = document.getElementById("rStatus"), b = document.getElementById("rBtn");
+  if (rPass.value !== rPass2.value) { st.innerHTML = `<div class="status-error">Passwords match नहीं हो रहे</div>`; return; }
+  b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
+  const r = await API.registerPartner({ user_type: rType, full_name: rName.value.trim(), mobile: rMobile.value.trim(), email: rEmail.value.trim(),
+    city: rCity.value.trim(), company_name: rType === "Owner" ? "" : rCompany.value.trim(), rera_number: rType === "Owner" ? "" : rRera.value.trim(),
+    username: rUser.value.trim(), password: rPass.value });
+  b.disabled = false; b.innerHTML = '<i class="fas fa-user-plus"></i> Register';
+  if (r.success) {
+    document.getElementById("regForm").innerHTML = `<div style="text-align:center;padding:20px"><i class="fas fa-check-circle" style="font-size:54px;color:var(--green)"></i>
+      <h3 style="margin:14px 0 8px">Thank you, ${escapeHtml(rName.value || "")}!</h3><p>${escapeHtml(r.message)}</p>
+      <a href="partner.html" class="btn btn-primary" style="margin-top:18px">Go to Login</a></div>`;
+  } else st.innerHTML = `<div class="status-error"><i class="fas fa-exclamation-circle"></i> ${escapeHtml(r.error)}</div>`;
+}
+
+</script>
+</body>
+</html>

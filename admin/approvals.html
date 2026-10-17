@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Approvals — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v2.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../website/index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Approvals — Partner Accounts & Ads</div>
+      </div>
+      <div class="topbar-right"></div>
+    </header>
+    <main class="admin-content">
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+        <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-user-clock"></i></div><div><span class="kpi-val" id="kU">—</span><span class="kpi-label">Accounts to approve</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon gold"><i class="fas fa-home"></i></div><div><span class="kpi-val" id="kP">—</span><span class="kpi-label">Property ads to approve</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon navy"><i class="fas fa-rocket"></i></div><div><span class="kpi-val" id="kJ">—</span><span class="kpi-label">Projects to approve</span></div></div>
+      </div>
+      <div class="setup-alert" style="background:#eef4fb;border-color:#c9daf0;color:var(--navy)"><i class="fas fa-info-circle"></i><div>
+        Agents, Builders and Owners register at <a href="../website/post-ad.html" target="_blank">website/post-ad.html</a> and post ads from their
+        <a href="../website/partner.html" target="_blank">Partner Portal</a>. Nothing they post appears on the website until you approve it here.
+        Partners cannot see your clients, deals or any other ERP data.</div></div>
+      <div class="card" style="margin-bottom:20px"><div class="card-header"><h3><i class="fas fa-user-clock"></i> New Partner Accounts</h3></div>
+        <div class="table-wrap"><table><thead><tr><th>Registered</th><th>Name</th><th>Type</th><th>Company / RERA</th><th>Mobile / Email</th><th>Username</th><th>Actions</th></tr></thead>
+        <tbody id="uBody"><tr><td colspan="7" class="empty-row"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody></table></div></div>
+      <div class="card"><div class="card-header"><h3><i class="fas fa-bullhorn"></i> Ads Waiting for Approval</h3>
+        <select class="toolbar-select" id="showAll" onchange="renderAds()"><option value="Pending">Pending only</option><option value="Rejected">Rejected</option><option value="partner">All partner ads</option></select></div>
+        <div class="table-wrap"><table><thead><tr><th>Photo</th><th>Ad</th><th>Posted by</th><th>Price</th><th>Media</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="aBody"><tr><td colspan="7" class="empty-row"><i class="fas fa-spinner fa-spin"></i></td></tr></tbody></table></div></div>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="../website/js/config.js"></script>
+<script src="../website/js/api.js"></script>
+<script src="admin.js"></script>
+<script src="sidebar.js"></script>
+<script src="media-upload.js"></script>
+<script src="crud.js"></script>
+<script>
+
+let ADS = [], USERS = [];
+async function load() {
+  const [u, p, j] = await Promise.all([API.admin.getUsers(), API.getProperties({ limit: 5000 }), API.admin.getNewProjects()]);
+  USERS = u.success ? u.data : [];
+  ADS = [...(j.success ? j.data : []).map(x => ({ ...x, _sheet: "NEW_PROJECTS", _id: x.project_id, _name: x.project_name })),
+         ...(p.success ? p.data : []).map(x => ({ ...x, _sheet: "PROPERTIES", _id: x.property_id, _name: x.title }))];
+  const pendU = USERS.filter(x => String(x.status).trim() === "Pending");
+  document.getElementById("kU").textContent = pendU.length;
+  document.getElementById("kP").textContent = ADS.filter(a => a._sheet === "PROPERTIES" && a.approval_status === "Pending").length;
+  document.getElementById("kJ").textContent = ADS.filter(a => a._sheet === "NEW_PROJECTS" && a.approval_status === "Pending").length;
+  document.getElementById("uBody").innerHTML = pendU.length ? pendU.map(x => `<tr>
+      <td style="font-size:12px">${escapeHtml(x.created_at || "")}</td>
+      <td style="font-weight:600;color:var(--navy)">${escapeHtml(x.full_name)}</td>
+      <td>${statusBadge(x.user_type || "—")}</td>
+      <td style="font-size:12px">${escapeHtml(x.company_name || "—")}<br>${escapeHtml(x.rera_number || "")}</td>
+      <td style="font-size:12px"><a href="tel:${escapeHtml(x.mobile)}">${escapeHtml(x.mobile || "")}</a><br>${escapeHtml(x.email || "")}</td>
+      <td>@${escapeHtml(x.username)}</td>
+      <td><div style="display:flex;gap:5px">
+        <button class="btn btn-sm btn-success" onclick="approveU('${escapeHtml(x.user_id)}','Active')"><i class="fas fa-check"></i> Approve</button>
+        <button class="btn btn-sm btn-danger" onclick="approveU('${escapeHtml(x.user_id)}','Rejected')"><i class="fas fa-times"></i></button>
+        <a class="btn btn-sm btn-outline btn-icon" target="_blank" href="https://wa.me/91${String(x.mobile || "").replace(/\D/g, "").slice(-10)}"><i class="fab fa-whatsapp"></i></a></div></td></tr>`).join("")
+    : `<tr><td colspan="7" class="empty-row">No accounts waiting ✔</td></tr>`;
+  renderAds();
+}
+function renderAds() {
+  const mode = document.getElementById("showAll").value;
+  const list = ADS.filter(a => mode === "partner" ? a.posted_by : a.approval_status === mode);
+  document.getElementById("aBody").innerHTML = list.length ? list.map(a => {
+    const isP = a._sheet === "PROPERTIES";
+    const media = [1, 2, 3, 4, 5, 6].filter(i => a["image" + i + "_url"]).length;
+    const price = isP ? (a.listing_type === "Rent" ? fmt(a.expected_rent) + "/mo" : fmt(a.expected_price)) : (a.price_from ? fmt(a.price_from) + "+" : "—");
+    const view = isP ? `../website/property-detail.html?id=${encodeURIComponent(a._id)}` : `../website/project-detail.html?id=${encodeURIComponent(a._id)}`;
+    const edit = isP ? `properties.html` : `projects.html?edit=${encodeURIComponent(a._id)}`;
+    return `<tr>
+      <td><img class="thumb-sm" src="${escapeHtml(getImageUrl(a.image1_url))}" referrerpolicy="no-referrer" onclick="AGUpload.lightbox(this.src)" style="cursor:zoom-in" /></td>
+      <td><div style="font-weight:600;color:var(--navy)">${escapeHtml(a._name)}</div><div style="font-size:11px;color:var(--text-light)">${isP ? "🏠 " + escapeHtml([a.bhk, a.listing_type, a.city].filter(Boolean).join(" • ")) : "🚀 " + escapeHtml([a.launch_status, a.location, a.rera_number && "RERA " + a.rera_number].filter(Boolean).join(" • "))} • ${escapeHtml(a._id)}</div></td>
+      <td style="font-size:12px"><b>${escapeHtml(a.posted_by_name || "Admin")}</b><br>${escapeHtml(a.posted_by_type || "")} ${a.contact_mobile ? `• <a href="tel:${escapeHtml(a.contact_mobile)}">${escapeHtml(a.contact_mobile)}</a>` : ""}</td>
+      <td style="font-weight:700;color:var(--navy)">${price}</td>
+      <td style="font-size:12px">${media} 📷 ${a.video_url ? "• 🎬" : ""} ${a.brochure_url ? "• 📄" : ""}</td>
+      <td>${statusBadge(a.approval_status || "Approved")}${a.approval_note ? `<div style="font-size:11px;color:var(--text-light)">${escapeHtml(a.approval_note)}</div>` : ""}</td>
+      <td><div style="display:flex;gap:5px">
+        <a class="btn btn-sm btn-outline btn-icon" title="Preview" target="_blank" href="${view}"><i class="fas fa-eye"></i></a>
+        <a class="btn btn-sm btn-outline btn-icon" title="Edit" href="${edit}"><i class="fas fa-edit"></i></a>
+        <button class="btn btn-sm btn-success" onclick="approveA('${a._sheet}','${escapeHtml(a._id)}','Approved')"><i class="fas fa-check"></i> Approve</button>
+        <button class="btn btn-sm btn-danger btn-icon" title="Reject" onclick="approveA('${a._sheet}','${escapeHtml(a._id)}','Rejected')"><i class="fas fa-times"></i></button></div></td></tr>`;
+  }).join("") : `<tr><td colspan="7" class="empty-row">Nothing here ✔</td></tr>`;
+}
+async function approveU(id, status) {
+  if (status === "Rejected" && !confirm("Reject this account?")) return;
+  const r = await API.admin.approveUser(id, status);
+  r.success ? showToast(status === "Active" ? "Account approved — they can login now" : "Account rejected", "success") : showToast(r.error, "error");
+  load();
+}
+async function approveA(sheet, id, st) {
+  let note = "";
+  if (st === "Rejected") { note = prompt("Reason for rejection (partner will see this):", "Please add clear photos and correct price"); if (note === null) return; }
+  const r = await API.admin.approveListing(sheet, id, st, note);
+  r.success ? showToast(st === "Approved" ? "Approved — now live on website" : "Rejected", "success") : showToast(r.error, "error");
+  load();
+}
+load();
+
+</script>
+</body>
+</html>

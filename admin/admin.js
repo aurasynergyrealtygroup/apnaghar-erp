@@ -11,6 +11,7 @@ function getAdminUser() {
 (function authGuard() {
   const user = getAdminUser();
   if (!user || !user.token) { sessionStorage.removeItem("ag_user"); localStorage.removeItem("ag_user"); window.location.href = "login.html"; return; }
+  if (["Partner Agent", "Builder", "Owner"].includes(user.role)) { window.location.href = "../website/partner.html"; return; }
   // Populate sidebar user info
   const nameEl = document.getElementById("sidebarUserName");
   const roleEl = document.getElementById("sidebarUserRole");
@@ -19,7 +20,7 @@ function getAdminUser() {
 })();
 
 function logout() {
-  if (!confirm("Logout करायचे आहे का?")) return;
+  if (!confirm("क्या आप Logout करना चाहते हैं?")) return;
   sessionStorage.removeItem("ag_user");
   localStorage.removeItem("ag_user");
   window.location.href = "login.html";
@@ -91,6 +92,10 @@ function statusBadge(status) {
     "Negotiation":"badge-purple",
     "Open":       "badge-info",
     "Enquiry":    "badge-info",
+    "Approved":   "badge-success",
+    "Rejected":   "badge-danger",
+    "Builder":    "badge-navy",
+    "Owner":      "badge-purple",
     "Scheduled":  "badge-info",
     "Contacted":  "badge-warning",
     "Site Visit": "badge-purple",
@@ -123,7 +128,7 @@ function filterTable(inputId, tbodyId) {
 
 // ---- CONFIRM DELETE ----
 function confirmDelete(name, cb) {
-  if (confirm(`"${name}" delete करायचे आहे का?\n\nही action undo होऊ शकत नाही.`)) cb();
+  if (confirm(`"${name}" delete करना है?\n\nयह action undo नहीं हो सकता।`)) cb();
 }
 
 // ---- DATE GREETING ----

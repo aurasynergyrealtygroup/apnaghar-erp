@@ -40,6 +40,7 @@ async function loadKPIs() {
   setKPI("kProjects",   d.total_new_projects);
   setKPI("kBookings",   d.active_bookings);
   setKPI("kInquiries",  d.new_inquiries);
+  setKPI("kApprovals",  (d.pending_users || 0) + (d.pending_ads || 0));
 
   // Nav badges
   const nf = document.getElementById("newClientsCount");

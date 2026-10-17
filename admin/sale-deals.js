@@ -185,7 +185,7 @@ async function saveDeal() {
   const propertyId = document.getElementById("sdPropertyId").value;
   const clientId = document.getElementById("sdClientId").value;
   const finalPrice = document.getElementById("sdFinalPrice").value;
-  if (!propertyId || !clientId || !finalPrice) { showToast("सर्व required fields भरा", "error"); return; }
+  if (!propertyId || !clientId || !finalPrice) { showToast("सभी required fields भरें", "error"); return; }
 
   const id = document.getElementById("editDealId").value;
   const data = {

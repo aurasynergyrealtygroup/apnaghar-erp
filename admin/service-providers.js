@@ -138,7 +138,7 @@ function editSP(id) {
 async function saveSP() {
   const contact = document.getElementById("spContact").value.trim();
   const mobile = document.getElementById("spMobile").value.trim();
-  if (!contact || !mobile) { showToast("Contact Person आणि Mobile आवश्यक आहे", "error"); return; }
+  if (!contact || !mobile) { showToast("Contact Person और Mobile ज़रूरी है", "error"); return; }
 
   const id = document.getElementById("editSPId").value;
   const data = {

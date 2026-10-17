@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="mr">
+<html lang="hi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Properties — ApnaGhar</title>
-  <meta name="description" content="Pune मधील Flat, Villa, Shop, Office — Buy & Rent Properties. Filter by BHK, Budget, Location." />
+  <meta name="description" content="Pune में Flat, Villa, Shop, Office — Buy & Rent Properties. Filter by BHK, Budget, Location." />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/site.css" />
   <link rel="stylesheet" href="css/properties.css" />
@@ -30,6 +30,7 @@
       <li><a href="contact.html">Contact</a></li>
     </ul>
     <div class="nav-actions">
+      <a href="post-ad.html" class="btn btn-sm btn-post"><i class="fas fa-plus-circle"></i> Post Ad</a>
       <a href="tel:+917507163733" class="btn btn-outline btn-sm"><i class="fas fa-phone"></i> Call Now</a>
       <a href="../admin/login.html" class="btn btn-primary btn-sm">Admin</a>
     </div>
@@ -46,7 +47,7 @@
       <span>Properties</span>
     </div>
     <h1 class="page-title">Properties</h1>
-    <p class="page-sub">Pune मधील Verified Properties — खरेदी आणि भाडे</p>
+    <p class="page-sub">Pune में Verified Properties — खरीद और किराया</p>
   </div>
 </section>
 
@@ -69,11 +70,11 @@
         </label>
         <label class="radio-label">
           <input type="radio" name="listingType" value="Sale" onchange="applyFilters()" />
-          <span class="badge-sale">विक्री</span> Sale
+          <span class="badge-sale">बिक्री</span> Sale
         </label>
         <label class="radio-label">
           <input type="radio" name="listingType" value="Rent" onchange="applyFilters()" />
-          <span class="badge-rent">भाडे</span> Rent
+          <span class="badge-rent">किराया</span> Rent
         </label>
       </div>
     </div>
@@ -216,8 +217,8 @@
     <!-- Empty State -->
     <div class="empty-state" id="emptyState" style="display:none">
       <i class="fas fa-search"></i>
-      <h3>कोणतीही Property सापडली नाही</h3>
-      <p>Filters बदला किंवा Search Term वेगळा वापरा</p>
+      <h3>कोई Property नहीं मिली</h3>
+      <p>Filters बदलें या कोई दूसरा Search Term आज़माएँ</p>
       <button class="btn btn-outline" onclick="clearAllFilters()">
         <i class="fas fa-redo"></i> Reset Filters
       </button>
@@ -247,8 +248,8 @@
     <p id="modalSubtitle" class="modal-sub"></p>
     <form id="modalForm" onsubmit="submitModalInquiry(event)">
       <div class="form-group">
-        <label>पूर्ण नाव *</label>
-        <input type="text" id="mName" placeholder="तुमचे नाव" required />
+        <label>पूरा नाम *</label>
+        <input type="text" id="mName" placeholder="आपका नाम" required />
       </div>
       <div class="form-group">
         <label>Mobile Number *</label>
@@ -256,7 +257,7 @@
       </div>
       <div class="form-group">
         <label>Message</label>
-        <textarea id="mMessage" rows="3" placeholder="तुमची query सांगा..."></textarea>
+        <textarea id="mMessage" rows="3" placeholder="अपनी query बताएँ..."></textarea>
       </div>
       <button type="submit" class="btn btn-primary full-width" id="modalSubmitBtn">
         <i class="fas fa-paper-plane"></i> Send Inquiry
@@ -265,7 +266,7 @@
     </form>
     <div class="modal-actions">
       <a href="#" class="modal-wa" id="modalWA" target="_blank">
-        <i class="fab fa-whatsapp"></i> WhatsApp करा
+        <i class="fab fa-whatsapp"></i> WhatsApp करें
       </a>
     </div>
   </div>

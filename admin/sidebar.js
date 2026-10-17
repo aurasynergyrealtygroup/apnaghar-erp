@@ -3,7 +3,7 @@
 // ============================================================
 (function renderSidebar() {
   const MENU = [
-    ["Main", [["dashboard.html", "fa-th-large", "Dashboard"], ["inquiries.html", "fa-inbox", "Website Leads"]]],
+    ["Main", [["dashboard.html", "fa-th-large", "Dashboard"], ["inquiries.html", "fa-inbox", "Website Leads"], ["approvals.html", "fa-user-check", "Approvals (Post Ad)"]]],
     ["Property", [["properties.html", "fa-home", "Properties"], ["projects.html", "fa-rocket", "New Launch Projects"], ["land.html", "fa-map", "Land"], ["societies.html", "fa-city", "Societies"], ["media.html", "fa-photo-video", "Media Library"]]],
     ["CRM", [["clients.html", "fa-users", "Clients"], ["agents.html", "fa-user-tie", "Agents"], ["followups.html", "fa-phone-alt", "Follow-ups"], ["site-visits.html", "fa-car", "Site Visits"]]],
     ["Transactions", [["bookings.html", "fa-bookmark", "Bookings"], ["sale-deals.html", "fa-handshake", "Sale Deals"], ["agreements.html", "fa-file-contract", "Rent Agreements"], ["rent-payments.html", "fa-money-bill-wave", "Rent Payments"]]],

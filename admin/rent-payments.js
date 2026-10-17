@@ -220,7 +220,7 @@ async function saveRentPayment() {
   const agreementId = document.getElementById("rpAgreementId").value;
   const monthYear = document.getElementById("rpMonthYear").value.trim();
   const amount = document.getElementById("rpAmount").value;
-  if (!agreementId || !monthYear || !amount) { showToast("सर्व required fields भरा", "error"); return; }
+  if (!agreementId || !monthYear || !amount) { showToast("सभी required fields भरें", "error"); return; }
 
   const id = document.getElementById("editPaymentId").value;
   const data = {

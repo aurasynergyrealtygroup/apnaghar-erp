@@ -153,7 +153,7 @@ function editVisit(id) {
 async function saveVisit() {
   const clientId = document.getElementById("vClientId").value;
   const propertyId = document.getElementById("vPropertyId").value;
-  if (!clientId || !propertyId) { showToast("Client आणि Property निवडा", "error"); return; }
+  if (!clientId || !propertyId) { showToast("Client और Property चुनें", "error"); return; }
 
   const id = document.getElementById("editVisitId").value;
   const data = {

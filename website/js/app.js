@@ -38,7 +38,7 @@ async function loadFeaturedProperties() {
   const grid = document.getElementById("featuredGrid");
   const data = await API.getFeaturedProperties();
   if (!data.success || !data.data.length) {
-    grid.innerHTML = `<div class="empty-state"><i class="fas fa-home"></i><p>Properties लवकरच उपलब्ध होतील</p></div>`;
+    grid.innerHTML = `<div class="empty-state"><i class="fas fa-home"></i><p>Properties जल्द ही उपलब्ध होंगी</p></div>`;
     return;
   }
   grid.innerHTML = data.data.map(p => buildPropertyCard(p)).join("");
@@ -120,7 +120,7 @@ async function submitContact(e) {
     status.innerHTML = `<div class="status-success"><i class="fas fa-check-circle"></i> ${result.message}</div>`;
     document.getElementById("contactForm").reset();
   } else {
-    status.innerHTML = `<div class="status-error"><i class="fas fa-exclamation-circle"></i> काहीतरी चुकले. पुन्हा प्रयत्न करा.</div>`;
+    status.innerHTML = `<div class="status-error"><i class="fas fa-exclamation-circle"></i> कुछ गलत हो गया। फिर से कोशिश करें।</div>`;
   }
   btn.disabled = false;
   btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Inquiry';
@@ -128,10 +128,10 @@ async function submitContact(e) {
 
 // ---- Inquiry Modal ----
 function openInquiryModal(propertyId, title) {
-  const name = prompt(`Property Inquiry — ${title}\n\nतुमचे नाव सांगा:`);
+  const name = prompt(`Property Inquiry — ${title}\n\nअपना नाम बताएँ:`);
   if (!name) return;
   const mobile = prompt("Mobile Number (10 digits):");
-  if (!mobile || mobile.length !== 10) { alert("Valid mobile number द्या"); return; }
+  if (!mobile || mobile.length !== 10) { alert("Valid mobile number दें"); return; }
 
   API.submitContact({
     full_name: name, mobile, client_type: "Buyer",

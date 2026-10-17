@@ -1,5 +1,5 @@
 // ============================================================
-// ApnaGhar ERP — Google Apps Script Backend  (v2.1)
+// ApnaGhar ERP — Google Apps Script Backend  (v2.4)
 // Aura Synergy Realty Group
 // ------------------------------------------------------------
 // FIRST-TIME SETUP (do this once):   (if anything fails, run "diagnose" and read the log)
@@ -20,6 +20,13 @@ const NOTIFY_EMAIL = "aurasynergyrealtygroup@gmail.com"; // new website leads/bo
 const TOKEN_DAYS = 7;
 const TZ = "Asia/Kolkata";
 
+// ---- Post-Your-Ad partners (Agents / Builders / Owners) ----
+// Partner accounts can ONLY post & manage their own ads — no access to the ERP.
+const PARTNER_ROLES = { Agent: "Partner Agent", Builder: "Builder", Owner: "Owner" };   // user_type → role name
+const STAFF_ROLES = ["Admin", "Manager", "Agent", "Accountant"];
+const AUTO_APPROVE_PARTNERS = false;  // true = new partner accounts can log in immediately
+const AUTO_APPROVE_ADS = false;       // true = partner ads go live without admin approval
+
 // ------------------------------------------------------------
 // SCHEMA — every sheet tab, its ID column, ID prefix and headers.
 // Row 1 = title, Row 2 = headers, Row 3+ = data (your existing convention).
@@ -29,9 +36,9 @@ const MEDIA_COLS = ["image1_url","image2_url","image3_url","image4_url","image5_
 
 const SCHEMA = {
   PROPERTIES: { id: "property_id", prefix: "PROP", title: "Properties (Sale / Rent)", public: true,
-    headers: ["property_id","property_code","title","property_type","listing_type","bhk","furnished_status","carpet_area","builtup_area","floor","total_floors","facing","city","address","society_id","project_id","owner_name","owner_mobile","agent_id","status","featured","expected_price","expected_rent","deposit_amount","amenities","description"].concat(MEDIA_COLS, ["created_at","updated_at"]) },
+    headers: ["property_id","property_code","title","posted_by","posted_by_name","posted_by_type","contact_name","contact_mobile","approval_status","approval_note","property_type","listing_type","bhk","furnished_status","carpet_area","builtup_area","floor","total_floors","facing","city","address","society_id","project_id","owner_name","owner_mobile","agent_id","status","featured","expected_price","expected_rent","deposit_amount","amenities","description"].concat(MEDIA_COLS, ["created_at","updated_at"]) },
   NEW_PROJECTS: { id: "project_id", prefix: "NPJ", title: "New Launch Projects", public: true,
-    headers: ["project_id","project_name","builder_name","project_type","launch_status","location","city","rera_number","configurations","price_from","price_to","carpet_from","carpet_to","total_towers","total_units","available_units","launch_date","possession_date","booking_amount","offer","amenities","highlights","description","map_url","floor_plan_url","status","featured"].concat(MEDIA_COLS, ["created_at","updated_at"]) },
+    headers: ["project_id","project_name","builder_name","posted_by","posted_by_name","posted_by_type","contact_name","contact_mobile","approval_status","approval_note","project_type","launch_status","location","city","rera_number","configurations","price_from","price_to","carpet_from","carpet_to","total_towers","total_units","available_units","launch_date","possession_date","booking_amount","offer","amenities","highlights","description","map_url","floor_plan_url","status","featured"].concat(MEDIA_COLS, ["created_at","updated_at"]) },
   PROPERTY_BOOKINGS: { id: "booking_id", prefix: "BKG", title: "Bookings (Property + New Launch Projects)",
     headers: ["booking_id","booking_for","property_id","project_id","unit_no","tower_wing","configuration","client_id","customer_name","customer_mobile","customer_email","agent_id","total_price","token_amount","booking_date","expected_registration_date","booking_status","payment_mode","transaction_ref","receipt_url","document_url","source","notes","created_at","updated_at"] },
   WEBSITE_INQUIRIES: { id: "inquiry_id", prefix: "INQ", title: "Website Inquiries / Leads",
@@ -79,7 +86,7 @@ const SCHEMA = {
   MESSAGE_LOG: { id: "message_id", prefix: "MSG", title: "Message Log",
     headers: ["message_id","channel","to","message","status","created_at"] },
   USERS: { id: "user_id", prefix: "USR", title: "Users",
-    headers: ["user_id","username","full_name","email","mobile","password_hash","role_id","agent_id","status","last_login","created_at","updated_at"] },
+    headers: ["user_id","username","full_name","email","mobile","password_hash","role_id","user_type","company_name","rera_number","city","agent_id","status","approved_by","last_login","created_at","updated_at"] },
   ROLES: { id: "role_id", prefix: "ROLE", title: "Roles",
     headers: ["role_id","role_name","description","created_at"] },
   USER_ACTIVITY_LOG: { id: "log_id", prefix: "LOG", title: "Activity Log",
@@ -144,22 +151,26 @@ function doPost(e) {
 function routeGet(action, p) {
   // ---------- Public (website) ----------
   switch (action) {
-    case "ping":                  return { success: true, message: "ApnaGhar API is running", time: new Date().toISOString(), version: "2.0" };
+    case "ping":                  return { success: true, message: "ApnaGhar API is running", time: new Date().toISOString(), version: "2.4" };
     case "getProperties":         return getProperties(p);
-    case "getProperty":           return getById("PROPERTIES", p.id);
+    case "getProperty":           return getPublicById("PROPERTIES", p.id, p.token);
     case "getFeaturedProperties": return getFeaturedProperties();
     case "searchProperties":      return searchProperties(p);
     case "getLand":               return getLand(p);
     case "getLandById":           return getById("LAND_PROPERTIES", p.id);
     case "getSocieties":          return listRows("SOCIETIES");
     case "getNewProjects":        return getNewProjects(p);
-    case "getNewProject":         return getNewProject(p.id);
+    case "getNewProject":         return getNewProject(p.id, p.token);
     case "getDashboard":          return getDashboardStats();
     case "getMasters":            return { success: true, data: [] };
   }
 
   // ---------- Admin (token required) ----------
   const user = requireAuth(p.token);
+  if (action === "whoami")     return { success: true, user: user };
+  if (action === "myListings") return myListings(user);
+  if (action === "myLeads")    return myLeads(user);
+  requireStaff(user);                         // everything below = ERP staff only
   if (action === "list")  return listRows(checkSheet(p.sheet));
   if (action === "get")   return getById(checkSheet(p.sheet), p.id);
   if (action === "getUsers") return listUsersSafe();
@@ -177,19 +188,28 @@ function routePost(action, data, body) {
     case "submitInquiry":  return submitContactForm(Object.assign({ inquiry_type: "Property Inquiry" }, data));
     case "submitBooking":  return submitWebsiteBooking(data);
     case "submitSiteVisit":return submitWebsiteSiteVisit(data);
+    case "registerPartner":return registerPartner(data);
   }
 
   // ---------- Admin (token required) ----------
   const user = requireAuth(body.token);
   const who = user.username || user.user_id;
+  // Allowed for every logged-in user (staff + partners)
   switch (action) {
+    case "uploadFile":     return uploadFile(data, who);
+    case "changePassword": return changePassword(user, data);
+    case "savePartnerListing":   return savePartnerListing(user, body.sheet, data);
+    case "deletePartnerListing": return deletePartnerListing(user, body.sheet, data.id);
+  }
+  requireStaff(user);                         // everything below = ERP staff only
+  switch (action) {
+    case "approveListing": return approveListing(body.sheet, data, who);
+    case "approveUser":    requireAdmin(user); return approveUser(data, who);
     case "create":      return addRow(checkSheet(body.sheet), data, who);
     case "update":      return updateRow(checkSheet(body.sheet), data, who);
     case "delete":      return deleteRow(checkSheet(body.sheet), data.id || data[SCHEMA[checkSheet(body.sheet)].id], who);
-    case "uploadFile":  return uploadFile(data, who);
     case "saveUser":    requireAdmin(user); return saveUser(data, who);
     case "deleteUser":  requireAdmin(user); return deleteRow("USERS", data.user_id, who);
-    case "changePassword": return changePassword(user, data);
     case "runSetup":    requireAdmin(user); return setupSheets();
   }
   const legacy = LEGACY_POST[action];
@@ -234,12 +254,8 @@ function setupSheets() {
   SpreadsheetApp.flush();
 
   try {
-    if (sheetToJSON(getSheet("ROLES")).length === 0) {
-      ["Admin", "Manager", "Agent", "Accountant"].forEach(function (r) {
-        addRow("ROLES", { role_name: r, description: r + " role" }, "SETUP");
-      });
-      report.push("Added default roles");
-    }
+    const addedRoles = ensureRoles();
+    if (addedRoles.length) report.push("Added roles: " + addedRoles.join(", "));
     const roles = sheetToJSON(getSheet("ROLES"));
     const adminRole = roles.find(function (r) { return r.role_name === "Admin"; });
     const users = sheetToJSON(getSheet("USERS"));
@@ -258,6 +274,58 @@ function setupSheets() {
 
   Logger.log("✅ DONE\n" + report.join("\n") + (errors.length ? "\n\n❌ PROBLEMS:\n" + errors.join("\n") : "\n\nNo problems 🎉"));
   return { success: errors.length === 0, message: errors.length ? "Setup finished with problems" : "Setup complete", report: report, errors: errors };
+}
+
+// ------------------------------------------------------------
+// RESET ADMIN LOGIN — run this from the editor if login says
+// "Invalid username or password". Sets  admin / admin123  (Active, Admin role).
+// ------------------------------------------------------------
+function resetAdmin() {
+  const log = [];
+  const sh = getSheet("USERS");
+  ensureColumns(sh, SCHEMA.USERS.headers);
+  const headers = sh.getRange(2, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+  log.push("USERS headers (row 2): " + headers.join(", "));
+
+  // Make sure the Admin role exists
+  if (!sheetToJSON(getSheet("ROLES")).some(function (r) { return r.role_name === "Admin"; })) {
+    addRow("ROLES", { role_name: "Admin", description: "Admin role" }, "SETUP");
+    log.push("Created Admin role");
+  }
+  const adminRole = sheetToJSON(getSheet("ROLES")).find(function (r) { return r.role_name === "Admin"; });
+
+  const all = sh.getDataRange().getValues();
+  const col = function (h) { return headers.indexOf(h); };
+  const uCol = col("username");
+  log.push("Users found: " + (all.slice(2).map(function (r) { return "[" + r[uCol] + " | status=" + r[col("status")] + "]"; }).join(" ") || "none"));
+  let fixed = 0;
+  for (let i = 2; i < all.length; i++) {
+    if (String(all[i][uCol] || "").toLowerCase().trim() !== "admin") continue;
+    const row = all[i].slice();
+    if (fixed === 0) {
+      if (!row[col("user_id")]) row[col("user_id")] = generateId("USERS");
+      row[uCol] = "admin";
+      row[col("status")] = "Active";
+      row[col("password_hash")] = hashPassword("admin123");
+      if (adminRole) row[col("role_id")] = adminRole.role_id;
+      if (!row[col("full_name")]) row[col("full_name")] = "Admin User";
+      log.push("✅ Existing admin row " + (i + 1) + " reset → password admin123, status Active, role Admin");
+    } else {
+      row[uCol] = "admin_old_" + (i + 1);   // duplicate admin rows renamed so they can't block login
+      log.push("Renamed duplicate admin row " + (i + 1) + " → " + row[uCol]);
+    }
+    sh.getRange(i + 1, 1, 1, row.length).setValues([row]);
+    fixed++;
+  }
+  if (!fixed) {
+    const r = addRow("USERS", { username: "admin", full_name: "Admin User", status: "Active",
+      password_hash: hashPassword("admin123"), role_id: adminRole ? adminRole.role_id : "" }, "SETUP");
+    log.push("✅ Created admin user " + r.id + " → admin / admin123");
+  }
+  SpreadsheetApp.flush();
+  const test = loginUser({ username: "admin", password: "admin123" });
+  log.push(test.success ? "✅ Login test PASSED — you can log in on the website now." : "❌ Login test failed: " + test.error);
+  Logger.log(log.join("\n"));
 }
 
 // Run separately if the Drive step failed in setupSheets
@@ -498,6 +566,7 @@ function uploadFile(data, who) {
 // ============================================================
 function getProperties(p) {
   let rows = sheetToJSON(getSheet("PROPERTIES"));
+  if (!isStaffToken(p.token)) rows = rows.filter(isLive);
   const lc = function (v) { return String(v || "").toLowerCase(); };
   if (p.listing_type)  rows = rows.filter(function (r) { return r.listing_type === p.listing_type; });
   if (p.bhk)           rows = rows.filter(function (r) { return lc(r.bhk).replace(/\s/g, "") === lc(p.bhk).replace(/\s/g, ""); });
@@ -519,7 +588,7 @@ function getProperties(p) {
 }
 
 function getFeaturedProperties() {
-  let rows = sheetToJSON(getSheet("PROPERTIES")).filter(function (r) { return r.status === "Available"; }).reverse();
+  let rows = sheetToJSON(getSheet("PROPERTIES")).filter(function (r) { return r.status === "Available" && isLive(r); }).reverse();
   const featured = rows.filter(function (r) { return String(r.featured).toLowerCase() === "yes" || r.featured === true; });
   rows = featured.concat(rows.filter(function (r) { return featured.indexOf(r) === -1; })).slice(0, 6);
   return { success: true, count: rows.length, data: rows };
@@ -538,7 +607,7 @@ function getLand(p) {
 }
 
 function getNewProjects(p) {
-  let rows = sheetToJSON(getSheet("NEW_PROJECTS")).filter(function (r) { return r.status !== "Inactive"; });
+  let rows = sheetToJSON(getSheet("NEW_PROJECTS")).filter(function (r) { return r.status !== "Inactive" && isLive(r); });
   if (p.launch_status) rows = rows.filter(function (r) { return r.launch_status === p.launch_status; });
   if (p.city) rows = rows.filter(function (r) { return String(r.city || "").toLowerCase().indexOf(String(p.city).toLowerCase()) !== -1; });
   rows.reverse();
@@ -547,10 +616,11 @@ function getNewProjects(p) {
   return { success: true, count: rows.length, data: rows };
 }
 
-function getNewProject(id) {
+function getNewProject(id, token) {
+  const staff = isStaffToken(token);
   const res = getById("NEW_PROJECTS", id);
-  if (!res.success || res.data.status === "Inactive") return { success: false, error: "Project not found" };
-  res.units = sheetToJSON(getSheet("PROPERTIES")).filter(function (r) { return String(r.project_id) === String(id); });
+  if (!res.success || (!staff && (res.data.status === "Inactive" || !isLive(res.data)))) return { success: false, error: "Project not found" };
+  res.units = sheetToJSON(getSheet("PROPERTIES")).filter(function (r) { return String(r.project_id) === String(id) && (staff || isLive(r)); });
   return res;
 }
 
@@ -587,6 +657,8 @@ function getDashboardStats(full) {
     total_bookings: bookings.length,
     active_bookings: bookings.filter(function (b) { return b.booking_status === "Active" || b.booking_status === "Enquiry"; }).length,
     new_inquiries: inquiries.filter(function (i) { return i.status === "New"; }).length,
+    pending_users: safeRows("USERS").filter(function (u) { return String(u.status).trim() === "Pending"; }).length,
+    pending_ads: props.concat(projects).filter(function (r) { return String(r.approval_status).trim() === "Pending"; }).length,
     last_updated: new Date().toISOString(),
   });
   return { success: true, data: data };
@@ -615,7 +687,7 @@ function notify(subject, lines) {
 
 function submitContactForm(d) {
   if (!d.full_name && !d.name) return { success: false, error: "Name is required" };
-  if (!validMobile(d.mobile)) return { success: false, error: "Valid 10-digit mobile number द्या" };
+  if (!validMobile(d.mobile)) return { success: false, error: "Valid 10-digit mobile number दें" };
   const clientId = findOrCreateClient(d);
   addRow("WEBSITE_INQUIRIES", {
     inquiry_type: d.inquiry_type || d.client_type || "General", full_name: d.full_name || d.name, mobile: normMobile(d.mobile),
@@ -623,12 +695,12 @@ function submitContactForm(d) {
     message: d.message || "", source_page: d.source_page || "", status: "New",
   }, "WEBSITE");
   notify("New inquiry from " + (d.full_name || d.name), ["Mobile: " + d.mobile, "Type: " + (d.inquiry_type || d.client_type || ""), "Message: " + (d.message || ""), d.property_id ? "Property: " + d.property_id : "", d.project_id ? "Project: " + d.project_id : ""]);
-  return { success: true, message: "Thank you! आमची टीम 24 तासांत संपर्क करेल." };
+  return { success: true, message: "Thank you! हमारी टीम 24 घंटों में संपर्क करेगी।" };
 }
 
 function submitWebsiteBooking(d) {
   if (!d.full_name) return { success: false, error: "Name is required" };
-  if (!validMobile(d.mobile)) return { success: false, error: "Valid 10-digit mobile number द्या" };
+  if (!validMobile(d.mobile)) return { success: false, error: "Valid 10-digit mobile number दें" };
   if (!d.project_id && !d.property_id) return { success: false, error: "Project / property missing" };
   const clientId = findOrCreateClient(d);
   const res = addRow("PROPERTY_BOOKINGS", {
@@ -638,12 +710,12 @@ function submitWebsiteBooking(d) {
     booking_status: "Enquiry", source: "Website", notes: d.message || "",
   }, "WEBSITE");
   notify("New booking request (" + res.id + ")", ["Name: " + d.full_name, "Mobile: " + d.mobile, "Project: " + (d.project_id || ""), "Property: " + (d.property_id || ""), "Configuration: " + (d.configuration || ""), "Message: " + (d.message || "")]);
-  return { success: true, id: res.id, message: "Booking request received! Booking ID: " + res.id + ". आमची टीम लवकरच संपर्क करेल." };
+  return { success: true, id: res.id, message: "Booking request received! Booking ID: " + res.id + ". हमारी टीम जल्द ही संपर्क करेगी।" };
 }
 
 function submitWebsiteSiteVisit(d) {
   if (!d.full_name) return { success: false, error: "Name is required" };
-  if (!validMobile(d.mobile)) return { success: false, error: "Valid 10-digit mobile number द्या" };
+  if (!validMobile(d.mobile)) return { success: false, error: "Valid 10-digit mobile number दें" };
   const clientId = findOrCreateClient(d);
   const res = addRow("SITE_VISITS", {
     client_id: clientId, property_id: d.property_id || "", project_id: d.project_id || "",
@@ -651,7 +723,7 @@ function submitWebsiteSiteVisit(d) {
     feedback: d.message || "", source: "Website",
   }, "WEBSITE");
   notify("Site visit request", ["Name: " + d.full_name, "Mobile: " + d.mobile, "Date: " + (d.visit_date || "") + " " + (d.visit_time || ""), "Property: " + (d.property_id || ""), "Project: " + (d.project_id || "")]);
-  return { success: true, id: res.id, message: "Site visit request received! आम्ही वेळ confirm करण्यासाठी call करू." };
+  return { success: true, id: res.id, message: "Site visit request received! समय confirm करने के लिए हम call करेंगे।" };
 }
 
 // ============================================================
@@ -686,15 +758,23 @@ function requireAdmin(u) { if (u.role !== "Admin") throw new Error("Only Admin u
 function loginUser(d) {
   const users = sheetToJSON(getSheet("USERS"));
   const roles = sheetToJSON(getSheet("ROLES"));
-  const user = users.find(function (u) { return String(u.username).toLowerCase() === String(d.username || "").toLowerCase().trim() && u.status === "Active"; });
+  const uname = String(d.username || "").toLowerCase().trim();
+  const matches = users.filter(function (u) { return String(u.username || "").toLowerCase().trim() === uname; });
+  const user = matches.find(function (u) { return String(u.status || "Active").trim().toLowerCase() === "active"; }) || matches[0];
   if (!user) return { success: false, error: "Invalid username or password" };
-  const stored = String(user.password_hash || "");
-  const ok = stored === hashPassword(d.password) || stored === legacyMd5(d.password) || (stored && stored === String(d.password));
+  const stored = String(user.password_hash || "").trim();
+  const pw = String(d.password || "");
+  const ok = stored === hashPassword(pw) || stored === legacyMd5(pw) || (stored !== "" && stored.trim() === pw);
   if (!ok) return { success: false, error: "Invalid username or password" };
+  const st = String(user.status || "Active").trim().toLowerCase();
+  if (st === "pending") return { success: false, error: "Your account is waiting for admin approval. We will call you shortly." };
+  if (st !== "active") return { success: false, error: "This account is " + user.status + ". Please contact " + NOTIFY_EMAIL };
   if (stored.indexOf("sha256:") !== 0) updateRow("USERS", { user_id: user.user_id, password_hash: hashPassword(d.password) }, "SYSTEM"); // upgrade old hash
   const role = roles.find(function (r) { return String(r.role_id) === String(user.role_id); });
   const out = { user_id: user.user_id, username: user.username, full_name: user.full_name, email: user.email,
-    role: role ? role.role_name : "User", role_id: user.role_id, agent_id: user.agent_id };
+    role: role ? role.role_name : "User", role_id: user.role_id, agent_id: user.agent_id,
+    user_type: user.user_type || "", company_name: user.company_name || "", mobile: user.mobile || "" };
+  out.is_partner = isPartnerRole(out.role);
   out.token = makeToken(out);
   try { updateRow("USERS", { user_id: user.user_id, last_login: Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd HH:mm") }, user.username); } catch (e) {}
   return { success: true, user: out, message: "Login successful" };
@@ -706,7 +786,8 @@ function listUsersSafe() {
 }
 
 function saveUser(d, who) {
-  const rec = { username: d.username, full_name: d.full_name, email: d.email, mobile: d.mobile, role_id: d.role_id, agent_id: d.agent_id, status: d.status || "Active" };
+  const rec = { username: d.username, full_name: d.full_name, email: d.email, mobile: d.mobile, role_id: d.role_id, agent_id: d.agent_id, status: d.status || "Active",
+    user_type: d.user_type, company_name: d.company_name, rera_number: d.rera_number, city: d.city };
   if (d.password) rec.password_hash = hashPassword(d.password);
   const users = sheetToJSON(getSheet("USERS"));
   const clash = users.find(function (u) { return String(u.username).toLowerCase() === String(d.username).toLowerCase() && String(u.user_id) !== String(d.user_id || ""); });
@@ -723,6 +804,165 @@ function changePassword(user, d) {
   if (!(s === hashPassword(d.old_password) || s === legacyMd5(d.old_password) || s === String(d.old_password))) return { success: false, error: "Current password is wrong" };
   if (!d.new_password || String(d.new_password).length < 6) return { success: false, error: "New password must be at least 6 characters" };
   return updateRow("USERS", { user_id: u.user_id, password_hash: hashPassword(d.new_password) }, user.username);
+}
+
+// ============================================================
+// POST-YOUR-AD PARTNERS  (Agents / Builders / Owners)
+// ============================================================
+function isPartnerRole(role) { return Object.keys(PARTNER_ROLES).some(function (k) { return PARTNER_ROLES[k] === role; }); }
+function requireStaff(u) { if (isPartnerRole(u.role)) throw new Error("Partner accounts can only manage their own ads"); }
+function isLive(r) { const a = String(r.approval_status || "").trim(); return a === "" || a === "Approved"; }
+function isStaffToken(token) { try { return !!token && !isPartnerRole(requireAuth(token).role); } catch (e) { return false; } }
+
+function getPublicById(key, id, token) {
+  const res = getById(key, id);
+  if (res.success && !isStaffToken(token) && !isLive(res.data)) return { success: false, error: "Record not found" };
+  return res;
+}
+
+function ensureRoles() {
+  const have = sheetToJSON(getSheet("ROLES")).map(function (r) { return r.role_name; });
+  const want = STAFF_ROLES.concat(Object.keys(PARTNER_ROLES).map(function (k) { return PARTNER_ROLES[k]; }));
+  const added = [];
+  want.forEach(function (r) {
+    if (have.indexOf(r) === -1) { addRow("ROLES", { role_name: r, description: (isPartnerRole(r) ? "Post-your-ad partner: " : "") + r }, "SETUP"); added.push(r); }
+  });
+  return added;
+}
+function roleIdByName(name) {
+  ensureRoles();
+  const r = sheetToJSON(getSheet("ROLES")).find(function (x) { return x.role_name === name; });
+  return r ? r.role_id : "";
+}
+
+// Public self-registration from website/post-ad.html
+function registerPartner(d) {
+  const type = String(d.user_type || "");
+  if (!PARTNER_ROLES[type]) return { success: false, error: "Select Agent, Builder or Owner" };
+  if (!d.full_name || String(d.full_name).trim().length < 3) return { success: false, error: "पूरा नाम दें" };
+  if (!validMobile(d.mobile)) return { success: false, error: "Valid 10-digit mobile number दें" };
+  if (!/^[a-zA-Z0-9_.]{3,30}$/.test(String(d.username || ""))) return { success: false, error: "Username: 3–30 letters/numbers, no spaces" };
+  if (String(d.password || "").length < 6) return { success: false, error: "Password must be at least 6 characters" };
+  if (type === "Builder" && !d.company_name) return { success: false, error: "Builder / company name is required" };
+  const users = sheetToJSON(getSheet("USERS"));
+  const uname = String(d.username).toLowerCase();
+  if (users.some(function (u) { return String(u.username || "").toLowerCase().trim() === uname; })) return { success: false, error: "This username is already taken — choose another" };
+  const mob = normMobile(d.mobile);
+  if (users.some(function (u) { return normMobile(u.mobile) === mob && PARTNER_ROLES[u.user_type]; })) return { success: false, error: "An account with this mobile already exists. Please login, or contact us to reset password." };
+  const res = addRow("USERS", {
+    username: d.username, full_name: String(d.full_name).trim(), email: d.email || "", mobile: mob,
+    password_hash: hashPassword(d.password), role_id: roleIdByName(PARTNER_ROLES[type]), user_type: type,
+    company_name: d.company_name || "", rera_number: d.rera_number || "", city: d.city || "Pune",
+    status: AUTO_APPROVE_PARTNERS ? "Active" : "Pending",
+  }, "WEBSITE");
+  notify("New " + type + " registration: " + d.full_name, ["Mobile: " + mob, "Company: " + (d.company_name || "-"), "RERA: " + (d.rera_number || "-"), "Username: " + d.username, "", "Approve in Admin → Approvals"]);
+  return { success: true, id: res.id, message: AUTO_APPROVE_PARTNERS ? "Account created! You can login now." : "Registration received ✅ Admin will verify and activate your account (usually within 24 hours). You will be able to login after approval." };
+}
+
+const PARTNER_FIELDS = {
+  PROPERTIES: ["title","property_type","listing_type","bhk","furnished_status","carpet_area","builtup_area","floor","total_floors","facing","city","address","project_id","expected_price","expected_rent","deposit_amount","amenities","description","contact_name","contact_mobile","status"].concat(MEDIA_COLS),
+  NEW_PROJECTS: ["project_name","builder_name","project_type","launch_status","location","city","rera_number","configurations","price_from","price_to","carpet_from","carpet_to","total_towers","total_units","available_units","launch_date","possession_date","booking_amount","offer","amenities","highlights","description","map_url","floor_plan_url","contact_name","contact_mobile"].concat(MEDIA_COLS),
+};
+
+function partnerSheet(user, sheet) {
+  if (!PARTNER_FIELDS[sheet]) throw new Error("You can post Properties or Projects only");
+  if (sheet === "NEW_PROJECTS" && isPartnerRole(user.role) && user.role !== PARTNER_ROLES.Builder) throw new Error("Only Builder accounts can post New Launch Projects");
+  return sheet;
+}
+function ownedRecord(user, sheet, id) {
+  const r = getById(sheet, id);
+  if (!r.success) throw new Error("Listing not found");
+  if (String(r.data.posted_by) !== String(user.user_id)) throw new Error("You can only edit your own listings");
+  return r.data;
+}
+
+function savePartnerListing(user, sheet, data) {
+  sheet = partnerSheet(user, sheet);
+  const idField = SCHEMA[sheet].id, id = data[idField];
+  const rec = {};
+  PARTNER_FIELDS[sheet].forEach(function (f) { if (data[f] !== undefined) rec[f] = data[f]; });
+  if (sheet === "PROPERTIES" && rec.status && ["Available","Booked","Sold","Rented"].indexOf(rec.status) === -1) delete rec.status;
+  if (sheet === "PROPERTIES" && rec.project_id) {           // may only attach units to own project
+    const pj = getById("NEW_PROJECTS", rec.project_id);
+    if (!pj.success || String(pj.data.posted_by) !== String(user.user_id)) rec.project_id = "";
+  }
+  if (!(sheet === "PROPERTIES" ? rec.title : rec.project_name)) return { success: false, error: "Title / project name is required" };
+  const u = sheetToJSON(getSheet("USERS")).find(function (x) { return String(x.user_id) === String(user.user_id); }) || {};
+  if (!rec.contact_name) rec.contact_name = u.full_name || "";
+  if (!rec.contact_mobile) rec.contact_mobile = u.mobile || "";
+  rec.approval_status = AUTO_APPROVE_ADS ? "Approved" : "Pending";
+  rec.approval_note = "";
+  const who = user.username || user.user_id;
+  if (id) {
+    ownedRecord(user, sheet, id);
+    rec[idField] = id;
+    const r = updateRow(sheet, rec, who);
+    if (r.success) r.message = AUTO_APPROVE_ADS ? "Listing updated" : "Listing updated — sent for admin approval";
+    return r;
+  }
+  rec.posted_by = user.user_id;
+  rec.posted_by_name = u.company_name || u.full_name || user.username;
+  rec.posted_by_type = u.user_type || "";
+  if (sheet === "PROPERTIES" && !rec.status) rec.status = "Available";
+  if (sheet === "NEW_PROJECTS") { rec.status = "Active"; rec.featured = "No"; if (!rec.builder_name) rec.builder_name = u.company_name || u.full_name; }
+  const r = addRow(sheet, rec, who);
+  if (r.success) {
+    r.message = AUTO_APPROVE_ADS ? "Your ad is live!" : "Ad submitted ✅ It will appear on the website after admin approval.";
+    notify("New ad to approve: " + (rec.title || rec.project_name), ["Posted by: " + rec.posted_by_name + " (" + rec.posted_by_type + ")", "Mobile: " + rec.contact_mobile, "ID: " + r.id, "", "Approve in Admin → Approvals"]);
+  }
+  return r;
+}
+
+function deletePartnerListing(user, sheet, id) {
+  sheet = partnerSheet(user, sheet);
+  ownedRecord(user, sheet, id);
+  return deleteRow(sheet, id, user.username || user.user_id);
+}
+
+function myListings(user) {
+  const mine = function (r) { return String(r.posted_by) === String(user.user_id); };
+  return { success: true, data: {
+    properties: sheetToJSON(getSheet("PROPERTIES")).filter(mine).reverse(),
+    projects: sheetToJSON(getSheet("NEW_PROJECTS")).filter(mine).reverse(),
+  } };
+}
+
+// Leads for the partner's own listings (inquiries, bookings, site visits)
+function myLeads(user) {
+  const L = myListings(user).data;
+  const ids = {};
+  L.properties.forEach(function (p) { ids["P:" + p.property_id] = p.title; });
+  L.projects.forEach(function (p) { ids["J:" + p.project_id] = p.project_name; });
+  const forMe = function (r) { return ids["P:" + r.property_id] || ids["J:" + r.project_id]; };
+  const out = [];
+  safeRows("WEBSITE_INQUIRIES").forEach(function (r) { const t = forMe(r); if (t) out.push({ type: "Inquiry", listing: t, name: r.full_name, mobile: r.mobile, detail: r.message, date: r.created_at, status: r.status }); });
+  safeRows("PROPERTY_BOOKINGS").forEach(function (r) { const t = forMe(r); if (t) out.push({ type: "Booking", listing: t, name: r.customer_name, mobile: r.customer_mobile, detail: [r.configuration, r.unit_no].filter(String).join(" "), date: r.created_at, status: r.booking_status }); });
+  const clients = safeRows("CLIENTS");
+  safeRows("SITE_VISITS").forEach(function (r) {
+    const t = forMe(r); if (!t) return;
+    const c = clients.find(function (x) { return String(x.client_id) === String(r.client_id); }) || {};
+    out.push({ type: "Site Visit", listing: t, name: c.full_name, mobile: c.mobile, detail: [r.visit_date, r.visit_time].filter(String).join(" "), date: r.created_at, status: r.visit_status });
+  });
+  out.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+  return { success: true, count: out.length, data: out };
+}
+
+function approveListing(sheet, d, who) {
+  if (sheet !== "PROPERTIES" && sheet !== "NEW_PROJECTS") return { success: false, error: "Bad sheet" };
+  const status = d.approval_status === "Rejected" ? "Rejected" : "Approved";
+  const rec = { approval_status: status, approval_note: d.approval_note || "" };
+  rec[SCHEMA[sheet].id] = d.id;
+  return updateRow(sheet, rec, who);
+}
+
+function approveUser(d, who) {
+  const status = d.status === "Rejected" ? "Rejected" : "Active";
+  const r = updateRow("USERS", { user_id: d.user_id, status: status, approved_by: who }, who);
+  const u = sheetToJSON(getSheet("USERS")).find(function (x) { return String(x.user_id) === String(d.user_id); });
+  if (r.success && u && u.email && status === "Active") {
+    try { MailApp.sendEmail(u.email, "Your ApnaGhar account is approved", "Hello " + u.full_name + ",\n\nYour account (" + u.username + ") is now active. Login and post your ads here:\nhttps://apnaghar-erp.aurasynergyrealtygroup.workers.dev/website/partner.html\n\n— Aura Synergy Realty Group"); } catch (e) {}
+  }
+  return r;
 }
 
 function jsonResponse(data) {

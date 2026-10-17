@@ -17,7 +17,10 @@ const API = {
   _handle(json) {
     if (json && json.success === false && /^AUTH:/.test(json.error || "")) {
       json.error = json.error.replace(/^AUTH:\s*/, "");
-      if (location.pathname.includes("/admin/") && !location.pathname.endsWith("login.html")) {
+      if (location.pathname.endsWith("partner.html")) {
+        sessionStorage.removeItem("ag_user"); localStorage.removeItem("ag_user");
+        alert(json.error); location.reload();
+      } else if (location.pathname.includes("/admin/") && !location.pathname.endsWith("login.html")) {
         sessionStorage.removeItem("ag_user"); localStorage.removeItem("ag_user");
         alert(json.error);
         location.href = "login.html";
@@ -122,6 +125,18 @@ const API = {
   submitInquiry: (data) => API.post("submitInquiry", { source_page: location.pathname, ...data }),
   submitBooking: (data) => API.post("submitBooking", { source_page: location.pathname, ...data }),
   submitSiteVisit: (data) => API.post("submitSiteVisit", { source_page: location.pathname, ...data }),
+  registerPartner: (data) => API.post("registerPartner", data),
+
+  // ---- Post-Your-Ad partners (Agent / Builder / Owner) ----
+  partner: {
+    login: (data) => API.post("login", data),
+    myListings: () => API.get({ action: "myListings" }),
+    myLeads: () => API.get({ action: "myLeads" }),
+    save: (sheet, data) => API.post("savePartnerListing", data, { sheet }),
+    remove: (sheet, id) => API.post("deletePartnerListing", { id }, { sheet }),
+    changePassword: (data) => API.post("changePassword", data),
+  },
+  isPartnerRole: (role) => ["Partner Agent", "Builder", "Owner"].includes(role),
 
   // ---- Admin API calls ----
   admin: {
@@ -181,6 +196,8 @@ const API = {
     getRoles: () => API.get({ action: "getRoles" }),
     saveUser: (data) => API.post("saveUser", data),
     deleteUser: (id) => API.post("deleteUser", { user_id: id }),
+    approveUser: (id, status = "Active") => API.post("approveUser", { user_id: id, status }),
+    approveListing: (sheet, id, approval_status = "Approved", approval_note = "") => API.post("approveListing", { id, approval_status, approval_note }, { sheet }),
     getProjects: () => API.get({ action: "getProjects" }),
     getCommissions: () => API.get({ action: "getCommissions" }),
     getMedia: () => API.get({ action: "getMedia" }),
@@ -247,7 +264,7 @@ function buildPropertyCard(p) {
     <div class="property-card" onclick="location.href='property-detail.html?id=${encodeURIComponent(p.property_id)}'">
       <div class="card-img-wrap">
         <img src="${img}" alt="${title}" loading="lazy" referrerpolicy="no-referrer" onerror="this.src='${CONFIG.CLOUDINARY.placeholder}'" />
-        <span class="listing-badge ${badge}">${p.listing_type === "Rent" ? "भाडे" : "विक्री"}</span>
+        <span class="listing-badge ${badge}">${p.listing_type === "Rent" ? "किराया" : "बिक्री"}</span>
         ${p.status === "Available" ? '<span class="avail-badge">Available</span>' : ""}
         ${p.video_url ? '<span class="video-indicator" title="Video available"><i class="fas fa-play"></i></span>' : ""}
       </div>

@@ -52,7 +52,7 @@ async function loadProperties() {
 
   const result = await API.getProperties({ limit: 500 });   // fetch all, filter client-side
   if (!result.success) {
-    showEmpty("API Error. कृपया पुन्हा प्रयत्न करा.");
+    showEmpty("API Error. कृपया फिर से कोशिश करें।");
     return;
   }
   STATE.allProperties = result.data || [];
@@ -364,7 +364,7 @@ async function submitModalInquiry(e) {
       status.innerHTML = "";
     }, 2500);
   } else {
-    status.innerHTML = `<div class="status-error" style="margin-top:12px"><i class="fas fa-exclamation-circle"></i> Error. पुन्हा प्रयत्न करा.</div>`;
+    status.innerHTML = `<div class="status-error" style="margin-top:12px"><i class="fas fa-exclamation-circle"></i> Error. फिर से कोशिश करें।</div>`;
   }
   btn.disabled = false;
   btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Inquiry';
