@@ -1,0 +1,6 @@
+.git
+.gitignore
+apps-script
+CHANGES_AND_SETUP.md
+wrangler.jsonc
+.assetsignore
