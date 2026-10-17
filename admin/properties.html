@@ -15,35 +15,13 @@
   <aside class="admin-sidebar" id="adminSidebar">
     <div class="sidebar-logo">
       <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
-      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v1.0</span></div>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v2.0</span></div>
     </div>
     <div class="sidebar-user">
       <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
       <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
     </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Main</div>
-      <a class="nav-item" href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
-      <div class="nav-section-label">Property</div>
-      <a class="nav-item active" href="properties.html"><i class="fas fa-home"></i> Properties</a>
-      <a class="nav-item" href="land.html"><i class="fas fa-map"></i> Land</a>
-      <a class="nav-item" href="societies.html"><i class="fas fa-city"></i> Societies</a>
-      <div class="nav-section-label">CRM</div>
-      <a class="nav-item" href="clients.html"><i class="fas fa-users"></i> Clients</a>
-      <a class="nav-item" href="agents.html"><i class="fas fa-user-tie"></i> Agents</a>
-      <a class="nav-item" href="followups.html"><i class="fas fa-phone-alt"></i> Follow-ups</a>
-      <a class="nav-item" href="site-visits.html"><i class="fas fa-car"></i> Site Visits</a>
-      <div class="nav-section-label">Transactions</div>
-      <a class="nav-item" href="agreements.html"><i class="fas fa-file-contract"></i> Agreements</a>
-      <a class="nav-item" href="rent-payments.html"><i class="fas fa-money-bill-wave"></i> Rent Payments</a>
-      <a class="nav-item" href="bookings.html"><i class="fas fa-bookmark"></i> Bookings</a>
-      <a class="nav-item" href="sale-deals.html"><i class="fas fa-handshake"></i> Sale Deals</a>
-      <div class="nav-section-label">Finance</div>
-      <a class="nav-item" href="expenses.html"><i class="fas fa-receipt"></i> Expenses</a>
-      <a class="nav-item" href="invoices.html"><i class="fas fa-file-invoice"></i> Invoices</a>
-      <div class="nav-section-label">Admin</div>
-      <a class="nav-item" href="users.html"><i class="fas fa-user-cog"></i> Users & Roles</a>
-    </nav>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
     <div class="sidebar-footer">
       <a class="nav-item" href="../website/index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
       <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -248,10 +226,27 @@
             <input type="text" id="pSocietyId" placeholder="1" />
           </div>
           <div class="form-group">
+            <label>New Launch Project (optional)</label>
+            <select id="pProjectId"><option value="">— Not part of a project —</option></select>
+          </div>
+          <div class="form-group">
+            <label>Featured on Homepage</label>
+            <select id="pFeatured"><option value="No">No</option><option value="Yes">Yes</option></select>
+          </div>
+          <div class="form-group">
+            <label>Owner Name</label>
+            <input type="text" id="pOwnerName" />
+          </div>
+          <div class="form-group">
+            <label>Owner Mobile</label>
+            <input type="tel" id="pOwnerMobile" />
+          </div>
+          <div class="form-group">
             <label>Status</label>
             <select id="pStatus">
               <option value="Available">Available</option>
               <option value="Rented">Rented</option>
+              <option value="Booked">Booked</option>
               <option value="Sold">Sold</option>
             </select>
           </div>
@@ -281,28 +276,20 @@
 
       <!-- Media -->
       <div class="ftab-content" id="ftab-media">
-        <div class="form-group full">
-          <label>Image 1 URL (Cloudinary)</label>
-          <input type="text" id="pImage1" placeholder="https://res.cloudinary.com/.../image1.jpg" />
+        <div style="background:var(--bg);border-radius:8px;padding:12px 14px;margin-bottom:14px">
+          <p style="font-size:13px;color:var(--text-light)"><i class="fas fa-cloud-upload-alt"></i> <b>Upload</b> → file goes to Google Drive (folder “ApnaGhar ERP Media/Properties”) and its link is saved in the Sheet when you click Save. You can also paste a YouTube / Drive / image link.</p>
         </div>
-        <div class="form-group full">
-          <label>Image 2 URL</label>
-          <input type="text" id="pImage2" placeholder="https://res.cloudinary.com/.../image2.jpg" />
-        </div>
-        <div class="form-group full">
-          <label>Image 3 URL</label>
-          <input type="text" id="pImage3" placeholder="https://res.cloudinary.com/.../image3.jpg" />
-        </div>
-        <div class="form-group full">
-          <label>YouTube Video URL</label>
-          <input type="text" id="pVideo" placeholder="https://www.youtube.com/watch?v=..." />
-        </div>
-        <div class="form-group full">
-          <label>Description</label>
-          <textarea id="pDescription" rows="4" placeholder="Property description..."></textarea>
-        </div>
-        <div style="background:var(--bg);border-radius:8px;padding:16px">
-          <p style="font-size:13px;color:var(--text-light)"><i class="fas fa-info-circle"></i> Images Cloudinary वर upload करा आणि त्याचा URL येथे paste करा. <a href="https://cloudinary.com" target="_blank" style="color:var(--navy);font-weight:600">Cloudinary उघडा →</a></p>
+        <div class="form-grid">
+          <div class="form-group full"><label>Main Photo (cover)</label><input type="text" id="pImage1" data-upload="image" data-module="Properties" data-record-field="editPropId" /></div>
+          <div class="form-group full"><label>Photo 2</label><input type="text" id="pImage2" data-upload="image" data-module="Properties" data-record-field="editPropId" /></div>
+          <div class="form-group full"><label>Photo 3</label><input type="text" id="pImage3" data-upload="image" data-module="Properties" data-record-field="editPropId" /></div>
+          <div class="form-group full"><label>Photo 4</label><input type="text" id="pImage4" data-upload="image" data-module="Properties" data-record-field="editPropId" /></div>
+          <div class="form-group full"><label>Photo 5</label><input type="text" id="pImage5" data-upload="image" data-module="Properties" data-record-field="editPropId" /></div>
+          <div class="form-group full"><label>Photo 6</label><input type="text" id="pImage6" data-upload="image" data-module="Properties" data-record-field="editPropId" /></div>
+          <div class="form-group full"><label>Video (upload ≤ 35 MB or paste YouTube link)</label><input type="text" id="pVideo" data-upload="video" data-module="Properties" data-record-field="editPropId" /></div>
+          <div class="form-group full"><label>Brochure / Floor Plan (PDF)</label><input type="text" id="pBrochure" data-upload="doc" data-module="Properties" data-record-field="editPropId" /></div>
+          <div class="form-group full"><label>Amenities (comma separated)</label><input type="text" id="pAmenities" placeholder="Lift, Parking, Gym, Swimming Pool, Security" /></div>
+          <div class="form-group full"><label>Description</label><textarea id="pDescription" rows="4" placeholder="Property description..."></textarea></div>
         </div>
       </div>
 
@@ -336,6 +323,8 @@
 <script src="../website/js/config.js"></script>
 <script src="../website/js/api.js"></script>
 <script src="admin.js"></script>
+<script src="sidebar.js"></script>
+<script src="media-upload.js"></script>
 <script src="properties-admin.js"></script>
 </body>
 </html>

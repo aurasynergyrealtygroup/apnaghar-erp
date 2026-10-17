@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Users & Roles — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v2.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../website/index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Users & Roles</div>
+      </div>
+      <div class="topbar-right"><button class="btn btn-primary" onclick="CRUD.openAdd()"><i class="fas fa-plus"></i> Add User</button></div>
+    </header>
+    <main class="admin-content" id="crudRoot"></main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="../website/js/config.js"></script>
+<script src="../website/js/api.js"></script>
+<script src="admin.js"></script>
+<script src="sidebar.js"></script>
+<script src="media-upload.js"></script>
+<script src="crud.js"></script>
+<script>
+
+CRUD.init({
+  sheet: "USERS", idField: "user_id", title: "User", plural: "Users", icon: "fa-user-cog",
+  intro: "Only <b>Admin</b> users can add or edit users. Passwords are stored encrypted (SHA-256) in the USERS sheet. Leave the password empty when editing to keep the current one.",
+  lookups: { roles: () => API.admin.getRoles(), agents: () => API.admin.getAgents() },
+  load: () => API.admin.getUsers(),
+  save: (data) => API.admin.saveUser(data),
+  remove: (id) => API.admin.deleteUser(id),
+  beforeSave: (d, id) => {
+    if (!/^[a-zA-Z0-9_.]{3,}$/.test(d.username)) return "Username: min 3 letters/numbers, no spaces";
+    if (!id && !d.password) return "Password is required for a new user";
+    if (d.password && d.password.length < 6) return "Password must be at least 6 characters";
+  },
+  columns: [
+    { label: "User", render: R.title("full_name", r => "@" + escapeHtml(r.username)) },
+    { label: "Role", render: R.lookup("role_id", "roles", "role_id", "role_name") },
+    { label: "Email", field: "email" },
+    { label: "Mobile", field: "mobile" },
+    { label: "Last Login", render: r => escapeHtml(r.last_login || "—") },
+    { label: "Status", render: R.badge("status") },
+  ],
+  defaults: { status: "Active" },
+  fields: [
+    { name: "username", label: "Username", required: true },
+    { name: "full_name", label: "Full Name", required: true },
+    { name: "password", label: "Password", type: "password", placeholder: "min 6 characters" },
+    { name: "role_id", label: "Role", type: "select", required: true, options: L => L.roles.map(r => ({ v: r.role_id, t: r.role_name })) },
+    { name: "email", label: "Email", type: "email" },
+    { name: "mobile", label: "Mobile", type: "tel" },
+    { name: "agent_id", label: "Linked Agent", type: "select", options: L => L.agents.map(a => ({ v: a.agent_id, t: a.full_name })) },
+    { name: "status", label: "Status", type: "select", options: ["Active","Inactive"], blank: false },
+  ],
+});
+
+</script>
+</body>
+</html>

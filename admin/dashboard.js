@@ -22,7 +22,11 @@ async function loadDashboard() {
 // ---- KPIs ----
 async function loadKPIs() {
   const result = await API.getDashboard();
-  if (!result.success) return;
+  if (!result.success) {
+    if (result.not_configured) document.querySelector(".admin-content")?.insertAdjacentHTML("afterbegin",
+      `<div class="setup-alert"><i class="fas fa-plug"></i><div><b>Google Sheet not connected yet.</b> ${escapeHtml(result.error)} <a href="settings.html">Settings &amp; Setup →</a></div></div>`);
+    return;
+  }
   const d = result.data;
 
   setKPI("kTotal",      d.total_properties);
@@ -33,6 +37,9 @@ async function loadKPIs() {
   setKPI("kDeals",      d.total_deals);
   setKPI("kLand",       d.total_land);
   setKPI("kFollowups",  d.pending_followups);
+  setKPI("kProjects",   d.total_new_projects);
+  setKPI("kBookings",   d.active_bookings);
+  setKPI("kInquiries",  d.new_inquiries);
 
   // Nav badges
   const nf = document.getElementById("newClientsCount");

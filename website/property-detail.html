@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title id="pageTitle">Property Detail — ApnaGhar</title>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/site.css" />
   <link rel="stylesheet" href="css/properties.css" />
   <link rel="stylesheet" href="css/detail.css" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
@@ -19,7 +20,9 @@
     <ul class="nav-links" id="navLinks">
       <li><a href="index.html">Home</a></li>
       <li><a href="properties.html" class="active">Properties</a></li>
+      <li><a href="projects.html">New Projects</a></li>
       <li><a href="land.html">Land</a></li>
+      <li><a href="services.html">Services</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
     </ul>
@@ -57,7 +60,7 @@
   <!-- GALLERY -->
   <div class="gallery-section" id="gallerySection">
     <div class="gallery-main" id="galleryMain">
-      <img id="mainImg" src="" alt="Property" />
+      <img id="mainImg" src="" alt="Property" referrerpolicy="no-referrer" />
       <button class="gallery-nav prev" onclick="changeImage(-1)"><i class="fas fa-chevron-left"></i></button>
       <button class="gallery-nav next" onclick="changeImage(1)"><i class="fas fa-chevron-right"></i></button>
       <div class="gallery-counter" id="galleryCounter">1 / 1</div>
@@ -164,6 +167,15 @@
           <a href="#" class="btn btn-whatsapp full-width" id="agentWA" target="_blank">
             <i class="fab fa-whatsapp"></i> WhatsApp
           </a>
+          <button type="button" class="btn btn-gold full-width" onclick="bookProperty('booking')">
+            <i class="fas fa-bookmark"></i> Book Now
+          </button>
+          <button type="button" class="btn btn-outline full-width" onclick="bookProperty('visit')">
+            <i class="fas fa-calendar-check"></i> Free Site Visit
+          </button>
+          <a href="#" class="btn btn-outline full-width" id="brochureBtn" target="_blank" style="display:none">
+            <i class="fas fa-file-download"></i> Download Brochure
+          </a>
         </div>
       </div>
 
@@ -235,5 +247,6 @@
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/detail.js"></script>
+<script src="js/site.js"></script>
 </body>
 </html>

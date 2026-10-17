@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Land — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v2.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../website/index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Land</div>
+      </div>
+      <div class="topbar-right"><button class="btn btn-primary" onclick="CRUD.openAdd()"><i class="fas fa-plus"></i> Add Land</button></div>
+    </header>
+    <main class="admin-content" id="crudRoot"></main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="../website/js/config.js"></script>
+<script src="../website/js/api.js"></script>
+<script src="admin.js"></script>
+<script src="sidebar.js"></script>
+<script src="media-upload.js"></script>
+<script src="crud.js"></script>
+<script>
+
+CRUD.init({
+  sheet: "LAND_PROPERTIES", idField: "land_id", title: "Land", plural: "Land Listings", icon: "fa-map", module: "Land",
+  kpis: [
+    { label: "Total", icon: "fa-map", color: "navy", value: r => r.length },
+    { label: "Available", icon: "fa-check-circle", color: "green", value: r => r.filter(x => x.status === "Available").length },
+    { label: "Sold", icon: "fa-tag", color: "blue", value: r => r.filter(x => x.status === "Sold").length },
+    { label: "Total Value", icon: "fa-rupee-sign", color: "gold", value: r => fmt(r.reduce((s, x) => s + Number(x.price || 0), 0)) },
+  ],
+  filters: [{ field: "land_type", label: "All Types", options: ["NA Plot","Agricultural","Commercial","Industrial","Farm House Plot"] }, { field: "status", label: "All Status", options: ["Available","Booked","Sold"] }],
+  columns: [
+    { label: "Image", render: R.thumb("image1_url") },
+    { label: "Land", render: R.title("title", r => escapeHtml([r.survey_no && "S.No " + r.survey_no, r.village, r.taluka].filter(Boolean).join(" • "))) },
+    { label: "Type", field: "land_type" },
+    { label: "Area", render: r => r.area_value ? escapeHtml(r.area_value + " " + (r.area_unit || "")) : "—" },
+    { label: "Price", render: R.money("price") },
+    { label: "District", field: "district" },
+    { label: "Status", render: R.badge("status") },
+  ],
+  defaults: { status: "Available", district: "Pune", area_unit: "Guntha", featured: "No" },
+  fields: [
+    { name: "title", label: "Title", required: true, placeholder: "2 Acre NA Plot, Uruli Kanchan" },
+    { name: "land_type", label: "Land Type", type: "select", options: ["NA Plot","Agricultural","Commercial","Industrial","Farm House Plot"] },
+    { name: "survey_no", label: "Survey / Gat No." },
+    { name: "village", label: "Village" },
+    { name: "taluka", label: "Taluka" },
+    { name: "district", label: "District" },
+    { name: "area_value", label: "Area", type: "number", step: "any" },
+    { name: "area_unit", label: "Area Unit", type: "select", options: ["Guntha","Acre","Hectare","SqFt","SqMt"], blank: false },
+    { name: "price", label: "Total Price (₹)", type: "number" },
+    { name: "price_per_unit", label: "Price per Unit (₹)", type: "number" },
+    { name: "road_touch", label: "Road Touch", type: "select", options: ["Yes","No"] },
+    { name: "zone", label: "Zone", placeholder: "Residential / Agri / Yellow" },
+    { name: "ownership", label: "Ownership", placeholder: "Single / Joint / Company" },
+    { name: "status", label: "Status", type: "select", options: ["Available","Booked","Sold"], blank: false },
+    { name: "featured", label: "Featured", type: "select", options: ["No","Yes"], blank: false },
+    { name: "description", label: "Description", type: "textarea" },
+    { name: "image1_url", label: "Photo 1", type: "image" },
+    { name: "image2_url", label: "Photo 2", type: "image" },
+    { name: "image3_url", label: "Photo 3", type: "image" },
+    { name: "video_url", label: "Video", type: "video" },
+    { name: "document_url", label: "7/12 Extract / Documents", type: "doc" },
+  ],
+});
+
+</script>
+</body>
+</html>

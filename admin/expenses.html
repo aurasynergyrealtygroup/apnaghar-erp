@@ -11,34 +11,9 @@
 <body>
 <div class="admin-layout">
   <aside class="admin-sidebar" id="adminSidebar">
-    <div class="sidebar-logo"><span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span><div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v1.0</span></div></div>
+    <div class="sidebar-logo"><span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span><div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v2.0</span></div></div>
     <div class="sidebar-user"><div class="user-avatar"><i class="fas fa-user-tie"></i></div><div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div></div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Main</div>
-      <a class="nav-item" href="dashboard.html"><i class="fas fa-th-large"></i> Dashboard</a>
-      <div class="nav-section-label">Property</div>
-      <a class="nav-item" href="properties.html"><i class="fas fa-home"></i> Properties</a>
-      <div class="nav-section-label">CRM</div>
-      <a class="nav-item" href="clients.html"><i class="fas fa-users"></i> Clients</a>
-      <a class="nav-item" href="agents.html"><i class="fas fa-user-tie"></i> Agents</a>
-      <a class="nav-item" href="followups.html"><i class="fas fa-phone-alt"></i> Follow-ups</a>
-      <div class="nav-section-label">Transactions</div>
-      <a class="nav-item" href="agreements.html"><i class="fas fa-file-contract"></i> Agreements</a>
-      <a class="nav-item" href="rent-payments.html"><i class="fas fa-money-bill-wave"></i> Rent Payments</a>
-      <a class="nav-item" href="bookings.html"><i class="fas fa-bookmark"></i> Bookings</a>
-      <a class="nav-item" href="sale-deals.html"><i class="fas fa-handshake"></i> Sale Deals</a>
-      <div class="nav-section-label">Finance</div>
-      <a class="nav-item active" href="expenses.html"><i class="fas fa-receipt"></i> Expenses</a>
-      <a class="nav-item" href="invoices.html"><i class="fas fa-file-invoice"></i> Invoices</a>
-      <a class="nav-item" href="ledger.html"><i class="fas fa-book"></i> Ledger</a>
-      <div class="nav-section-label">Operations</div>
-      <a class="nav-item" href="work-requests.html"><i class="fas fa-tools"></i> Work Requests</a>
-      <a class="nav-item" href="service-providers.html"><i class="fas fa-hard-hat"></i> Service Providers</a>
-      <div class="nav-section-label">Reports</div>
-      <a class="nav-item" href="reports.html"><i class="fas fa-chart-bar"></i> Reports</a>
-      <div class="nav-section-label">Admin</div>
-      <a class="nav-item" href="users.html"><i class="fas fa-user-cog"></i> Users & Roles</a>
-    </nav>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
     <div class="sidebar-footer">
       <a class="nav-item" href="../website/index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
       <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
@@ -168,6 +143,8 @@
 <script src="../website/js/config.js"></script>
 <script src="../website/js/api.js"></script>
 <script src="admin.js"></script>
+<script src="sidebar.js"></script>
+<script src="media-upload.js"></script>
 <script src="expenses.js"></script>
 </body>
 </html>

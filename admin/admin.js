@@ -10,7 +10,7 @@ function getAdminUser() {
 
 (function authGuard() {
   const user = getAdminUser();
-  if (!user) { window.location.href = "login.html"; return; }
+  if (!user || !user.token) { sessionStorage.removeItem("ag_user"); localStorage.removeItem("ag_user"); window.location.href = "login.html"; return; }
   // Populate sidebar user info
   const nameEl = document.getElementById("sidebarUserName");
   const roleEl = document.getElementById("sidebarUserRole");
@@ -90,9 +90,22 @@ function statusBadge(status) {
     "Inactive":   "badge-danger",
     "Negotiation":"badge-purple",
     "Open":       "badge-info",
+    "Enquiry":    "badge-info",
+    "Scheduled":  "badge-info",
+    "Contacted":  "badge-warning",
+    "Site Visit": "badge-purple",
+    "Converted":  "badge-success",
+    "Refunded":   "badge-danger",
+    "Terminated": "badge-danger",
+    "Booked":     "badge-warning",
+    "Pre-Launch": "badge-purple",
+    "New Launch": "badge-gold",
+    "Under Construction": "badge-warning",
+    "Ready to Move": "badge-success",
+    "Sold Out":   "badge-navy",
   };
   const cls = map[status] || "badge-gold";
-  return `<span class="badge ${cls}">${status || "—"}</span>`;
+  return `<span class="badge ${cls}">${escapeHtml(status || "—")}</span>`;
 }
 
 // ---- TABLE SEARCH ----
@@ -126,3 +139,10 @@ function setGreeting() {
 }
 
 document.addEventListener("DOMContentLoaded", setGreeting);
+
+// ---- "?action=add" / "?new=1" deep links open the page's Add form ----
+document.addEventListener("DOMContentLoaded", () => {
+  const q = new URLSearchParams(location.search);
+  if (q.get("action") === "add" && typeof CRUD === "undefined") setTimeout(() => document.querySelector(".topbar-right .btn-primary")?.click(), 700);
+  if (q.get("action") === "add" && typeof CRUD !== "undefined") setTimeout(() => CRUD.openAdd(), 700);
+});

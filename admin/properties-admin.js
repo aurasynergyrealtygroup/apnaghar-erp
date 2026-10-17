@@ -8,12 +8,24 @@ let currentPropPage = 1;
 let adminView = "table";
 const PROP_PAGE_SIZE = 12;
 
-document.addEventListener("DOMContentLoaded", loadAdminProperties);
+let projectsList = [];
+document.addEventListener("DOMContentLoaded", () => { loadAdminProperties(); loadProjectOptions(); });
+
+async function loadProjectOptions() {
+  const r = await API.admin.getNewProjects();
+  projectsList = r.success ? r.data : [];
+  document.getElementById("pProjectId").innerHTML = '<option value="">— Not part of a project —</option>' +
+    projectsList.map(p => `<option value="${escapeHtml(p.project_id)}">${escapeHtml(p.project_name)} (${escapeHtml(p.project_id)})</option>`).join("");
+}
 
 // ---- LOAD ----
 async function loadAdminProperties() {
   const result = await API.getProperties({ limit: 1000 });
-  if (!result.success) { showToast("Error loading properties", "error"); return; }
+  if (!result.success) {
+    showToast(result.error || "Error loading properties", "error");
+    document.getElementById("propsTbody").innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-light)">${escapeHtml(result.error || "Could not load")}</td></tr>`;
+    return;
+  }
   allProperties = result.data || [];
 
   // KPIs
@@ -70,7 +82,7 @@ function renderTableView(page, total) {
     <tr>
       <td><img src="${getImageUrl(p.image1_url)}" style="width:56px;height:42px;object-fit:cover;border-radius:6px" onerror="this.src='${CONFIG.CLOUDINARY.placeholder}'" /></td>
       <td>
-        <div style="font-weight:600;color:var(--navy)">${p.title || "—"}</div>
+        <div style="font-weight:600;color:var(--navy)">${escapeHtml(p.title || "—")}</div>
         <div style="font-size:11px;color:var(--text-light)">${p.property_code || p.property_id} • ${p.city || ""}</div>
       </td>
       <td><span style="font-size:12px">${p.property_type || "—"}</span> ${statusBadge(p.listing_type === "Rent" ? "Followup" : "New").replace(/Followup|New/, p.listing_type)}</td>
@@ -81,7 +93,7 @@ function renderTableView(page, total) {
       <td>${statusBadge(p.status)}</td>
       <td>
         <div style="display:flex;gap:5px">
-          <a href="../property-detail.html?id=${p.property_id}" target="_blank" class="btn btn-sm btn-outline btn-icon" title="View Live"><i class="fas fa-external-link-alt"></i></a>
+          <a href="../website/property-detail.html?id=${p.property_id}" target="_blank" class="btn btn-sm btn-outline btn-icon" title="View Live"><i class="fas fa-external-link-alt"></i></a>
           <button class="btn btn-sm btn-outline btn-icon" onclick="viewProperty('${p.property_id}')" title="Quick View"><i class="fas fa-eye"></i></button>
           <button class="btn btn-sm btn-primary btn-icon" onclick="editProperty('${p.property_id}')" title="Edit"><i class="fas fa-edit"></i></button>
           <button class="btn btn-sm btn-danger btn-icon" onclick="deleteProperty('${p.property_id}','${(p.title||"").replace(/'/g,"")}')" title="Delete"><i class="fas fa-trash"></i></button>
@@ -103,7 +115,7 @@ function renderCardView(page, total) {
         <span class="apc-badge">${p.listing_type === "Rent" ? "भाडे" : "विक्री"}</span>
       </div>
       <div class="apc-body">
-        <h4>${p.title || "—"}</h4>
+        <h4>${escapeHtml(p.title || "—")}</h4>
         <p>${p.city || ""} ${p.bhk ? "• " + p.bhk : ""}</p>
         <div class="apc-price">${p.listing_type === "Rent" ? fmt(p.expected_rent) + "/mo" : fmt(p.expected_price)}</div>
         <div class="apc-footer">
@@ -164,7 +176,7 @@ function openAddModal() {
 }
 
 function clearPropForm() {
-  const fields = ["pCode","pTitle","pCarpetArea","pBuiltupArea","pFloor","pTotalFloors","pAddress","pSocietyId","pExpectedPrice","pExpectedRent","pDeposit","pImage1","pImage2","pImage3","pVideo","pDescription"];
+  const fields = ["pCode","pTitle","pCarpetArea","pBuiltupArea","pFloor","pTotalFloors","pAddress","pSocietyId","pExpectedPrice","pExpectedRent","pDeposit","pImage1","pImage2","pImage3","pImage4","pImage5","pImage6","pVideo","pBrochure","pAmenities","pDescription","pOwnerName","pOwnerMobile"];
   fields.forEach(id => document.getElementById(id).value = "");
   document.getElementById("pCity").value = "Pune";
   document.getElementById("pType").value = "Apartment";
@@ -173,7 +185,10 @@ function clearPropForm() {
   document.getElementById("pFurnished").value = "Unfurnished";
   document.getElementById("pFacing").value = "";
   document.getElementById("pStatus").value = "Available";
+  document.getElementById("pProjectId").value = "";
+  document.getElementById("pFeatured").value = "No";
   togglePriceFields();
+  AGUpload.refresh();
 }
 
 function editProperty(id) {
@@ -204,10 +219,20 @@ function editProperty(id) {
   document.getElementById("pImage1").value = p.image1_url || "";
   document.getElementById("pImage2").value = p.image2_url || "";
   document.getElementById("pImage3").value = p.image3_url || "";
+  document.getElementById("pImage4").value = p.image4_url || "";
+  document.getElementById("pImage5").value = p.image5_url || "";
+  document.getElementById("pImage6").value = p.image6_url || "";
+  document.getElementById("pBrochure").value = p.brochure_url || "";
+  document.getElementById("pAmenities").value = p.amenities || "";
+  document.getElementById("pOwnerName").value = p.owner_name || "";
+  document.getElementById("pOwnerMobile").value = p.owner_mobile || "";
+  document.getElementById("pProjectId").value = p.project_id || "";
+  document.getElementById("pFeatured").value = p.featured || "No";
   document.getElementById("pVideo").value = p.video_url || "";
   document.getElementById("pDescription").value = p.description || "";
 
   togglePriceFields();
+  AGUpload.refresh();
   document.querySelector('.ftab').click();
   openModal("propModal");
 }
@@ -239,7 +264,16 @@ async function saveProperty() {
     image1_url: document.getElementById("pImage1").value,
     image2_url: document.getElementById("pImage2").value,
     image3_url: document.getElementById("pImage3").value,
+    image4_url: document.getElementById("pImage4").value,
+    image5_url: document.getElementById("pImage5").value,
+    image6_url: document.getElementById("pImage6").value,
     video_url: document.getElementById("pVideo").value,
+    brochure_url: document.getElementById("pBrochure").value,
+    amenities: document.getElementById("pAmenities").value,
+    owner_name: document.getElementById("pOwnerName").value,
+    owner_mobile: document.getElementById("pOwnerMobile").value,
+    project_id: document.getElementById("pProjectId").value,
+    featured: document.getElementById("pFeatured").value,
     description: document.getElementById("pDescription").value,
   };
 

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Media Library — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v2.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../website/index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Media Library</div>
+      </div>
+      <div class="topbar-right"></div>
+    </header>
+    <main class="admin-content">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><h3><i class="fas fa-cloud-upload-alt"></i> Upload Photos, Videos &amp; Documents</h3></div>
+        <div class="card-body" style="padding:20px">
+          <div class="form-grid">
+            <div class="form-group"><label>Folder / Module</label>
+              <select id="upModule"><option>Properties</option><option>Projects</option><option>Land</option><option>Bookings</option><option>Agreements</option><option>General</option></select></div>
+            <div class="form-group"><label>Linked Record ID (optional)</label><input type="text" id="upRecord" placeholder="e.g. PROP2610171234" /></div>
+          </div>
+          <label id="dropZone" style="display:block;border:2px dashed var(--gray-400);border-radius:12px;padding:30px;text-align:center;cursor:pointer;margin-top:10px">
+            <i class="fas fa-photo-video" style="font-size:32px;color:var(--navy)"></i>
+            <p style="margin-top:8px;font-weight:600;color:var(--navy)">Click or drop files here</p>
+            <p style="font-size:12px;color:var(--text-light)">Images (auto-optimized), videos up to 35 MB, PDFs. Files go to Google Drive → “ApnaGhar ERP Media”, links are saved in the MEDIA_LIBRARY sheet.</p>
+            <input type="file" id="bulkFiles" multiple accept="image/*,video/*,.pdf" hidden />
+          </label>
+          <div id="upQueue" style="margin-top:12px;font-size:13px"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-photo-video"></i> Media Library</h3>
+          <div style="display:flex;gap:8px">
+            <select class="toolbar-select" id="mType" onchange="renderMedia()"><option value="">All types</option><option value="image">Images</option><option value="video">Videos</option><option value="document">Documents</option></select>
+            <select class="toolbar-select" id="mModule" onchange="renderMedia()"><option value="">All folders</option></select>
+            <button class="btn btn-outline btn-sm" onclick="loadMedia()"><i class="fas fa-sync-alt"></i></button>
+          </div></div>
+        <div class="media-grid" id="mediaGrid"><p class="empty-row" style="grid-column:1/-1"><i class="fas fa-spinner fa-spin"></i> Loading…</p></div>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="../website/js/config.js"></script>
+<script src="../website/js/api.js"></script>
+<script src="admin.js"></script>
+<script src="sidebar.js"></script>
+<script src="media-upload.js"></script>
+<script src="crud.js"></script>
+<script>
+
+let MEDIA = [];
+async function loadMedia() {
+  const res = await API.admin.getMedia();
+  if (!res.success) { document.getElementById("mediaGrid").innerHTML = `<p class="empty-row" style="grid-column:1/-1">${escapeHtml(res.error)}</p>`; return; }
+  MEDIA = (res.data || []).reverse();
+  const mods = [...new Set(MEDIA.map(m => m.module).filter(Boolean))];
+  const sel = document.getElementById("mModule"), cur = sel.value;
+  sel.innerHTML = '<option value="">All folders</option>' + mods.map(m => `<option>${escapeHtml(m)}</option>`).join(""); sel.value = cur;
+  renderMedia();
+}
+function renderMedia() {
+  const t = document.getElementById("mType").value, m = document.getElementById("mModule").value;
+  const list = MEDIA.filter(x => (!t || x.media_type === t) && (!m || x.module === m));
+  document.getElementById("mediaGrid").innerHTML = list.length ? list.map(x => {
+    const thumb = x.media_type === "image" ? `<img src="${escapeHtml(x.url)}" referrerpolicy="no-referrer" onclick="AGUpload.lightbox(this.src)" loading="lazy" />`
+      : `<i class="fas ${x.media_type === "video" ? "fa-film" : "fa-file-pdf"}" onclick="window.open('${escapeHtml(x.view_url)}','_blank')"></i>`;
+    return `<div class="media-tile"><div class="mt-thumb">${thumb}</div><div class="mt-body">
+      <div class="mt-name" title="${escapeHtml(x.file_name)}">${escapeHtml(x.file_name)}</div>
+      <div style="color:var(--text-light)">${escapeHtml(x.module || "")}${x.record_id ? " • " + escapeHtml(x.record_id) : ""} • ${x.size_kb || 0} KB</div>
+      <div class="mt-actions">
+        <button class="btn btn-sm btn-primary" onclick="copyLink('${escapeHtml(x.url)}')"><i class="fas fa-link"></i> Copy link</button>
+        <a class="btn btn-sm btn-outline btn-icon" href="${escapeHtml(x.view_url)}" target="_blank" title="Open in Drive"><i class="fab fa-google-drive"></i></a>
+      </div></div></div>`;
+  }).join("") : `<p class="empty-row" style="grid-column:1/-1">No files yet — upload above.</p>`;
+}
+function copyLink(u) { navigator.clipboard.writeText(u).then(() => showToast("Link copied — paste it in any image/video field", "success")); }
+async function uploadMany(files) {
+  const q = document.getElementById("upQueue");
+  for (const f of files) {
+    const row = document.createElement("div"); row.style.padding = "4px 0";
+    row.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${escapeHtml(f.name)} — <span>starting…</span>`; q.prepend(row);
+    const res = await API.uploadFile(f, document.getElementById("upModule").value, document.getElementById("upRecord").value.trim(), s => row.querySelector("span").textContent = s);
+    row.innerHTML = res.success ? `<i class="fas fa-check-circle" style="color:var(--green)"></i> ${escapeHtml(f.name)} — saved` : `<i class="fas fa-times-circle" style="color:var(--red)"></i> ${escapeHtml(f.name)} — ${escapeHtml(res.error)}`;
+  }
+  loadMedia();
+}
+const dz = document.getElementById("dropZone"), bf = document.getElementById("bulkFiles");
+bf.onchange = () => { uploadMany([...bf.files]); bf.value = ""; };
+dz.ondragover = e => { e.preventDefault(); dz.style.borderColor = "var(--navy)"; };
+dz.ondragleave = () => dz.style.borderColor = "";
+dz.ondrop = e => { e.preventDefault(); dz.style.borderColor = ""; uploadMany([...e.dataTransfer.files]); };
+loadMedia();
+
+</script>
+</body>
+</html>

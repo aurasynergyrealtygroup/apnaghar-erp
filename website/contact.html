@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="pageTitle">Contact — Aura Synergy Realty Group, Hadapsar Pune</title>
+  <meta name="description" content="Call, WhatsApp or visit Aura Synergy Realty Group, Sasane Nagar, Hadapsar, Pune." />
+  <link rel="icon" href="images/logo-small.png" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/site.css" />
+</head>
+<body>
+<nav class="navbar scrolled" id="navbar" data-solid="1">
+  <div class="container nav-inner">
+    <a href="index.html" class="logo">
+      <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+      <span class="logo-text">ApnaGhar</span>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="properties.html">Properties</a></li>
+      <li><a href="projects.html">New Projects</a></li>
+      <li><a href="land.html">Land</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html" class="active">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="tel:+917507163733" class="btn btn-outline btn-sm"><i class="fas fa-phone"></i> Call Now</a>
+      <a href="../admin/login.html" class="btn btn-primary btn-sm">Admin</a>
+    </div>
+    <button class="hamburger" id="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<section class="page-hero"><div class="container">
+  <div class="breadcrumb"><a href="index.html">Home</a><i class="fas fa-chevron-right"></i><span>Contact</span></div>
+  <h1>आजच संपर्क करा</h1><p>आमचा Expert Agent 2 तासांत संपर्क करेल</p></div></section>
+<section class="section"><div class="container contact-wrapper">
+  <div>
+    <h2 class="section-title">Aura Synergy Realty Group</h2>
+    <div class="contact-items">
+      <a href="tel:+917507163733" class="contact-item"><div class="ci-icon"><i class="fas fa-phone"></i></div><div><span>Call Us</span><strong>+91 75071 63733</strong></div></a>
+      <a href="https://wa.me/917507163733" target="_blank" class="contact-item"><div class="ci-icon"><i class="fab fa-whatsapp"></i></div><div><span>WhatsApp</span><strong>+91 75071 63733</strong></div></a>
+      <a href="mailto:aurasynergyrealtygroup@gmail.com" class="contact-item"><div class="ci-icon"><i class="fas fa-envelope"></i></div><div><span>Email</span><strong>aurasynergyrealtygroup@gmail.com</strong></div></a>
+      <div class="contact-item"><div class="ci-icon"><i class="fas fa-map-marker-alt"></i></div><div><span>Office</span><strong>Sasane Nagar, Hadapsar, Pune – 411028</strong></div></div>
+    </div>
+    <iframe class="map-embed" style="margin-top:20px" loading="lazy" src="https://maps.google.com/maps?q=Sasane%20Nagar%2C%20Hadapsar%2C%20Pune%20411028&output=embed"></iframe>
+  </div>
+  <form class="contact-form" id="contactForm" onsubmit="sendContact(event)">
+    <h3>Send Inquiry</h3>
+    <div class="form-group"><label>पूर्ण नाव *</label><input type="text" id="cName" required /></div>
+    <div class="form-row">
+      <div class="form-group"><label>Mobile Number *</label><input type="tel" id="cMobile" pattern="[6-9][0-9]{9}" maxlength="10" required /></div>
+      <div class="form-group"><label>Email</label><input type="email" id="cEmail" /></div>
+    </div>
+    <div class="form-group"><label>मला हवे आहे</label><select id="cType"><option value="Buyer">Property खरेदी</option><option value="Tenant">Property भाडे</option><option value="Seller">Property विकायची आहे</option><option value="Project Booking">New Project Booking</option><option value="Investment">Investment</option></select></div>
+    <div class="form-group"><label>Message</label><textarea id="cMessage" rows="4" placeholder="तुमची requirement सांगा..."></textarea></div>
+    <button type="submit" class="btn btn-primary full-width" id="cBtn"><i class="fas fa-paper-plane"></i> Submit Inquiry</button>
+    <div id="cStatus" class="form-status"></div>
+  </form>
+</div></section>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="logo logo-white">
+          <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+          <span class="logo-text">ApnaGhar</span>
+        </a>
+        <p>Pune मधील विश्वासू Real Estate Partner. खरेदी, विक्री, भाडे, New Launch Projects — सर्व सेवा एकाच ठिकाणी.</p>
+        <div class="social-links">
+          <a href="https://wa.me/917507163733" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+          <a href="mailto:aurasynergyrealtygroup@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
+          <a href="tel:+917507163733" aria-label="Call"><i class="fas fa-phone"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Properties</h4>
+        <ul>
+          <li><a href="projects.html">New Launch Projects</a></li>
+          <li><a href="properties.html?listing_type=Sale">Flat for Sale</a></li>
+          <li><a href="properties.html?listing_type=Rent">Flat for Rent</a></li>
+          <li><a href="properties.html?type=Shop">Shop & Office</a></li>
+          <li><a href="land.html">Land & Plots</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Services</h4>
+        <ul>
+          <li><a href="services.html#loan">Home Loans</a></li>
+          <li><a href="services.html#legal">Legal & Documentation</a></li>
+          <li><a href="services.html#rental">Rental Management</a></li>
+          <li><a href="services.html#packers">Packers & Movers</a></li>
+          <li><a href="services.html#interior">Interior Design</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <ul class="footer-contact">
+          <li><i class="fas fa-phone"></i> <a href="tel:+917507163733">+91 75071 63733</a></li>
+          <li><i class="fab fa-whatsapp"></i> <a href="https://wa.me/917507163733">+91 75071 63733</a></li>
+          <li><i class="fas fa-envelope"></i> <a href="mailto:aurasynergyrealtygroup@gmail.com">aurasynergyrealtygroup@gmail.com</a></li>
+          <li><i class="fas fa-map-marker-alt"></i> Sasane Nagar, Hadapsar, Pune – 411028</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Aura Synergy Realty Group. All Rights Reserved.</p>
+      <div class="footer-links">
+        <a href="about.html#privacy">Privacy Policy</a>
+        <a href="about.html#terms">Terms of Use</a>
+        <a href="about.html#rera">RERA Disclosure</a>
+      </div>
+    </div>
+  </div>
+</footer>
+<a href="https://wa.me/917507163733?text=Hello! I'm interested in properties." class="whatsapp-float" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+<a href="tel:+917507163733" class="call-float" aria-label="Call"><i class="fas fa-phone"></i></a>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/site.js"></script>
+<script>
+initSiteNav();
+
+async function sendContact(e) {
+  e.preventDefault();
+  const b = document.getElementById("cBtn"), s = document.getElementById("cStatus");
+  b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+  const r = await API.submitContact({ full_name: cName.value.trim(), mobile: cMobile.value.trim(), email: cEmail.value.trim(), client_type: cType.value, inquiry_type: cType.value, message: cMessage.value.trim() });
+  b.disabled = false; b.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Inquiry';
+  s.innerHTML = r.success ? `<div class="status-success"><i class="fas fa-check-circle"></i> ${escapeHtml(r.message)}</div>` : `<div class="status-error"><i class="fas fa-exclamation-circle"></i> ${escapeHtml(r.error || "Error")}</div>`;
+  if (r.success) e.target.reset();
+}
+
+</script>
+</body>
+</html>

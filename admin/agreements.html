@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rent Agreements — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v2.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../website/index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Rent Agreements</div>
+      </div>
+      <div class="topbar-right"><button class="btn btn-primary" onclick="CRUD.openAdd()"><i class="fas fa-plus"></i> Add Agreement</button></div>
+    </header>
+    <main class="admin-content" id="crudRoot"></main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="../website/js/config.js"></script>
+<script src="../website/js/api.js"></script>
+<script src="admin.js"></script>
+<script src="sidebar.js"></script>
+<script src="media-upload.js"></script>
+<script src="crud.js"></script>
+<script>
+
+CRUD.init({
+  sheet: "AGREEMENTS", idField: "agreement_id", title: "Agreement", plural: "Rent Agreements", icon: "fa-file-contract", module: "Agreements",
+  lookups: { props: () => API.getProperties({ listing_type: "Rent", limit: 1000 }), clients: () => API.admin.getClients() },
+  kpis: [
+    { label: "Total", icon: "fa-file-contract", color: "navy", value: r => r.length },
+    { label: "Active", icon: "fa-check-circle", color: "green", value: r => r.filter(x => x.status === "Active").length },
+    { label: "Expiring in 30 days", icon: "fa-hourglass-half", color: "orange", value: r => r.filter(x => x.status === "Active" && x.end_date && (new Date(x.end_date) - new Date()) / 864e5 <= 30).length },
+    { label: "Monthly Rent (Active)", icon: "fa-rupee-sign", color: "gold", value: r => fmt(r.filter(x => x.status === "Active").reduce((s, x) => s + Number(x.monthly_rent || 0), 0)) },
+  ],
+  filters: [{ field: "status", label: "All Status", options: ["Active","Expired","Terminated"] }],
+  columns: [
+    { label: "ID", field: "agreement_id" },
+    { label: "Property", render: R.lookup("property_id", "props", "property_id", "title") },
+    { label: "Tenant", render: r => escapeHtml(r.tenant_name || "—") + (r.tenant_mobile ? `<div style="font-size:11px;color:var(--text-light)">${escapeHtml(r.tenant_mobile)}</div>` : "") },
+    { label: "Period", render: r => `${fmtDate(r.start_date)} → ${fmtDate(r.end_date)}` },
+    { label: "Rent", render: R.money("monthly_rent") },
+    { label: "Deposit", render: R.money("deposit") },
+    { label: "Document", render: R.link("agreement_url", "View") },
+    { label: "Status", render: R.badge("status") },
+  ],
+  defaults: { status: "Active", rent_due_day: 5 },
+  onOpen: () => {
+    const sel = document.getElementById("f_tenant_client_id");
+    sel.onchange = () => { const c = CRUD.lookups.clients.find(x => String(x.client_id) === sel.value); if (c) { document.getElementById("f_tenant_name").value = c.full_name || ""; document.getElementById("f_tenant_mobile").value = c.mobile || ""; } };
+  },
+  fields: [
+    { name: "property_id", label: "Property (Rent)", type: "select", required: true, options: L => L.props.map(p => ({ v: p.property_id, t: `${p.title} (${p.property_id})` })) },
+    { name: "owner_name", label: "Owner Name" },
+    { name: "tenant_client_id", label: "Tenant (from Clients)", type: "select", options: L => L.clients.map(c => ({ v: c.client_id, t: `${c.full_name} (${c.mobile})` })) },
+    { name: "tenant_name", label: "Tenant Name", required: true },
+    { name: "tenant_mobile", label: "Tenant Mobile", type: "tel" },
+    { name: "start_date", label: "Start Date", type: "date", required: true },
+    { name: "end_date", label: "End Date", type: "date", required: true },
+    { name: "monthly_rent", label: "Monthly Rent (₹)", type: "number", required: true },
+    { name: "deposit", label: "Deposit (₹)", type: "number" },
+    { name: "rent_due_day", label: "Rent Due Day (1-28)", type: "number" },
+    { name: "escalation_percent", label: "Yearly Escalation %", type: "number", step: "0.1" },
+    { name: "status", label: "Status", type: "select", options: ["Active","Expired","Terminated"], blank: false },
+    { name: "agreement_url", label: "Signed Agreement (PDF)", type: "doc" },
+  ],
+});
+
+</script>
+</body>
+</html>

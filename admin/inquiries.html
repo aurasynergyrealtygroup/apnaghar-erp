@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Website Leads — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v2.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../website/index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Website Leads & Inquiries</div>
+      </div>
+      <div class="topbar-right"><button class="btn btn-primary" onclick="CRUD.openAdd()"><i class="fas fa-plus"></i> Add Lead</button></div>
+    </header>
+    <main class="admin-content" id="crudRoot"></main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="../website/js/config.js"></script>
+<script src="../website/js/api.js"></script>
+<script src="admin.js"></script>
+<script src="sidebar.js"></script>
+<script src="media-upload.js"></script>
+<script src="crud.js"></script>
+<script>
+
+const wa = m => "https://wa.me/91" + String(m || "").replace(/\D/g, "").slice(-10);
+CRUD.init({
+  sheet: "WEBSITE_INQUIRIES", idField: "inquiry_id", title: "Inquiry", plural: "Website Inquiries", icon: "fa-inbox", module: "Inquiries",
+  intro: "Every contact form, property inquiry, site-visit request and project booking submitted on the website is saved here (and in the <b>WEBSITE_INQUIRIES</b> sheet). The person is also added to <a href='clients.html'>Clients</a> automatically.",
+  kpis: [
+    { label: "Total Leads", icon: "fa-inbox", color: "navy", value: r => r.length },
+    { label: "New (not contacted)", icon: "fa-bell", color: "orange", value: r => r.filter(x => x.status === "New").length },
+    { label: "Converted", icon: "fa-check-circle", color: "green", value: r => r.filter(x => x.status === "Converted").length },
+  ],
+  filters: [{ field: "status", label: "All Status", options: ["New","Contacted","Site Visit","Converted","Closed"] }],
+  columns: [
+    { label: "Date", render: R.date("created_at") },
+    { label: "Name", render: R.title("full_name", r => escapeHtml(r.email || "")) },
+    { label: "Mobile", render: r => `<a href="tel:${escapeHtml(r.mobile)}">${escapeHtml(r.mobile || "—")}</a>` },
+    { label: "Type", field: "inquiry_type" },
+    { label: "For", render: r => r.project_id ? `<a href="../website/project-detail.html?id=${encodeURIComponent(r.project_id)}" target="_blank">${escapeHtml(r.project_id)}</a>` : r.property_id ? `<a href="../website/property-detail.html?id=${encodeURIComponent(r.property_id)}" target="_blank">${escapeHtml(r.property_id)}</a>` : "—" },
+    { label: "Message", render: r => `<span style="font-size:12px">${escapeHtml(String(r.message || "").slice(0, 80))}</span>` },
+    { label: "Status", render: R.badge("status") },
+  ],
+  rowActions: r => `<a class="btn btn-sm btn-success btn-icon" title="WhatsApp" target="_blank" href="${wa(r.mobile)}"><i class="fab fa-whatsapp"></i></a>`,
+  defaults: { status: "New", inquiry_type: "General" },
+  fields: [
+    { name: "full_name", label: "Name", required: true },
+    { name: "mobile", label: "Mobile", type: "tel", required: true },
+    { name: "email", label: "Email", type: "email" },
+    { name: "inquiry_type", label: "Type", type: "select", options: ["General","Buyer","Tenant","Property Inquiry","Site Visit","Project Booking","Investment"] },
+    { name: "property_id", label: "Property ID" },
+    { name: "project_id", label: "Project ID" },
+    { name: "status", label: "Status", type: "select", options: ["New","Contacted","Site Visit","Converted","Closed"], blank: false },
+    { name: "message", label: "Message / Notes", type: "textarea" },
+  ],
+});
+
+</script>
+</body>
+</html>

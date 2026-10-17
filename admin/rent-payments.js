@@ -56,23 +56,10 @@ function autoFillRentAmount() {
 }
 
 // ---- VIDEO HELPERS (YouTube + Cloudflare Stream) — same pattern as bookings.js ----
-function extractYouTubeId(url) {
-  if (!url) return null;
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
-  return m ? m[1] : null;
-}
-function buildVideoEmbedHtml(videoUrl) {
-  if (!videoUrl) return "";
-  const ytId = extractYouTubeId(videoUrl);
-  if (ytId) return `<div class="media-video-wrap"><iframe src="https://www.youtube.com/embed/${ytId}" allowfullscreen></iframe></div>`;
-  if (videoUrl.includes("cloudflarestream.com") || videoUrl.includes("videodelivery.net")) {
-    let src = videoUrl;
-    const idMatch = videoUrl.match(/([a-f0-9]{32})/i);
-    if (idMatch && !videoUrl.includes("/iframe")) src = `https://customer-.cloudflarestream.com/${idMatch[1]}/iframe`;
-    return `<div class="media-video-wrap"><iframe src="${src}" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen></iframe></div>`;
-  }
-  return `<div class="media-video-wrap"><video src="${videoUrl}" controls style="width:100%;height:100%;object-fit:cover"></video></div>`;
-}
+// extractYouTubeId() now lives in website/js/api.js (shared)
+
+// buildVideoEmbedHtml() now lives in website/js/api.js (shared)
+
 
 // ---- MEDIA PREVIEW (images + video for the rented property) ----
 function showRentPropertyMedia(agreementId) {
@@ -86,7 +73,7 @@ function showRentPropertyMedia(agreementId) {
 
   const images = [p.image1_url, p.image2_url, p.image3_url, p.image4_url].filter(Boolean).map(getImageUrl);
   gallery.innerHTML = images.map(src => `<img src="${src}" onclick="openLightbox('${src}')" onerror="this.style.display='none'" />`).join("");
-  videoWrap.innerHTML = buildVideoEmbedHtml(p.video_url);
+  videoWrap.innerHTML = buildVideoEmbedHtml(p.video_url, "media-video-wrap");
 
   empty.style.display = (!images.length && !p.video_url) ? "block" : "none";
   preview.classList.add("show");

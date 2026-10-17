@@ -1,556 +1,686 @@
 // ============================================================
-// ApnaGhar ERP — Google Apps Script API
-// File: Code.gs
-// Version: 1.0
+// ApnaGhar ERP — Google Apps Script Backend  (v2.0)
+// Aura Synergy Realty Group
+// ------------------------------------------------------------
+// FIRST-TIME SETUP (do this once):
+//   1. Paste this whole file into Extensions → Apps Script of your Google Sheet.
+//   2. Select function "setupSheets" in the toolbar → click Run → Allow permissions.
+//      This creates every sheet tab + headers, a Drive media folder and the admin user.
+//   3. Deploy → New deployment → type "Web app"
+//        Execute as: Me      Who has access: Anyone
+//      Copy the Web app URL (ends with /exec).
+//   4. Paste that URL into website/js/config.js → APPS_SCRIPT_URL, push to GitHub.
+//   5. Login at /admin/login.html with  admin / admin123  and change the password.
+// After any change to this file: Deploy → Manage deployments → Edit → Version: New → Deploy
 // ============================================================
 
-// ⚠️ IMPORTANT: Replace these IDs with your actual Google Sheet IDs
 const SPREADSHEET_ID = "14SH_L0fsknVQRNqrNPcfSS0lODipe-7mlnFt1pvFFG8";
+const MEDIA_ROOT_FOLDER = "ApnaGhar ERP Media";
+const NOTIFY_EMAIL = "aurasynergyrealtygroup@gmail.com"; // new website leads/bookings are emailed here ("" to disable)
+const TOKEN_DAYS = 7;
+const TZ = "Asia/Kolkata";
 
-// Sheet Names
-const SHEETS = {
-  PROPERTIES: "PROPERTIES",
-  SOCIETIES: "SOCIETIES",
-  CLIENTS: "CLIENTS",
-  AGENTS: "AGENTS",
-  OWNERS: "OWNERS",
-  PROPERTY_OWNERS: "PROPERTY_OWNERS",
-  AGREEMENTS: "AGREEMENTS",
-  TENANTS: "TENANTS",
-  RENT_PAYMENTS: "RENT_PAYMENTS",
-  SALE_DEALS: "SALE_DEALS",
-  AGENT_COMMISSION: "AGENT_COMMISSION",
-  SITE_VISITS: "SITE_VISITS",
-  FOLLOWUPS: "FOLLOWUPS",
-  SERVICE_PROVIDERS: "SERVICE_PROVIDERS",
-  WORK_REQUEST: "PROPERTY_WORK_REQUEST",
-  WORK_ASSIGNMENT: "WORK_ASSIGNMENT",
-  WORK_PAYMENT: "WORK_PAYMENT",
-  CONSTRUCTION: "CONSTRUCTION_PROJECT",
-  PROJECT_EXPENSES: "PROJECT_EXPENSES",
-  EXPENSES: "EXPENSES",
-  LAND: "LAND_PROPERTIES",
-  LAND_PLOTS: "LAND_PLOTS",
-  LAND_DOCUMENTS: "LAND_DOCUMENTS",
-  LAND_OWNERS: "LAND_OWNERS",
-  LAND_SALE_DEALS: "LAND_SALE_DEALS",
-  INVOICES: "INVOICES",
-  LEDGER: "ACCOUNT_LEDGER",
-  USERS: "USERS",
-  ROLES: "ROLES",
-  PERMISSIONS: "PERMISSIONS",
-  ROLE_PERMISSIONS: "ROLE_PERMISSIONS",
-  DOCUMENT_LOCKER: "DOCUMENT_LOCKER",
-  MESSAGE_LOG: "MESSAGE_LOG",
-  CLIENT_INTEREST: "CLIENT_PROPERTY_INTEREST",
-  AGENT_ASSIGNMENT: "AGENT_PROPERTY_ASSIGNMENT",
-  DASHBOARD: "DASHBOARD",
-  MASTER_CITY: "MASTER_CITY",
-  MASTER_BHK: "MASTER_BHK",
-  MASTER_PROPERTY_TYPE: "MASTER_PROPERTY_TYPE",
-  MASTER_AMENITIES: "MASTER_AMENITIES",
-  MASTER_LEAD_SOURCE: "MASTER_LEAD_SOURCE",
-  VEHICLES: "VEHICLES",
-  CAR_RENTALS: "CAR_RENTALS",
-  TEMP_RENTALS: "TEMPORARY_RENTALS",
-  PACKERS_SERVICE: "PACKERS_MOVERS_SERVICE",
-  PACKERS_REQUESTS: "PACKERS_REQUESTS",
-  RERA: "RERA_COMPLIANCE",
-  RENT_TEMPLATES: "RENT_TEMPLATE_MASTER",
-  INVESTORS: "INVESTORS",
-  JOINT_VENTURE: "JOINT_VENTURE",
-  INVESTOR_TXN: "INVESTOR_TRANSACTIONS",
-  USER_LOG: "USER_ACTIVITY_LOG",
-  BOOKINGS: "PROPERTY_BOOKINGS",
+// ------------------------------------------------------------
+// SCHEMA — every sheet tab, its ID column, ID prefix and headers.
+// Row 1 = title, Row 2 = headers, Row 3+ = data (your existing convention).
+// Missing tabs/columns are created automatically; nothing is ever deleted.
+// ------------------------------------------------------------
+const MEDIA_COLS = ["image1_url","image2_url","image3_url","image4_url","image5_url","image6_url","video_url","brochure_url"];
+
+const SCHEMA = {
+  PROPERTIES: { id: "property_id", prefix: "PROP", title: "Properties (Sale / Rent)", public: true,
+    headers: ["property_id","property_code","title","property_type","listing_type","bhk","furnished_status","carpet_area","builtup_area","floor","total_floors","facing","city","address","society_id","project_id","owner_name","owner_mobile","agent_id","status","featured","expected_price","expected_rent","deposit_amount","amenities","description"].concat(MEDIA_COLS, ["created_at","updated_at"]) },
+  NEW_PROJECTS: { id: "project_id", prefix: "NPJ", title: "New Launch Projects", public: true,
+    headers: ["project_id","project_name","builder_name","project_type","launch_status","location","city","rera_number","configurations","price_from","price_to","carpet_from","carpet_to","total_towers","total_units","available_units","launch_date","possession_date","booking_amount","offer","amenities","highlights","description","map_url","floor_plan_url","status","featured"].concat(MEDIA_COLS, ["created_at","updated_at"]) },
+  PROPERTY_BOOKINGS: { id: "booking_id", prefix: "BKG", title: "Bookings (Property + New Launch Projects)",
+    headers: ["booking_id","booking_for","property_id","project_id","unit_no","tower_wing","configuration","client_id","customer_name","customer_mobile","customer_email","agent_id","total_price","token_amount","booking_date","expected_registration_date","booking_status","payment_mode","transaction_ref","receipt_url","document_url","source","notes","created_at","updated_at"] },
+  WEBSITE_INQUIRIES: { id: "inquiry_id", prefix: "INQ", title: "Website Inquiries / Leads",
+    headers: ["inquiry_id","inquiry_type","full_name","mobile","email","client_id","property_id","project_id","preferred_date","message","source_page","status","created_at","updated_at"] },
+  MEDIA_LIBRARY: { id: "media_id", prefix: "MED", title: "Media Library (uploaded images / videos / documents)",
+    headers: ["media_id","file_name","media_type","mime_type","size_kb","module","record_id","file_id","url","view_url","download_url","uploaded_by","created_at"] },
+  CLIENTS: { id: "client_id", prefix: "CLI", title: "Clients / Leads",
+    headers: ["client_id","client_type","full_name","mobile","alternate_mobile","email","occupation","company_name","preferred_location","preferred_bhk","property_type_interest","budget_min","budget_max","loan_required","lead_source","lead_status","assigned_agent_id","remarks","created_at","updated_at"] },
+  AGENTS: { id: "agent_id", prefix: "AGT", title: "Agents",
+    headers: ["agent_id","full_name","mobile","email","rera_agent_no","experience_years","area","commission_percent","photo_url","joining_date","status","created_at","updated_at"] },
+  SOCIETIES: { id: "society_id", prefix: "SOC", title: "Societies", public: true,
+    headers: ["society_id","society_name","builder_name","address","area","city","pincode","total_wings","total_flats","amenities","secretary_name","secretary_mobile","image_url","status","created_at","updated_at"] },
+  LAND_PROPERTIES: { id: "land_id", prefix: "LAND", title: "Land", public: true,
+    headers: ["land_id","title","land_type","survey_no","village","taluka","district","area_value","area_unit","price","price_per_unit","road_touch","zone","ownership","status","featured","description","image1_url","image2_url","image3_url","video_url","document_url","created_at","updated_at"] },
+  AGREEMENTS: { id: "agreement_id", prefix: "AGR", title: "Rent Agreements",
+    headers: ["agreement_id","property_id","owner_name","tenant_client_id","tenant_name","tenant_mobile","start_date","end_date","monthly_rent","deposit","rent_due_day","escalation_percent","agreement_url","status","created_at","updated_at"] },
+  RENT_PAYMENTS: { id: "payment_id", prefix: "PAY", title: "Rent Payments",
+    headers: ["payment_id","agreement_id","month_year","rent_amount","late_fee","due_date","paid_date","payment_mode","transaction_id","payment_status","receipt_url","created_at","updated_at"] },
+  SALE_DEALS: { id: "deal_id", prefix: "DEAL", title: "Sale Deals",
+    headers: ["deal_id","property_id","project_id","client_id","agent_id","offered_price","final_price","token_amount","token_date","registration_date","commission_percent","commission_amount","deal_status","created_at","updated_at"] },
+  FOLLOWUPS: { id: "followup_id", prefix: "FUP", title: "Follow-ups",
+    headers: ["followup_id","client_id","agent_id","followup_date","discussion_note","next_followup_date","followup_status","created_at","updated_at"] },
+  SITE_VISITS: { id: "visit_id", prefix: "VIS", title: "Site Visits",
+    headers: ["visit_id","client_id","property_id","project_id","asset_id","agent_id","visit_date","visit_time","visit_status","feedback","next_followup_date","source","created_at","updated_at"] },
+  SERVICE_PROVIDERS: { id: "service_provider_id", prefix: "SP", title: "Service Providers",
+    headers: ["service_provider_id","provider_type","company_name","contact_person","mobile","alternate_mobile","email","address","city","gst_no","pan_no","bank_account","ifsc","rating","status","created_at","updated_at"] },
+  PROPERTY_WORK_REQUEST: { id: "work_request_id", prefix: "WRK", title: "Work Requests",
+    headers: ["work_request_id","property_id","work_type","description","priority","request_date","requested_by","estimated_cost","approved_by","status","created_at","updated_at"] },
+  WORK_ASSIGNMENT: { id: "assignment_id", prefix: "WA", title: "Work Assignments",
+    headers: ["assignment_id","work_request_id","service_provider_id","assigned_date","expected_completion_date","material_cost","labour_cost","total_cost","work_status","created_at","updated_at"] },
+  EXPENSES: { id: "expense_id", prefix: "EXP", title: "Expenses",
+    headers: ["expense_id","expense_date","expense_type","amount","paid_to","payment_mode","property_id","project_id","bill_url","remark","created_at","updated_at"] },
+  INVOICES: { id: "invoice_id", prefix: "INV", title: "Invoices",
+    headers: ["invoice_id","invoice_number","invoice_date","client_id","invoice_type","taxable_amount","gst_percent","gst_amount","total_amount","payment_status","created_at","updated_at"] },
+  ACCOUNT_LEDGER: { id: "ledger_id", prefix: "LED", title: "Account Ledger",
+    headers: ["ledger_id","transaction_date","transaction_type","category","amount","description","payment_mode","reference_id","created_by","created_at","updated_at"] },
+  AGENT_COMMISSION: { id: "commission_id", prefix: "COM", title: "Agent Commission",
+    headers: ["commission_id","agent_id","deal_id","amount","status","paid_date","created_at","updated_at"] },
+  CLIENT_PROPERTY_INTEREST: { id: "interest_id", prefix: "INT", title: "Client Property Interest",
+    headers: ["interest_id","client_id","property_id","project_id","visit_date","interest_level","remark","created_at"] },
+  CONSTRUCTION_PROJECT: { id: "project_id", prefix: "PROJ", title: "Construction Projects",
+    headers: ["project_id","project_name","location","start_date","end_date","budget","status","created_at","updated_at"] },
+  DOCUMENT_LOCKER: { id: "document_id", prefix: "DOC", title: "Document Locker",
+    headers: ["document_id","document_name","document_type","module","record_id","file_url","created_at"] },
+  MESSAGE_LOG: { id: "message_id", prefix: "MSG", title: "Message Log",
+    headers: ["message_id","channel","to","message","status","created_at"] },
+  USERS: { id: "user_id", prefix: "USR", title: "Users",
+    headers: ["user_id","username","full_name","email","mobile","password_hash","role_id","agent_id","status","last_login","created_at","updated_at"] },
+  ROLES: { id: "role_id", prefix: "ROLE", title: "Roles",
+    headers: ["role_id","role_name","description","created_at"] },
+  USER_ACTIVITY_LOG: { id: "log_id", prefix: "LOG", title: "Activity Log",
+    headers: ["log_id","user","module","action","record_id","timestamp","source"] },
+};
+
+// Legacy action names used by existing pages → [operation, sheet]
+const LEGACY_GET = {
+  getProperties: null, getProperty: ["get","PROPERTIES"], getSocieties: ["list","SOCIETIES"], getLand: null,
+  getLandById: ["get","LAND_PROPERTIES"], getAgents: ["list","AGENTS"], getClients: ["list","CLIENTS"],
+  getClient: ["get","CLIENTS"], getFollowups: ["list","FOLLOWUPS"], getSiteVisits: ["list","SITE_VISITS"],
+  getClientInterests: ["list","CLIENT_PROPERTY_INTEREST"], getAgreements: ["list","AGREEMENTS"],
+  getRentPayments: ["list","RENT_PAYMENTS"], getSaleDeals: ["list","SALE_DEALS"], getCommissions: ["list","AGENT_COMMISSION"],
+  getBookings: ["list","PROPERTY_BOOKINGS"], getBooking: ["get","PROPERTY_BOOKINGS"],
+  getInvoices: ["list","INVOICES"], getLedger: ["list","ACCOUNT_LEDGER"], getExpenses: ["list","EXPENSES"],
+  getProjects: ["list","CONSTRUCTION_PROJECT"], getWorkRequests: ["list","PROPERTY_WORK_REQUEST"],
+  getWorkAssignments: ["list","WORK_ASSIGNMENT"], getServiceProviders: ["list","SERVICE_PROVIDERS"],
+  getUsers: ["list","USERS"], getRoles: ["list","ROLES"], getUserLog: ["list","USER_ACTIVITY_LOG"],
+  getMedia: ["list","MEDIA_LIBRARY"], getInquiries: ["list","WEBSITE_INQUIRIES"], getNewProjectsAdmin: ["list","NEW_PROJECTS"],
+};
+const LEGACY_POST = {
+  addProperty: ["create","PROPERTIES"], updateProperty: ["update","PROPERTIES"], deleteProperty: ["delete","PROPERTIES"],
+  addClient: ["create","CLIENTS"], updateClient: ["update","CLIENTS"], deleteClient: ["delete","CLIENTS"],
+  addAgent: ["create","AGENTS"], updateAgent: ["update","AGENTS"],
+  addAgreement: ["create","AGREEMENTS"], updateAgreement: ["update","AGREEMENTS"],
+  addRentPayment: ["create","RENT_PAYMENTS"], updateRentPayment: ["update","RENT_PAYMENTS"],
+  addSaleDeal: ["create","SALE_DEALS"], updateSaleDeal: ["update","SALE_DEALS"],
+  addBooking: ["create","PROPERTY_BOOKINGS"], updateBooking: ["update","PROPERTY_BOOKINGS"], deleteBooking: ["delete","PROPERTY_BOOKINGS"],
+  addFollowup: ["create","FOLLOWUPS"], updateFollowup: ["update","FOLLOWUPS"],
+  addSiteVisit: ["create","SITE_VISITS"], updateSiteVisit: ["update","SITE_VISITS"],
+  addClientInterest: ["create","CLIENT_PROPERTY_INTEREST"],
+  addLand: ["create","LAND_PROPERTIES"], updateLand: ["update","LAND_PROPERTIES"],
+  addWorkRequest: ["create","PROPERTY_WORK_REQUEST"], updateWorkRequest: ["update","PROPERTY_WORK_REQUEST"],
+  addWorkAssignment: ["create","WORK_ASSIGNMENT"],
+  addServiceProvider: ["create","SERVICE_PROVIDERS"], updateServiceProvider: ["update","SERVICE_PROVIDERS"],
+  addExpense: ["create","EXPENSES"], updateExpense: ["update","EXPENSES"],
+  addInvoice: ["create","INVOICES"], updateInvoice: ["update","INVOICES"],
+  addLedgerEntry: ["create","ACCOUNT_LEDGER"], addDocument: ["create","DOCUMENT_LOCKER"], logMessage: ["create","MESSAGE_LOG"],
 };
 
 // ============================================================
-// MAIN ROUTER — doGet handles all API requests
+// ROUTERS
 // ============================================================
 function doGet(e) {
+  const p = (e && e.parameter) || {};
   try {
-    const params = e.parameter;
-    const action = params.action || "";
-    const sheet = params.sheet || "";
-    const id = params.id || "";
-
-    let result;
-
-    switch (action) {
-      // Public endpoints (no auth needed)
-      case "getProperties":      result = getProperties(params); break;
-      case "getProperty":        result = getById(SHEETS.PROPERTIES, id, "property_id"); break;
-      case "getSocieties":       result = getAllRows(SHEETS.SOCIETIES); break;
-      case "getLand":            result = getLand(params); break;
-      case "getLandById":        result = getById(SHEETS.LAND, id, "land_id"); break;
-      case "getAgents":          result = getAllRows(SHEETS.AGENTS); break;
-      case "getMasters":         result = getMasters(params.type); break;
-      case "getDashboard":       result = getDashboardStats(); break;
-      case "searchProperties":   result = searchProperties(params); break;
-      case "getFeaturedProperties": result = getFeaturedProperties(); break;
-
-      // CRM
-      case "getClients":         result = getAllRows(SHEETS.CLIENTS); break;
-      case "getClient":          result = getById(SHEETS.CLIENTS, id, "client_id"); break;
-      case "getFollowups":       result = getAllRows(SHEETS.FOLLOWUPS); break;
-      case "getSiteVisits":      result = getAllRows(SHEETS.SITE_VISITS); break;
-      case "getClientInterests": result = getAllRows(SHEETS.CLIENT_INTEREST); break;
-
-      // Rental
-      case "getAgreements":      result = getAllRows(SHEETS.AGREEMENTS); break;
-      case "getRentPayments":    result = getAllRows(SHEETS.RENT_PAYMENTS); break;
-      case "getTenants":         result = getAllRows(SHEETS.TENANTS); break;
-
-      // Sales
-      case "getSaleDeals":       result = getAllRows(SHEETS.SALE_DEALS); break;
-      case "getCommissions":     result = getAllRows(SHEETS.AGENT_COMMISSION); break;
-
-      // Bookings
-      case "getBookings":        result = getAllRows(SHEETS.BOOKINGS); break;
-      case "getBooking":         result = getById(SHEETS.BOOKINGS, id, "booking_id"); break;
-
-      // Land
-      case "getLandPlots":       result = getAllRows(SHEETS.LAND_PLOTS); break;
-      case "getLandDocuments":   result = getAllRows(SHEETS.LAND_DOCUMENTS); break;
-
-      // Finance
-      case "getInvoices":        result = getAllRows(SHEETS.INVOICES); break;
-      case "getLedger":          result = getAllRows(SHEETS.LEDGER); break;
-      case "getExpenses":        result = getAllRows(SHEETS.EXPENSES); break;
-
-      // Construction
-      case "getProjects":        result = getAllRows(SHEETS.CONSTRUCTION); break;
-      case "getProjectExpenses": result = getAllRows(SHEETS.PROJECT_EXPENSES); break;
-
-      // Maintenance
-      case "getWorkRequests":    result = getAllRows(SHEETS.WORK_REQUEST); break;
-      case "getWorkAssignments": result = getAllRows(SHEETS.WORK_ASSIGNMENT); break;
-      case "getServiceProviders": result = getAllRows(SHEETS.SERVICE_PROVIDERS); break;
-
-      // Services
-      case "getVehicles":        result = getAllRows(SHEETS.VEHICLES); break;
-      case "getCarRentals":      result = getAllRows(SHEETS.CAR_RENTALS); break;
-
-      // Admin
-      case "getUsers":           result = getAllRows(SHEETS.USERS); break;
-      case "getRoles":           result = getAllRows(SHEETS.ROLES); break;
-      case "getUserLog":         result = getAllRows(SHEETS.USER_LOG); break;
-
-      default:
-        result = { success: false, error: "Unknown action: " + action };
-    }
-
-    return jsonResponse(result);
+    return jsonResponse(routeGet(p.action || "", p));
   } catch (err) {
-    return jsonResponse({ success: false, error: err.toString() });
+    return jsonResponse({ success: false, error: String(err.message || err) });
   }
 }
 
-// ============================================================
-// doPost — handles Create, Update, Delete, Login
-// ============================================================
 function doPost(e) {
   try {
-    const body = JSON.parse(e.postData.contents);
-    const action = body.action || "";
-    const data = body.data || {};
-
-    let result;
-
-    switch (action) {
-      // Properties
-      case "addProperty":         result = addRow(SHEETS.PROPERTIES, data); break;
-      case "updateProperty":      result = updateRow(SHEETS.PROPERTIES, data, "property_id"); break;
-      case "deleteProperty":      result = deleteRow(SHEETS.PROPERTIES, data.property_id, "property_id"); break;
-
-      // Clients
-      case "addClient":           result = addRow(SHEETS.CLIENTS, data); break;
-      case "updateClient":        result = updateRow(SHEETS.CLIENTS, data, "client_id"); break;
-      case "deleteClient":        result = deleteRow(SHEETS.CLIENTS, data.client_id, "client_id"); break;
-
-      // Agents
-      case "addAgent":            result = addRow(SHEETS.AGENTS, data); break;
-      case "updateAgent":         result = updateRow(SHEETS.AGENTS, data, "agent_id"); break;
-
-      // Agreements
-      case "addAgreement":        result = addRow(SHEETS.AGREEMENTS, data); break;
-      case "updateAgreement":     result = updateRow(SHEETS.AGREEMENTS, data, "agreement_id"); break;
-
-      // Rent Payments
-      case "addRentPayment":      result = addRow(SHEETS.RENT_PAYMENTS, data); break;
-      case "updateRentPayment":   result = updateRow(SHEETS.RENT_PAYMENTS, data, "payment_id"); break;
-
-      // Sale Deals
-      case "addSaleDeal":         result = addRow(SHEETS.SALE_DEALS, data); break;
-      case "updateSaleDeal":      result = updateRow(SHEETS.SALE_DEALS, data, "deal_id"); break;
-
-      // Bookings
-      case "addBooking":          result = addRow(SHEETS.BOOKINGS, data); break;
-      case "updateBooking":       result = updateRow(SHEETS.BOOKINGS, data, "booking_id"); break;
-      case "deleteBooking":       result = deleteRow(SHEETS.BOOKINGS, data.booking_id, "booking_id"); break;
-
-      // CRM
-      case "addFollowup":         result = addRow(SHEETS.FOLLOWUPS, data); break;
-      case "updateFollowup":      result = updateRow(SHEETS.FOLLOWUPS, data, "followup_id"); break;
-      case "addSiteVisit":        result = addRow(SHEETS.SITE_VISITS, data); break;
-      case "updateSiteVisit":     result = updateRow(SHEETS.SITE_VISITS, data, "visit_id"); break;
-      case "addClientInterest":   result = addRow(SHEETS.CLIENT_INTEREST, data); break;
-
-      // Land
-      case "addLand":             result = addRow(SHEETS.LAND, data); break;
-      case "updateLand":          result = updateRow(SHEETS.LAND, data, "land_id"); break;
-
-      // Maintenance
-      case "addWorkRequest":         result = addRow(SHEETS.WORK_REQUEST, data); break;
-      case "updateWorkRequest":      result = updateRow(SHEETS.WORK_REQUEST, data, "work_request_id"); break;
-      case "addWorkAssignment":      result = addRow(SHEETS.WORK_ASSIGNMENT, data); break;
-      case "addServiceProvider":     result = addRow(SHEETS.SERVICE_PROVIDERS, data); break;
-      case "updateServiceProvider":  result = updateRow(SHEETS.SERVICE_PROVIDERS, data, "service_provider_id"); break;
-
-      // Finance
-      case "updateExpense":          result = updateRow(SHEETS.EXPENSES, data, "expense_id"); break;
-      case "addInvoice":             result = addRow(SHEETS.INVOICES, data); break;
-      case "updateInvoice":          result = updateRow(SHEETS.INVOICES, data, "invoice_id"); break;
-
-      // Finance
-      case "addExpense":          result = addRow(SHEETS.EXPENSES, data); break;
-      case "addInvoice":          result = addRow(SHEETS.INVOICES, data); break;
-      case "addLedgerEntry":      result = addRow(SHEETS.LEDGER, data); break;
-
-      // Documents
-      case "addDocument":         result = addRow(SHEETS.DOCUMENT_LOCKER, data); break;
-
-      // Contact form (public)
-      case "submitContact":       result = submitContactForm(data); break;
-      case "submitInquiry":       result = submitInquiry(data); break;
-
-      // Auth
-      case "login":               result = loginUser(data); break;
-
-      // Message Log
-      case "logMessage":          result = addRow(SHEETS.MESSAGE_LOG, data); break;
-
-      default:
-        result = { success: false, error: "Unknown action: " + action };
-    }
-
-    return jsonResponse(result);
+    const body = JSON.parse((e && e.postData && e.postData.contents) || "{}");
+    return jsonResponse(routePost(body.action || "", body.data || {}, body));
   } catch (err) {
-    return jsonResponse({ success: false, error: err.toString() });
+    return jsonResponse({ success: false, error: String(err.message || err) });
   }
 }
 
-// ============================================================
-// CORE HELPERS
-// ============================================================
+function routeGet(action, p) {
+  // ---------- Public (website) ----------
+  switch (action) {
+    case "ping":                  return { success: true, message: "ApnaGhar API is running", time: new Date().toISOString(), version: "2.0" };
+    case "getProperties":         return getProperties(p);
+    case "getProperty":           return getById("PROPERTIES", p.id);
+    case "getFeaturedProperties": return getFeaturedProperties();
+    case "searchProperties":      return searchProperties(p);
+    case "getLand":               return getLand(p);
+    case "getLandById":           return getById("LAND_PROPERTIES", p.id);
+    case "getSocieties":          return listRows("SOCIETIES");
+    case "getNewProjects":        return getNewProjects(p);
+    case "getNewProject":         return getNewProject(p.id);
+    case "getDashboard":          return getDashboardStats();
+    case "getMasters":            return { success: true, data: [] };
+  }
 
-function getSheet(sheetName) {
+  // ---------- Admin (token required) ----------
+  const user = requireAuth(p.token);
+  if (action === "list")  return listRows(checkSheet(p.sheet));
+  if (action === "get")   return getById(checkSheet(p.sheet), p.id);
+  if (action === "getUsers") return listUsersSafe();
+  if (action === "getAdminSummary") return getDashboardStats(true);
+  const legacy = LEGACY_GET[action];
+  if (legacy) return legacy[0] === "list" ? listRows(legacy[1]) : getById(legacy[1], p.id);
+  return { success: false, error: "Unknown action: " + action };
+}
+
+function routePost(action, data, body) {
+  // ---------- Public (website forms) ----------
+  switch (action) {
+    case "login":          return loginUser(data);
+    case "submitContact":  return submitContactForm(data);
+    case "submitInquiry":  return submitContactForm(Object.assign({ inquiry_type: "Property Inquiry" }, data));
+    case "submitBooking":  return submitWebsiteBooking(data);
+    case "submitSiteVisit":return submitWebsiteSiteVisit(data);
+  }
+
+  // ---------- Admin (token required) ----------
+  const user = requireAuth(body.token);
+  const who = user.username || user.user_id;
+  switch (action) {
+    case "create":      return addRow(checkSheet(body.sheet), data, who);
+    case "update":      return updateRow(checkSheet(body.sheet), data, who);
+    case "delete":      return deleteRow(checkSheet(body.sheet), data.id || data[SCHEMA[checkSheet(body.sheet)].id], who);
+    case "uploadFile":  return uploadFile(data, who);
+    case "saveUser":    requireAdmin(user); return saveUser(data, who);
+    case "deleteUser":  requireAdmin(user); return deleteRow("USERS", data.user_id, who);
+    case "changePassword": return changePassword(user, data);
+    case "runSetup":    requireAdmin(user); return setupSheets();
+  }
+  const legacy = LEGACY_POST[action];
+  if (legacy) {
+    const [op, sheet] = legacy;
+    if (op === "create") return addRow(sheet, data, who);
+    if (op === "update") return updateRow(sheet, data, who);
+    if (op === "delete") return deleteRow(sheet, data[SCHEMA[sheet].id], who);
+  }
+  return { success: false, error: "Unknown action: " + action };
+}
+
+function checkSheet(key) {
+  if (!key || !SCHEMA[key]) throw new Error("Unknown sheet: " + key);
+  if (key === "USERS") throw new Error("Use the Users screen to manage users");
+  return key;
+}
+
+// ============================================================
+// SETUP — creates/repairs every tab. Safe to run again any time.
+// ============================================================
+function setupSheets() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sheet = ss.getSheetByName(sheetName);
-  if (!sheet) throw new Error("Sheet not found: " + sheetName);
-  return sheet;
+  const report = [];
+  Object.keys(SCHEMA).forEach(function (key) {
+    const def = SCHEMA[key];
+    let sh = ss.getSheetByName(key);
+    if (!sh) {
+      sh = ss.insertSheet(key);
+      sh.getRange(1, 1).setValue(def.title).setFontWeight("bold").setFontSize(13);
+      sh.getRange(2, 1, 1, def.headers.length).setValues([def.headers])
+        .setFontWeight("bold").setBackground("#1e3a5f").setFontColor("#ffffff");
+      sh.setFrozenRows(2);
+      report.push("Created " + key);
+    } else {
+      const added = ensureColumns(sh, def.headers);
+      if (added.length) report.push(key + ": added columns " + added.join(", "));
+    }
+  });
+
+  // Roles + default admin user
+  if (sheetToJSON(getSheet("ROLES")).length === 0) {
+    ["Admin", "Manager", "Agent", "Accountant"].forEach(function (r) {
+      addRow("ROLES", { role_name: r, description: r + " role" }, "SETUP");
+    });
+    report.push("Added default roles");
+  }
+  const roles = sheetToJSON(getSheet("ROLES"));
+  const adminRole = roles.find(function (r) { return r.role_name === "Admin"; });
+  const users = sheetToJSON(getSheet("USERS"));
+  if (!users.some(function (u) { return String(u.username) === "admin"; })) {
+    addRow("USERS", { username: "admin", full_name: "Admin User", email: NOTIFY_EMAIL,
+      password_hash: hashPassword("admin123"), role_id: adminRole ? adminRole.role_id : "", status: "Active" }, "SETUP");
+    report.push("Created user admin / admin123  (please change after first login)");
+  }
+
+  getMediaFolder("General");
+  getSecret();
+  report.push("Media folder ready in Google Drive: " + MEDIA_ROOT_FOLDER);
+  Logger.log(report.join("\n"));
+  return { success: true, message: "Setup complete", report: report };
+}
+
+// Adds any missing header columns at the end of row 2. Returns names added.
+function ensureColumns(sheet, wanted) {
+  const lastCol = Math.max(sheet.getLastColumn(), 1);
+  let headers = sheet.getRange(2, 1, 1, lastCol).getValues()[0].map(String);
+  if (headers.every(function (h) { return h === ""; })) headers = [];
+  const missing = wanted.filter(function (h) { return h && /^[a-z0-9_]+$/.test(h) && headers.indexOf(h) === -1; });
+  if (missing.length) {
+    sheet.getRange(2, headers.length + 1, 1, missing.length).setValues([missing])
+      .setFontWeight("bold").setBackground("#1e3a5f").setFontColor("#ffffff");
+  }
+  return missing;
+}
+
+// ============================================================
+// CORE DATA HELPERS
+// ============================================================
+let _ss = null;
+function getSheet(key) {
+  if (!_ss) _ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sh = _ss.getSheetByName(key);
+  if (!sh && SCHEMA[key]) {           // auto-create on first use
+    sh = _ss.insertSheet(key);
+    sh.getRange(1, 1).setValue(SCHEMA[key].title).setFontWeight("bold");
+    sh.getRange(2, 1, 1, SCHEMA[key].headers.length).setValues([SCHEMA[key].headers]).setFontWeight("bold");
+    sh.setFrozenRows(2);
+  }
+  if (!sh) throw new Error("Sheet not found: " + key);
+  return sh;
+}
+
+function cellOut(v) {
+  if (v === "" || v === null || v === undefined) return null;
+  if (Object.prototype.toString.call(v) === "[object Date]") {
+    const hasTime = v.getHours() || v.getMinutes();
+    return Utilities.formatDate(v, TZ, hasTime ? "yyyy-MM-dd HH:mm" : "yyyy-MM-dd");
+  }
+  return v;
 }
 
 function sheetToJSON(sheet) {
   const data = sheet.getDataRange().getValues();
-  if (data.length < 3) return []; // Row 1=title, Row 2=headers, Row 3+=data
-  const headers = data[1]; // Row 2 is the actual headers
-  return data.slice(2).map(row => {
+  if (data.length < 3) return [];
+  const headers = data[1].map(String);
+  return data.slice(2).map(function (row) {
     const obj = {};
-    headers.forEach((h, i) => {
-      obj[h] = row[i] === "" ? null : row[i];
-    });
+    headers.forEach(function (h, i) { if (h) obj[h] = cellOut(row[i]); });
     return obj;
-  }).filter(row => Object.values(row).some(v => v !== null));
+  }).filter(function (row) { return Object.keys(row).some(function (k) { return row[k] !== null; }); });
 }
 
-function getAllRows(sheetName) {
-  const sheet = getSheet(sheetName);
-  const rows = sheetToJSON(sheet);
+function listRows(key) {
+  const rows = sheetToJSON(getSheet(key));
   return { success: true, count: rows.length, data: rows };
 }
 
-function getById(sheetName, id, idField) {
-  const sheet = getSheet(sheetName);
-  const rows = sheetToJSON(sheet);
-  const found = rows.find(r => String(r[idField]) === String(id));
-  if (!found) return { success: false, error: "Record not found" };
-  return { success: true, data: found };
+function getById(key, id) {
+  const idField = SCHEMA[key].id;
+  const found = sheetToJSON(getSheet(key)).find(function (r) { return String(r[idField]) === String(id); });
+  return found ? { success: true, data: found } : { success: false, error: "Record not found" };
 }
 
-function addRow(sheetName, data) {
-  const sheet = getSheet(sheetName);
-  const headers = sheet.getRange(2, 1, 1, sheet.getLastColumn()).getValues()[0];
-  const newId = generateId(sheetName);
-  const firstIdKey = headers[0];
-  data[firstIdKey] = newId;
-  data.created_at = new Date().toISOString().split("T")[0];
-  const row = headers.map(h => data[h] !== undefined ? data[h] : "");
-  sheet.appendRow(row);
-  logActivity("Add", sheetName, newId);
-  return { success: true, id: newId, message: "Record added successfully" };
+function cleanValue(v) {
+  if (v === null || v === undefined) return "";
+  if (typeof v === "object") return JSON.stringify(v);
+  const s = String(v);
+  return /^[=+\-@]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s) ? "'" + s : v; // block formula injection
 }
 
-function updateRow(sheetName, data, idField) {
-  const sheet = getSheet(sheetName);
-  const allData = sheet.getDataRange().getValues();
-  const headers = allData[1];
-  const idColIndex = headers.indexOf(idField);
-  if (idColIndex === -1) return { success: false, error: "ID field not found" };
+function generateId(key) {
+  const prefix = (SCHEMA[key] && SCHEMA[key].prefix) || "REC";
+  return prefix + Utilities.formatDate(new Date(), TZ, "yyMMdd") + Math.floor(1000 + Math.random() * 9000);
+}
 
-  for (let i = 2; i < allData.length; i++) {
-    if (String(allData[i][idColIndex]) === String(data[idField])) {
-      headers.forEach((h, j) => {
-        if (data[h] !== undefined) {
-          sheet.getRange(i + 1, j + 1).setValue(data[h]);
-        }
-      });
-      logActivity("Update", sheetName, data[idField]);
-      return { success: true, message: "Record updated successfully" };
+function addRow(key, data, who) {
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sheet = getSheet(key);
+    const def = SCHEMA[key];
+    const keys = Object.keys(data).filter(function (k) { return /^[a-z0-9_]+$/.test(k); });
+    ensureColumns(sheet, def.headers.concat(keys));
+    const headers = sheet.getRange(2, 1, 1, sheet.getLastColumn()).getValues()[0].map(String);
+    const idField = headers.indexOf(def.id) !== -1 ? def.id : headers[0];
+    const newId = generateId(key);
+    data[idField] = newId;
+    const now = Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd HH:mm");
+    data.created_at = now; data.updated_at = now;
+    sheet.appendRow(headers.map(function (h) { return data[h] !== undefined ? cleanValue(data[h]) : ""; }));
+    if (key !== "USER_ACTIVITY_LOG") logActivity(who, "Add", key, newId);
+    return { success: true, id: newId, message: "Record added successfully" };
+  } finally { lock.releaseLock(); }
+}
+
+function updateRow(key, data, who) {
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sheet = getSheet(key);
+    const idField = SCHEMA[key].id;
+    const id = data[idField] || data.id;
+    if (!id) return { success: false, error: "Missing " + idField };
+    const keys = Object.keys(data).filter(function (k) { return /^[a-z0-9_]+$/.test(k) && k !== "id" && k !== "created_at"; });
+    ensureColumns(sheet, keys.concat(["updated_at"]));
+    const all = sheet.getDataRange().getValues();
+    const headers = all[1].map(String);
+    const idCol = headers.indexOf(idField);
+    if (idCol === -1) return { success: false, error: "ID column not found: " + idField };
+    data.updated_at = Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd HH:mm");
+    for (let i = 2; i < all.length; i++) {
+      if (String(all[i][idCol]) === String(id)) {
+        const row = all[i].slice();
+        headers.forEach(function (h, j) {
+          if (h !== idField && h !== "created_at" && data[h] !== undefined) row[j] = cleanValue(data[h]);
+        });
+        sheet.getRange(i + 1, 1, 1, headers.length).setValues([row]);
+        logActivity(who, "Update", key, id);
+        return { success: true, id: id, message: "Record updated successfully" };
+      }
     }
-  }
-  return { success: false, error: "Record not found" };
+    return { success: false, error: "Record not found" };
+  } finally { lock.releaseLock(); }
 }
 
-function deleteRow(sheetName, id, idField) {
-  const sheet = getSheet(sheetName);
-  const allData = sheet.getDataRange().getValues();
-  const headers = allData[1];
-  const idColIndex = headers.indexOf(idField);
-
-  for (let i = 2; i < allData.length; i++) {
-    if (String(allData[i][idColIndex]) === String(id)) {
-      sheet.deleteRow(i + 1);
-      logActivity("Delete", sheetName, id);
-      return { success: true, message: "Record deleted" };
+function deleteRow(key, id, who) {
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sheet = getSheet(key);
+    const all = sheet.getDataRange().getValues();
+    const idCol = all[1].map(String).indexOf(SCHEMA[key].id);
+    for (let i = 2; i < all.length; i++) {
+      if (String(all[i][idCol]) === String(id)) {
+        sheet.deleteRow(i + 1);
+        logActivity(who, "Delete", key, id);
+        return { success: true, message: "Record deleted" };
+      }
     }
-  }
-  return { success: false, error: "Record not found" };
+    return { success: false, error: "Record not found" };
+  } finally { lock.releaseLock(); }
 }
 
-function generateId(sheetName) {
-  const prefixes = {
-    PROPERTIES: "PROP", CLIENTS: "CLI", AGENTS: "AGT", AGREEMENTS: "AGR",
-    RENT_PAYMENTS: "PAY", SALE_DEALS: "DEAL", LAND_PROPERTIES: "LAND",
-    EXPENSES: "EXP", INVOICES: "INV", ACCOUNT_LEDGER: "LED",
-    PROPERTY_WORK_REQUEST: "WRK", WORK_ASSIGNMENT: "WA", SERVICE_PROVIDERS: "SP",
-    OWNERS: "OWN", TENANTS: "TNT", CONSTRUCTION_PROJECT: "PROJ", DOCUMENT_LOCKER: "DOC",
-    FOLLOWUPS: "FUP", SITE_VISITS: "VIS", AGENTS: "AGT",
+function logActivity(who, action, module, recordId) {
+  try {
+    getSheet("USER_ACTIVITY_LOG").appendRow([
+      generateId("USER_ACTIVITY_LOG"), who || "SYSTEM", module, action, recordId,
+      Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd HH:mm:ss"), "API"]);
+  } catch (e) { /* never block the main action */ }
+}
+
+// ============================================================
+// FILE UPLOAD → Google Drive  (images, videos, PDFs)
+// Link is returned to the page, saved in the record's column,
+// and also logged in the MEDIA_LIBRARY sheet.
+// ============================================================
+function getMediaFolder(moduleName) {
+  const rootIt = DriveApp.getFoldersByName(MEDIA_ROOT_FOLDER);
+  const root = rootIt.hasNext() ? rootIt.next() : DriveApp.createFolder(MEDIA_ROOT_FOLDER);
+  const name = String(moduleName || "General").replace(/[^\w \-]/g, "");
+  const subIt = root.getFoldersByName(name);
+  return subIt.hasNext() ? subIt.next() : root.createFolder(name);
+}
+
+function uploadFile(data, who) {
+  if (!data.base64) return { success: false, error: "No file data received" };
+  const mime = data.mime_type || "application/octet-stream";
+  const bytes = Utilities.base64Decode(String(data.base64).replace(/^data:[^,]+,/, ""));
+  const fileName = (data.file_name || "upload").replace(/[\\\/:*?"<>|]/g, "_");
+  const blob = Utilities.newBlob(bytes, mime, fileName);
+  const folder = getMediaFolder(data.module || "General");
+  const file = folder.createFile(blob);
+  file.setDescription("Uploaded via ApnaGhar ERP by " + who + (data.record_id ? " for " + data.record_id : ""));
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (e) {
+    return { success: false, error: "File saved but could not be made public (Drive sharing is restricted on this account): " + e.message };
+  }
+  const id = file.getId();
+  const type = mime.indexOf("image/") === 0 ? "image" : mime.indexOf("video/") === 0 ? "video" : "document";
+  const url = type === "image" ? "https://lh3.googleusercontent.com/d/" + id
+            : type === "video" ? "https://drive.google.com/file/d/" + id + "/preview"
+            : "https://drive.google.com/file/d/" + id + "/view";
+  const rec = {
+    file_name: fileName, media_type: type, mime_type: mime, size_kb: Math.round(bytes.length / 1024),
+    module: data.module || "General", record_id: data.record_id || "", file_id: id, url: url,
+    view_url: "https://drive.google.com/file/d/" + id + "/view",
+    download_url: "https://drive.google.com/uc?export=download&id=" + id, uploaded_by: who,
   };
-  const prefix = prefixes[sheetName] || "REC";
-  const timestamp = Date.now().toString().slice(-6);
-  return prefix + timestamp;
+  const saved = addRow("MEDIA_LIBRARY", rec, who);
+  rec.media_id = saved.id;
+  return { success: true, message: "Uploaded", data: rec, url: url };
 }
 
 // ============================================================
-// SPECIFIC API FUNCTIONS
+// PUBLIC DATA
 // ============================================================
-
-function getProperties(params) {
-  const sheet = getSheet(SHEETS.PROPERTIES);
-  let rows = sheetToJSON(sheet);
-
-  // Filters
-  if (params.listing_type) rows = rows.filter(r => r.listing_type === params.listing_type);
-  if (params.bhk) rows = rows.filter(r => r.bhk === params.bhk);
-  if (params.city) rows = rows.filter(r => r.city && r.city.toLowerCase().includes(params.city.toLowerCase()));
-  if (params.status) rows = rows.filter(r => r.status === params.status);
-  if (params.property_type) rows = rows.filter(r => r.property_type === params.property_type);
-  if (params.min_price) rows = rows.filter(r => Number(r.expected_price || r.expected_rent) >= Number(params.min_price));
-  if (params.max_price) rows = rows.filter(r => Number(r.expected_price || r.expected_rent) <= Number(params.max_price));
-  if (params.society_id) rows = rows.filter(r => String(r.society_id) === params.society_id);
-
-  // Pagination
-  const page = parseInt(params.page) || 1;
-  const limit = parseInt(params.limit) || 20;
-  const total = rows.length;
-  const start = (page - 1) * limit;
-  const paginated = rows.slice(start, start + limit);
-
-  return { success: true, total, page, limit, count: paginated.length, data: paginated };
+function getProperties(p) {
+  let rows = sheetToJSON(getSheet("PROPERTIES"));
+  const lc = function (v) { return String(v || "").toLowerCase(); };
+  if (p.listing_type)  rows = rows.filter(function (r) { return r.listing_type === p.listing_type; });
+  if (p.bhk)           rows = rows.filter(function (r) { return lc(r.bhk).replace(/\s/g, "") === lc(p.bhk).replace(/\s/g, ""); });
+  if (p.city)          rows = rows.filter(function (r) { return lc(r.city).indexOf(lc(p.city)) !== -1; });
+  if (p.status)        rows = rows.filter(function (r) { return r.status === p.status; });
+  if (p.property_type) rows = rows.filter(function (r) { return r.property_type === p.property_type; });
+  if (p.project_id)    rows = rows.filter(function (r) { return String(r.project_id) === String(p.project_id); });
+  if (p.min_price)     rows = rows.filter(function (r) { return Number(r.expected_price || r.expected_rent) >= Number(p.min_price); });
+  if (p.max_price)     rows = rows.filter(function (r) { return Number(r.expected_price || r.expected_rent) <= Number(p.max_price); });
+  if (p.society_id)    rows = rows.filter(function (r) { return String(r.society_id) === String(p.society_id); });
+  if (p.q) {
+    const q = lc(p.q);
+    rows = rows.filter(function (r) { return [r.title, r.city, r.address, r.bhk, r.property_type].some(function (v) { return lc(v).indexOf(q) !== -1; }); });
+  }
+  rows.reverse(); // newest first
+  const page = parseInt(p.page) || 1, limit = parseInt(p.limit) || 20;
+  const total = rows.length, start = (page - 1) * limit;
+  return { success: true, total: total, page: page, limit: limit, count: Math.min(limit, Math.max(0, total - start)), data: rows.slice(start, start + limit) };
 }
 
 function getFeaturedProperties() {
-  const sheet = getSheet(SHEETS.PROPERTIES);
-  let rows = sheetToJSON(sheet);
-  rows = rows.filter(r => r.status === "Available");
-  rows = rows.slice(0, 6);
+  let rows = sheetToJSON(getSheet("PROPERTIES")).filter(function (r) { return r.status === "Available"; }).reverse();
+  const featured = rows.filter(function (r) { return String(r.featured).toLowerCase() === "yes" || r.featured === true; });
+  rows = featured.concat(rows.filter(function (r) { return featured.indexOf(r) === -1; })).slice(0, 6);
   return { success: true, count: rows.length, data: rows };
 }
 
-function searchProperties(params) {
-  const q = (params.q || "").toLowerCase();
-  const sheet = getSheet(SHEETS.PROPERTIES);
-  let rows = sheetToJSON(sheet);
-  if (q) {
-    rows = rows.filter(r =>
-      (r.title && r.title.toLowerCase().includes(q)) ||
-      (r.city && r.city.toLowerCase().includes(q)) ||
-      (r.address && r.address.toLowerCase().includes(q)) ||
-      (r.bhk && r.bhk.toLowerCase().includes(q)) ||
-      (r.property_type && r.property_type.toLowerCase().includes(q))
-    );
-  }
+function searchProperties(p) { return getProperties({ q: p.q, limit: 1000 }); }
+
+function getLand(p) {
+  let rows = sheetToJSON(getSheet("LAND_PROPERTIES"));
+  const lc = function (v) { return String(v || "").toLowerCase(); };
+  if (p.land_type) rows = rows.filter(function (r) { return r.land_type === p.land_type; });
+  if (p.district)  rows = rows.filter(function (r) { return lc(r.district).indexOf(lc(p.district)) !== -1; });
+  if (p.status)    rows = rows.filter(function (r) { return r.status === p.status; });
+  if (p.q) { const q = lc(p.q); rows = rows.filter(function (r) { return [r.title, r.village, r.taluka, r.district].some(function (v) { return lc(v).indexOf(q) !== -1; }); }); }
+  return { success: true, count: rows.length, data: rows.reverse() };
+}
+
+function getNewProjects(p) {
+  let rows = sheetToJSON(getSheet("NEW_PROJECTS")).filter(function (r) { return r.status !== "Inactive"; });
+  if (p.launch_status) rows = rows.filter(function (r) { return r.launch_status === p.launch_status; });
+  if (p.city) rows = rows.filter(function (r) { return String(r.city || "").toLowerCase().indexOf(String(p.city).toLowerCase()) !== -1; });
+  rows.reverse();
+  rows.sort(function (a, b) { return (String(b.featured) === "Yes") - (String(a.featured) === "Yes"); });
+  if (p.limit) rows = rows.slice(0, parseInt(p.limit));
   return { success: true, count: rows.length, data: rows };
 }
 
-function getLand(params) {
-  const sheet = getSheet(SHEETS.LAND);
-  let rows = sheetToJSON(sheet);
-  if (params.land_type) rows = rows.filter(r => r.land_type === params.land_type);
-  if (params.district) rows = rows.filter(r => r.district && r.district.toLowerCase().includes(params.district.toLowerCase()));
-  if (params.status) rows = rows.filter(r => r.status === params.status);
-  return { success: true, count: rows.length, data: rows };
+function getNewProject(id) {
+  const res = getById("NEW_PROJECTS", id);
+  if (!res.success || res.data.status === "Inactive") return { success: false, error: "Project not found" };
+  res.units = sheetToJSON(getSheet("PROPERTIES")).filter(function (r) { return String(r.project_id) === String(id); });
+  return res;
 }
 
-function getMasters(type) {
-  const masterMap = {
-    city: SHEETS.MASTER_CITY, bhk: SHEETS.MASTER_BHK,
-    property_type: SHEETS.MASTER_PROPERTY_TYPE, amenities: SHEETS.MASTER_AMENITIES,
-    lead_source: SHEETS.MASTER_LEAD_SOURCE,
+function safeRows(key) { try { return sheetToJSON(getSheet(key)); } catch (e) { return []; } }
+
+function getDashboardStats(full) {
+  const props = safeRows("PROPERTIES"), clients = safeRows("CLIENTS"), agents = safeRows("AGENTS");
+  const land = safeRows("LAND_PROPERTIES"), projects = safeRows("NEW_PROJECTS");
+  const data = {
+    total_properties: props.length,
+    available_properties: props.filter(function (p) { return p.status === "Available"; }).length,
+    total_clients: clients.length,
+    active_agents: agents.filter(function (a) { return a.status === "Active"; }).length,
+    total_land: land.length,
+    total_new_projects: projects.filter(function (p) { return p.status !== "Inactive"; }).length,
   };
-  const sheetName = masterMap[type];
-  if (!sheetName) return { success: false, error: "Unknown master type" };
-  return getAllRows(sheetName);
+  if (full !== true) return { success: true, data: data }; // public: counts only
+
+  const payments = safeRows("RENT_PAYMENTS"), deals = safeRows("SALE_DEALS"), followups = safeRows("FOLLOWUPS");
+  const bookings = safeRows("PROPERTY_BOOKINGS"), inquiries = safeRows("WEBSITE_INQUIRIES");
+  const ym = Utilities.formatDate(new Date(), TZ, "yyyy-MM");
+  const inMonth = function (d) { return d && String(d).indexOf(ym) === 0; };
+  Object.assign(data, {
+    rented_properties: props.filter(function (p) { return p.status === "Rented"; }).length,
+    sold_properties: props.filter(function (p) { return p.status === "Sold"; }).length,
+    new_clients_this_month: clients.filter(function (c) { return inMonth(c.created_at); }).length,
+    total_agents: agents.length,
+    available_land: land.filter(function (l) { return l.status === "Available"; }).length,
+    pending_followups: followups.filter(function (f) { return f.followup_status === "Pending"; }).length,
+    total_deals: deals.length,
+    registered_deals: deals.filter(function (d) { return d.deal_status === "Registered"; }).length,
+    monthly_rent_income: payments.filter(function (p) { return p.payment_status === "Paid" && inMonth(p.paid_date); }).reduce(function (s, p) { return s + Number(p.rent_amount || 0); }, 0),
+    monthly_sale_revenue: deals.filter(function (d) { return d.deal_status === "Registered" && inMonth(d.registration_date); }).reduce(function (s, d) { return s + Number(d.final_price || 0); }, 0),
+    total_bookings: bookings.length,
+    active_bookings: bookings.filter(function (b) { return b.booking_status === "Active" || b.booking_status === "Enquiry"; }).length,
+    new_inquiries: inquiries.filter(function (i) { return i.status === "New"; }).length,
+    last_updated: new Date().toISOString(),
+  });
+  return { success: true, data: data };
 }
 
-function getDashboardStats() {
-  try {
-    const props = sheetToJSON(getSheet(SHEETS.PROPERTIES));
-    const clients = sheetToJSON(getSheet(SHEETS.CLIENTS));
-    const agents = sheetToJSON(getSheet(SHEETS.AGENTS));
-    const land = sheetToJSON(getSheet(SHEETS.LAND));
-    const payments = sheetToJSON(getSheet(SHEETS.RENT_PAYMENTS));
-    const deals = sheetToJSON(getSheet(SHEETS.SALE_DEALS));
-    const followups = sheetToJSON(getSheet(SHEETS.FOLLOWUPS));
+// ============================================================
+// PUBLIC FORMS  (website → Google Sheet)
+// ============================================================
+function validMobile(m) { return /^[6-9]\d{9}$/.test(String(m || "").replace(/\D/g, "").slice(-10)); }
+function normMobile(m) { return String(m || "").replace(/\D/g, "").slice(-10); }
 
-    const now = new Date();
-    const thisMonth = now.getMonth();
-    const thisYear = now.getFullYear();
-
-    const monthlyRent = payments
-      .filter(p => p.payment_status === "Paid" && p.paid_date && new Date(p.paid_date).getMonth() === thisMonth)
-      .reduce((s, p) => s + Number(p.rent_amount || 0), 0);
-
-    const monthlySales = deals
-      .filter(d => d.deal_status === "Registered" && d.registration_date && new Date(d.registration_date).getMonth() === thisMonth)
-      .reduce((s, d) => s + Number(d.final_price || 0), 0);
-
-    return {
-      success: true,
-      data: {
-        total_properties: props.length,
-        available_properties: props.filter(p => p.status === "Available").length,
-        rented_properties: props.filter(p => p.status === "Rented").length,
-        sold_properties: props.filter(p => p.status === "Sold").length,
-        total_clients: clients.length,
-        new_clients_this_month: clients.filter(c => c.created_at && new Date(c.created_at).getMonth() === thisMonth).length,
-        total_agents: agents.length,
-        active_agents: agents.filter(a => a.status === "Active").length,
-        total_land: land.length,
-        available_land: land.filter(l => l.status === "Available").length,
-        pending_followups: followups.filter(f => f.followup_status === "Pending").length,
-        total_deals: deals.length,
-        registered_deals: deals.filter(d => d.deal_status === "Registered").length,
-        monthly_rent_income: monthlyRent,
-        monthly_sale_revenue: monthlySales,
-        last_updated: new Date().toISOString(),
-      }
-    };
-  } catch (err) {
-    return { success: false, error: err.toString() };
-  }
+function findOrCreateClient(d) {
+  const mobile = normMobile(d.mobile);
+  const existing = sheetToJSON(getSheet("CLIENTS")).find(function (c) { return normMobile(c.mobile) === mobile; });
+  if (existing) return existing.client_id;
+  return addRow("CLIENTS", {
+    client_type: d.client_type || "Buyer", full_name: d.full_name || d.name || "", mobile: mobile,
+    email: d.email || "", lead_source: "Website", lead_status: "New", remarks: d.message || "",
+  }, "WEBSITE").id;
 }
 
-function submitContactForm(data) {
-  const sheet = getSheet(SHEETS.CLIENTS);
-  const allClients = sheetToJSON(sheet);
-  const existing = allClients.find(c => c.mobile === data.mobile);
-  if (existing) {
-    return { success: true, message: "Inquiry received. Our team will contact you shortly." };
-  }
-  const newClient = {
-    client_type: data.client_type || "Buyer",
-    full_name: data.full_name || data.name,
-    mobile: data.mobile,
-    email: data.email || "",
-    occupation: "",
-    lead_source: "Website",
-    lead_status: "New",
-    created_at: new Date().toISOString().split("T")[0],
-  };
-  addRow(SHEETS.CLIENTS, newClient);
-  return { success: true, message: "Thank you! We will contact you within 24 hours." };
+function notify(subject, lines) {
+  if (!NOTIFY_EMAIL) return;
+  try { MailApp.sendEmail(NOTIFY_EMAIL, "[ApnaGhar] " + subject, lines.filter(String).join("\n")); } catch (e) { /* quota */ }
 }
 
-function submitInquiry(data) {
-  const newInterest = {
-    client_id: data.client_id,
-    property_id: data.property_id,
-    visit_date: new Date().toISOString().split("T")[0],
-    interest_level: "Warm",
-    remark: data.message || "Website inquiry",
-  };
-  addRow(SHEETS.CLIENT_INTEREST, newInterest);
-  return { success: true, message: "Inquiry submitted successfully!" };
+function submitContactForm(d) {
+  if (!d.full_name && !d.name) return { success: false, error: "Name is required" };
+  if (!validMobile(d.mobile)) return { success: false, error: "Valid 10-digit mobile number द्या" };
+  const clientId = findOrCreateClient(d);
+  addRow("WEBSITE_INQUIRIES", {
+    inquiry_type: d.inquiry_type || d.client_type || "General", full_name: d.full_name || d.name, mobile: normMobile(d.mobile),
+    email: d.email || "", client_id: clientId, property_id: d.property_id || "", project_id: d.project_id || "",
+    message: d.message || "", source_page: d.source_page || "", status: "New",
+  }, "WEBSITE");
+  notify("New inquiry from " + (d.full_name || d.name), ["Mobile: " + d.mobile, "Type: " + (d.inquiry_type || d.client_type || ""), "Message: " + (d.message || ""), d.property_id ? "Property: " + d.property_id : "", d.project_id ? "Project: " + d.project_id : ""]);
+  return { success: true, message: "Thank you! आमची टीम 24 तासांत संपर्क करेल." };
 }
 
-function loginUser(data) {
-  const users = sheetToJSON(getSheet(SHEETS.USERS));
-  const roles = sheetToJSON(getSheet(SHEETS.ROLES));
+function submitWebsiteBooking(d) {
+  if (!d.full_name) return { success: false, error: "Name is required" };
+  if (!validMobile(d.mobile)) return { success: false, error: "Valid 10-digit mobile number द्या" };
+  if (!d.project_id && !d.property_id) return { success: false, error: "Project / property missing" };
+  const clientId = findOrCreateClient(d);
+  const res = addRow("PROPERTY_BOOKINGS", {
+    booking_for: d.project_id ? "Project" : "Property", project_id: d.project_id || "", property_id: d.property_id || "",
+    configuration: d.configuration || "", client_id: clientId, customer_name: d.full_name, customer_mobile: normMobile(d.mobile),
+    customer_email: d.email || "", booking_date: Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd"),
+    booking_status: "Enquiry", source: "Website", notes: d.message || "",
+  }, "WEBSITE");
+  notify("New booking request (" + res.id + ")", ["Name: " + d.full_name, "Mobile: " + d.mobile, "Project: " + (d.project_id || ""), "Property: " + (d.property_id || ""), "Configuration: " + (d.configuration || ""), "Message: " + (d.message || "")]);
+  return { success: true, id: res.id, message: "Booking request received! Booking ID: " + res.id + ". आमची टीम लवकरच संपर्क करेल." };
+}
 
-  const user = users.find(u =>
-    u.username === data.username && u.status === "Active"
-  );
+function submitWebsiteSiteVisit(d) {
+  if (!d.full_name) return { success: false, error: "Name is required" };
+  if (!validMobile(d.mobile)) return { success: false, error: "Valid 10-digit mobile number द्या" };
+  const clientId = findOrCreateClient(d);
+  const res = addRow("SITE_VISITS", {
+    client_id: clientId, property_id: d.property_id || "", project_id: d.project_id || "",
+    visit_date: d.visit_date || "", visit_time: d.visit_time || "", visit_status: "Scheduled",
+    feedback: d.message || "", source: "Website",
+  }, "WEBSITE");
+  notify("Site visit request", ["Name: " + d.full_name, "Mobile: " + d.mobile, "Date: " + (d.visit_date || "") + " " + (d.visit_time || ""), "Property: " + (d.property_id || ""), "Project: " + (d.project_id || "")]);
+  return { success: true, id: res.id, message: "Site visit request received! आम्ही वेळ confirm करण्यासाठी call करू." };
+}
 
+// ============================================================
+// AUTH  (signed token; passwords stored as salted SHA-256)
+// ============================================================
+function getSecret() {
+  const props = PropertiesService.getScriptProperties();
+  let s = props.getProperty("TOKEN_SECRET");
+  if (!s) { s = Utilities.getUuid() + Utilities.getUuid(); props.setProperty("TOKEN_SECRET", s); }
+  return s;
+}
+function b64(bytes) { return Utilities.base64EncodeWebSafe(bytes).replace(/=+$/, ""); }
+function hex(bytes) { return bytes.map(function (b) { return (b < 0 ? b + 256 : b).toString(16).padStart(2, "0"); }).join(""); }
+function hashPassword(pw) { return "sha256:" + hex(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(pw) + "|apnaghar|" + SPREADSHEET_ID)); }
+function legacyMd5(pw) { return hex(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, pw + "apnaghar_salt")); }
+
+function makeToken(u) {
+  const payload = b64(Utilities.newBlob(JSON.stringify({ uid: u.user_id, un: u.username, role: u.role, exp: Date.now() + TOKEN_DAYS * 86400000 })).getBytes());
+  return payload + "." + b64(Utilities.computeHmacSha256Signature(payload, getSecret()));
+}
+
+function requireAuth(token) {
+  if (!token) throw new Error("AUTH: Login required");
+  const parts = String(token).split(".");
+  if (parts.length !== 2 || b64(Utilities.computeHmacSha256Signature(parts[0], getSecret())) !== parts[1]) throw new Error("AUTH: Invalid session, please login again");
+  const p = JSON.parse(Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0] + "===".slice((parts[0].length + 3) % 4))).getDataAsString());
+  if (p.exp < Date.now()) throw new Error("AUTH: Session expired, please login again");
+  return { user_id: p.uid, username: p.un, role: p.role };
+}
+function requireAdmin(u) { if (u.role !== "Admin") throw new Error("Only Admin users can do this"); }
+
+function loginUser(d) {
+  const users = sheetToJSON(getSheet("USERS"));
+  const roles = sheetToJSON(getSheet("ROLES"));
+  const user = users.find(function (u) { return String(u.username).toLowerCase() === String(d.username || "").toLowerCase().trim() && u.status === "Active"; });
   if (!user) return { success: false, error: "Invalid username or password" };
-
-  // Simple hash check (in production use proper hashing)
-  const inputHash = Utilities.computeDigest(
-    Utilities.DigestAlgorithm.MD5,
-    data.password + "apnaghar_salt"
-  ).map(b => (b < 0 ? b + 256 : b).toString(16).padStart(2, "0")).join("");
-
-  if (user.password_hash !== inputHash && user.password_hash !== data.password) {
-    return { success: false, error: "Invalid username or password" };
-  }
-
-  const role = roles.find(r => String(r.role_id) === String(user.role_id));
-
-  return {
-    success: true,
-    user: {
-      user_id: user.user_id,
-      full_name: user.full_name,
-      email: user.email,
-      role: role ? role.role_name : "Unknown",
-      role_id: user.role_id,
-      agent_id: user.agent_id,
-    },
-    message: "Login successful"
-  };
+  const stored = String(user.password_hash || "");
+  const ok = stored === hashPassword(d.password) || stored === legacyMd5(d.password) || (stored && stored === String(d.password));
+  if (!ok) return { success: false, error: "Invalid username or password" };
+  if (stored.indexOf("sha256:") !== 0) updateRow("USERS", { user_id: user.user_id, password_hash: hashPassword(d.password) }, "SYSTEM"); // upgrade old hash
+  const role = roles.find(function (r) { return String(r.role_id) === String(user.role_id); });
+  const out = { user_id: user.user_id, username: user.username, full_name: user.full_name, email: user.email,
+    role: role ? role.role_name : "User", role_id: user.role_id, agent_id: user.agent_id };
+  out.token = makeToken(out);
+  try { updateRow("USERS", { user_id: user.user_id, last_login: Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd HH:mm") }, user.username); } catch (e) {}
+  return { success: true, user: out, message: "Login successful" };
 }
 
-function logActivity(action, module, recordId) {
-  try {
-    const sheet = getSheet(SHEETS.USER_LOG);
-    sheet.appendRow([
-      generateId("USER_LOG"), "SYSTEM", module, action, recordId,
-      new Date().toISOString(), "API"
-    ]);
-  } catch (e) { /* silent */ }
+function listUsersSafe() {
+  const rows = sheetToJSON(getSheet("USERS")).map(function (u) { delete u.password_hash; return u; });
+  return { success: true, count: rows.length, data: rows };
+}
+
+function saveUser(d, who) {
+  const rec = { username: d.username, full_name: d.full_name, email: d.email, mobile: d.mobile, role_id: d.role_id, agent_id: d.agent_id, status: d.status || "Active" };
+  if (d.password) rec.password_hash = hashPassword(d.password);
+  const users = sheetToJSON(getSheet("USERS"));
+  const clash = users.find(function (u) { return String(u.username).toLowerCase() === String(d.username).toLowerCase() && String(u.user_id) !== String(d.user_id || ""); });
+  if (clash) return { success: false, error: "Username already exists" };
+  if (d.user_id) { rec.user_id = d.user_id; return updateRow("USERS", rec, who); }
+  if (!d.password) return { success: false, error: "Password is required for a new user" };
+  return addRow("USERS", rec, who);
+}
+
+function changePassword(user, d) {
+  const u = sheetToJSON(getSheet("USERS")).find(function (x) { return String(x.user_id) === String(user.user_id); });
+  if (!u) return { success: false, error: "User not found" };
+  const s = String(u.password_hash || "");
+  if (!(s === hashPassword(d.old_password) || s === legacyMd5(d.old_password) || s === String(d.old_password))) return { success: false, error: "Current password is wrong" };
+  if (!d.new_password || String(d.new_password).length < 6) return { success: false, error: "New password must be at least 6 characters" };
+  return updateRow("USERS", { user_id: u.user_id, password_hash: hashPassword(d.new_password) }, user.username);
 }
 
 function jsonResponse(data) {
-  return ContentService
-    .createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 }
 
-// Additional endpoints added in Phase 9
-// Add to doPost switch:
-// case "updateExpense":    result = updateRow(SHEETS.EXPENSES, data, "expense_id"); break;
-// case "updateInvoice":   result = updateRow(SHEETS.INVOICES, data, "invoice_id"); break;
-// case "addServiceProvider": result = addRow(SHEETS.SERVICE_PROVIDERS, data); break;
-// case "updateServiceProvider": result = updateRow(SHEETS.SERVICE_PROVIDERS, data, "service_provider_id"); break;
-// (Add these cases to the doPost switch in Code.gs)
+// Run this from the editor to quickly verify everything works.
+function testSetup() {
+  Logger.log(JSON.stringify(setupSheets()));
+  Logger.log(JSON.stringify(routeGet("ping", {})));
+  Logger.log(JSON.stringify(getDashboardStats(false)));
+}

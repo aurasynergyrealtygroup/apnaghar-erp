@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Launch Projects — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v2.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../website/index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">New Launch Projects</div>
+      </div>
+      <div class="topbar-right"><button class="btn btn-primary" onclick="CRUD.openAdd()"><i class="fas fa-plus"></i> Add Project</button></div>
+    </header>
+    <main class="admin-content" id="crudRoot"></main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="../website/js/config.js"></script>
+<script src="../website/js/api.js"></script>
+<script src="admin.js"></script>
+<script src="sidebar.js"></script>
+<script src="media-upload.js"></script>
+<script src="crud.js"></script>
+<script>
+
+const LAUNCH = ["Pre-Launch","New Launch","Under Construction","Ready to Move","Sold Out"];
+CRUD.init({
+  sheet: "NEW_PROJECTS", idField: "project_id", title: "Project", plural: "New Launch Projects", icon: "fa-rocket", module: "Projects",
+  intro: "Projects marked <b>Active</b> appear on the website’s <b>New Projects</b> page with photos, video, brochure and an online <b>Book Now</b> form. Website bookings arrive in <a href='bookings.html'>Bookings</a> with status <b>Enquiry</b>.",
+  kpis: [
+    { label: "Total Projects", icon: "fa-rocket", color: "navy", value: r => r.length },
+    { label: "Live on Website", icon: "fa-globe", color: "green", value: r => r.filter(x => x.status !== "Inactive").length },
+    { label: "New / Pre-Launch", icon: "fa-bolt", color: "gold", value: r => r.filter(x => /Launch/.test(x.launch_status || "")).length },
+    { label: "Units Available", icon: "fa-door-open", color: "blue", value: r => r.reduce((s, x) => s + Number(x.available_units || 0), 0) },
+  ],
+  filters: [{ field: "launch_status", label: "All Stages", options: LAUNCH }, { field: "status", label: "All Website Status", options: ["Active","Inactive"] }],
+  columns: [
+    { label: "Image", render: R.thumb("image1_url") },
+    { label: "Project", render: R.title("project_name", r => escapeHtml([r.builder_name, r.location].filter(Boolean).join(" • "))) },
+    { label: "Stage", render: R.badge("launch_status") },
+    { label: "Config", field: "configurations" },
+    { label: "Price", render: r => r.price_from ? `<b style="color:var(--navy)">${fmt(r.price_from)}${r.price_to ? " – " + fmt(r.price_to) : "+"}</b>` : "—" },
+    { label: "Possession", field: "possession_date" },
+    { label: "Units", render: r => `${r.available_units || "—"} / ${r.total_units || "—"}` },
+    { label: "Website", render: r => statusBadge(r.status || "Active") + (r.featured === "Yes" ? ' <span class="badge badge-gold">★</span>' : "") },
+  ],
+  rowActions: r => `
+    <a class="btn btn-sm btn-outline btn-icon" title="View on website" target="_blank" href="../website/project-detail.html?id=${encodeURIComponent(r.project_id)}"><i class="fas fa-external-link-alt"></i></a>
+    <a class="btn btn-sm btn-gold btn-icon" title="New booking for this project" href="bookings.html?new=1&project=${encodeURIComponent(r.project_id)}"><i class="fas fa-bookmark"></i></a>`,
+  defaults: { city: "Pune", status: "Active", featured: "No", launch_status: "New Launch", project_type: "Residential" },
+  fields: [
+    { type: "section", label: "Project Details" },
+    { name: "project_name", label: "Project Name", required: true, placeholder: "e.g. Aura Heights" },
+    { name: "builder_name", label: "Builder / Developer", placeholder: "e.g. Aura Developers" },
+    { name: "project_type", label: "Project Type", type: "select", options: ["Residential","Commercial","Mixed Use","Plotting / NA Plots","Villa / Row House"] },
+    { name: "launch_status", label: "Launch Stage", type: "select", options: LAUNCH, blank: false },
+    { name: "rera_number", label: "MahaRERA No.", placeholder: "P521000XXXXX" },
+    { name: "location", label: "Location / Area", required: true, placeholder: "Hadapsar, Pune" },
+    { name: "city", label: "City" },
+    { name: "map_url", label: "Google Maps Link", placeholder: "https://maps.app.goo.gl/..." },
+    { type: "section", label: "Pricing & Inventory" },
+    { name: "configurations", label: "Configurations", placeholder: "1BHK, 2BHK, 3BHK" },
+    { name: "booking_amount", label: "Booking Amount (₹)", type: "number", placeholder: "51000" },
+    { name: "price_from", label: "Price From (₹)", type: "number", placeholder: "4500000" },
+    { name: "price_to", label: "Price To (₹)", type: "number", placeholder: "9500000" },
+    { name: "carpet_from", label: "Carpet From (SqFt)", type: "number" },
+    { name: "carpet_to", label: "Carpet To (SqFt)", type: "number" },
+    { name: "total_towers", label: "Towers / Wings", type: "number" },
+    { name: "total_units", label: "Total Units", type: "number" },
+    { name: "available_units", label: "Available Units", type: "number" },
+    { name: "launch_date", label: "Launch Date", type: "date" },
+    { name: "possession_date", label: "Possession", placeholder: "Dec 2028" },
+    { name: "offer", label: "Launch Offer", placeholder: "No GST / Free car parking for first 50 bookings" },
+    { type: "section", label: "Description" },
+    { name: "highlights", label: "Highlights (one per line)", type: "textarea", rows: 3, placeholder: "5 min from Magarpatta\nClubhouse & swimming pool" },
+    { name: "amenities", label: "Amenities (comma separated)", type: "textarea", rows: 2, placeholder: "Gym, Swimming Pool, Kids Play Area, 24x7 Security" },
+    { name: "description", label: "Description", type: "textarea", rows: 4 },
+    { type: "section", label: "Photos, Video & Brochure (uploaded to Google Drive, link saved in Sheet)" },
+    { name: "image1_url", label: "Main Photo (cover)", type: "image" },
+    { name: "image2_url", label: "Photo 2", type: "image" },
+    { name: "image3_url", label: "Photo 3", type: "image" },
+    { name: "image4_url", label: "Photo 4", type: "image" },
+    { name: "image5_url", label: "Photo 5", type: "image" },
+    { name: "image6_url", label: "Photo 6", type: "image" },
+    { name: "video_url", label: "Walkthrough Video", type: "video", help: "Upload a video up to 35 MB, or paste a YouTube link" },
+    { name: "brochure_url", label: "Brochure (PDF)", type: "doc" },
+    { name: "floor_plan_url", label: "Floor Plan (PDF / image)", type: "doc" },
+    { type: "section", label: "Website" },
+    { name: "status", label: "Show on Website", type: "select", options: [{ v: "Active", t: "Active (visible)" }, { v: "Inactive", t: "Inactive (hidden)" }], blank: false },
+    { name: "featured", label: "Featured on Homepage", type: "select", options: ["No","Yes"], blank: false },
+  ],
+});
+
+</script>
+</body>
+</html>

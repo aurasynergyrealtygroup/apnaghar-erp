@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Societies — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v2.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../website/index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Societies</div>
+      </div>
+      <div class="topbar-right"><button class="btn btn-primary" onclick="CRUD.openAdd()"><i class="fas fa-plus"></i> Add Society</button></div>
+    </header>
+    <main class="admin-content" id="crudRoot"></main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="../website/js/config.js"></script>
+<script src="../website/js/api.js"></script>
+<script src="admin.js"></script>
+<script src="sidebar.js"></script>
+<script src="media-upload.js"></script>
+<script src="crud.js"></script>
+<script>
+
+CRUD.init({
+  sheet: "SOCIETIES", idField: "society_id", title: "Society", plural: "Societies", icon: "fa-city", module: "Societies",
+  columns: [
+    { label: "Image", render: R.thumb("image_url") },
+    { label: "Society", render: R.title("society_name", r => escapeHtml(r.builder_name || "")) },
+    { label: "Area", render: r => escapeHtml([r.area, r.city].filter(Boolean).join(", ") || "—") },
+    { label: "Wings / Flats", render: r => `${r.total_wings || "—"} / ${r.total_flats || "—"}` },
+    { label: "Secretary", render: r => escapeHtml([r.secretary_name, r.secretary_mobile].filter(Boolean).join(" • ") || "—") },
+    { label: "Status", render: r => statusBadge(r.status || "Active") },
+  ],
+  defaults: { city: "Pune", status: "Active" },
+  fields: [
+    { name: "society_name", label: "Society Name", required: true },
+    { name: "builder_name", label: "Builder" },
+    { name: "address", label: "Address", full: true },
+    { name: "area", label: "Area" }, { name: "city", label: "City" }, { name: "pincode", label: "Pincode" },
+    { name: "total_wings", label: "Total Wings", type: "number" }, { name: "total_flats", label: "Total Flats", type: "number" },
+    { name: "secretary_name", label: "Secretary Name" }, { name: "secretary_mobile", label: "Secretary Mobile", type: "tel" },
+    { name: "status", label: "Status", type: "select", options: ["Active","Inactive"], blank: false },
+    { name: "amenities", label: "Amenities", type: "textarea", rows: 2 },
+    { name: "image_url", label: "Photo", type: "image" },
+  ],
+});
+
+</script>
+</body>
+</html>

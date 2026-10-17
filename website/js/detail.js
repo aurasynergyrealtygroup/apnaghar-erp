@@ -52,7 +52,7 @@ function renderPropertyDetail(p) {
   document.getElementById("bcTitle").textContent = p.title;
 
   // Gallery
-  galleryImages = [p.image1_url, p.image2_url, p.image3_url, p.image4_url]
+  galleryImages = [p.image1_url, p.image2_url, p.image3_url, p.image4_url, p.image5_url, p.image6_url]
     .filter(Boolean).map(getImageUrl);
   if (!galleryImages.length) galleryImages = [CONFIG.CLOUDINARY.placeholder];
   setGalleryImage(0);
@@ -139,28 +139,24 @@ function renderPropertyDetail(p) {
   document.getElementById("mapOpenBtn").href =
     `https://maps.google.com/?q=${mapQuery}`;
 
-  // Video (YouTube, Cloudflare Stream, or a direct video file)
+  // Amenities from the sheet (comma separated) replace the default list
+  if (p.amenities) {
+    const grid = document.getElementById("amenitiesGrid");
+    if (grid) grid.innerHTML = String(p.amenities).split(/,|\n/).map(a => a.trim()).filter(Boolean)
+      .map(a => `<div class="amenity-item"><i class="fas fa-check-circle"></i><span>${escapeHtml(a)}</span></div>`).join("");
+  }
+  // Brochure
+  if (p.brochure_url) { const b = document.getElementById("brochureBtn"); if (b) { b.href = p.brochure_url; b.style.display = ""; } }
+
+  // Video (YouTube, Google Drive, Cloudflare Stream, or a direct video file)
   if (p.video_url) {
     document.getElementById("videoWrap").innerHTML = buildVideoEmbedHtml(p.video_url);
   }
 }
 
 // ---- VIDEO EMBED HELPER (supports YouTube + Cloudflare Stream + direct file) ----
-function buildVideoEmbedHtml(videoUrl) {
-  const ytId = extractYouTubeId(videoUrl);
-  if (ytId) {
-    return `<iframe src="https://www.youtube.com/embed/${ytId}" allowfullscreen></iframe>`;
-  }
-  if (videoUrl.includes("cloudflarestream.com") || videoUrl.includes("videodelivery.net")) {
-    let src = videoUrl;
-    const idMatch = videoUrl.match(/([a-f0-9]{32})/i);
-    if (idMatch && !videoUrl.includes("/iframe")) {
-      src = `https://customer-.cloudflarestream.com/${idMatch[1]}/iframe`;
-    }
-    return `<iframe src="${src}" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen></iframe>`;
-  }
-  return `<video src="${videoUrl}" controls style="width:100%;height:100%;border-radius:12px"></video>`;
-}
+// buildVideoEmbedHtml() now lives in website/js/api.js (shared)
+
 
 // ---- GALLERY ----
 function setGalleryImage(index) {
@@ -173,7 +169,7 @@ function setGalleryImage(index) {
 function renderThumbs() {
   document.getElementById("galleryThumbs").innerHTML = galleryImages.map((img, i) =>
     `<div class="g-thumb ${i === 0 ? "active" : ""}" onclick="setGalleryImage(${i})">
-      <img src="${img}" alt="Photo ${i + 1}" />
+      <img src="${img}" alt="Photo ${i + 1}" referrerpolicy="no-referrer" />
     </div>`
   ).join("");
 }
@@ -208,7 +204,7 @@ async function loadSimilarProperties(p) {
     const img = getImageUrl(s.image1_url);
     const price = s.listing_type === "Rent" ? formatPrice(s.expected_rent) + "/mo" : formatPrice(s.expected_price);
     return `<div class="similar-card" onclick="location.href='property-detail.html?id=${s.property_id}'">
-      <img src="${img}" alt="${s.title}" onerror="this.src='${CONFIG.CLOUDINARY.placeholder}'" />
+      <img src="${img}" alt="${escapeHtml(s.title)}" referrerpolicy="no-referrer" onerror="this.src='${CONFIG.CLOUDINARY.placeholder}'" />
       <div>
         <div class="similar-card-title">${s.title}</div>
         <div class="similar-card-meta">${s.city || ""} ${s.bhk ? "• " + s.bhk : ""}</div>
@@ -260,7 +256,11 @@ function copyLink() {
 }
 
 // ---- UTILS ----
-function extractYouTubeId(url) {
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/);
-  return m ? m[1] : null;
+// extractYouTubeId() now lives in website/js/api.js (shared)
+
+
+// ---- Book Now / Site Visit (saved to PROPERTY_BOOKINGS / SITE_VISITS sheets) ----
+function bookProperty(mode) {
+  if (!currentProperty) return;
+  AGLead.open({ mode, property_id: currentProperty.property_id, title: currentProperty.title + (currentProperty.city ? " — " + currentProperty.city : "") });
 }

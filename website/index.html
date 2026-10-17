@@ -8,6 +8,7 @@
   <meta name="description" content="Pune मधील Residential, Commercial आणि Land Properties साठी ApnaGhar शी संपर्क करा. खरेदी, विक्री, भाडे सर्व सेवा उपलब्ध." />
   <meta name="keywords" content="property pune, flat for rent pune, 2bhk pune, land sale pune, real estate pune" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/site.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
   <!-- Font Awesome Icons -->
@@ -25,13 +26,15 @@
     <ul class="nav-links" id="navLinks">
       <li><a href="index.html" class="active">Home</a></li>
       <li><a href="properties.html">Properties</a></li>
+      <li><a href="projects.html">New Projects</a></li>
       <li><a href="land.html">Land</a></li>
+      <li><a href="services.html">Services</a></li>
       <li><a href="about.html">About</a></li>
       <li><a href="contact.html">Contact</a></li>
     </ul>
     <div class="nav-actions">
       <a href="tel:+917507163733" class="btn btn-outline btn-sm"><i class="fas fa-phone"></i> Call Now</a>
-      <a href="admin/login.html" class="btn btn-primary btn-sm">Admin</a>
+      <a href="../admin/login.html" class="btn btn-primary btn-sm">Admin</a>
     </div>
     <button class="hamburger" id="hamburger" aria-label="Menu">
       <span></span><span></span><span></span>
@@ -154,6 +157,22 @@
       <div class="skeleton-card"></div>
       <div class="skeleton-card"></div>
       <div class="skeleton-card"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== NEW LAUNCH PROJECTS ===== -->
+<section class="section" id="projectsSection" style="background:var(--off-white)">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <span class="section-eyebrow">New Launch</span>
+        <h2 class="section-title">New Launch Projects</h2>
+      </div>
+      <a href="projects.html" class="btn btn-outline">View All <i class="fas fa-arrow-right"></i></a>
+    </div>
+    <div class="properties-grid" id="projectsGrid">
+      <div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div>
     </div>
   </div>
 </section>
@@ -328,6 +347,7 @@
       <div class="footer-col">
         <h4>Properties</h4>
         <ul>
+          <li><a href="projects.html">New Launch Projects</a></li>
           <li><a href="properties.html?listing_type=Sale">Flat for Sale</a></li>
           <li><a href="properties.html?listing_type=Rent">Flat for Rent</a></li>
           <li><a href="properties.html?type=Villa">Villa & Bungalow</a></li>
@@ -338,11 +358,11 @@
       <div class="footer-col">
         <h4>Services</h4>
         <ul>
-          <li><a href="#">Home Loans</a></li>
-          <li><a href="#">Legal Help</a></li>
-          <li><a href="#">Packers & Movers</a></li>
-          <li><a href="#">Property Management</a></li>
-          <li><a href="#">Interior Design</a></li>
+          <li><a href="services.html#loan">Home Loans</a></li>
+          <li><a href="services.html#legal">Legal Help</a></li>
+          <li><a href="services.html#packers">Packers & Movers</a></li>
+          <li><a href="services.html#rental">Property Management</a></li>
+          <li><a href="services.html#interior">Interior Design</a></li>
         </ul>
       </div>
       <div class="footer-col">
@@ -358,9 +378,9 @@
     <div class="footer-bottom">
       <p>&copy; 2026 Aura Synergy Realty Group. All Rights Reserved.</p>
       <div class="footer-links">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Use</a>
-        <a href="#">RERA Disclosure</a>
+        <a href="about.html#privacy">Privacy Policy</a>
+        <a href="about.html#terms">Terms of Use</a>
+        <a href="about.html#rera">RERA Disclosure</a>
       </div>
     </div>
   </div>
@@ -380,5 +400,13 @@
 <script src="js/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/app.js"></script>
+<script src="js/site.js"></script>
+<script>
+  API.getNewProjects({ limit: 3 }).then(r => {
+    const g = document.getElementById("projectsGrid");
+    if (r.success && r.data.length) g.innerHTML = r.data.map(buildProjectCard).join("");
+    else document.getElementById("projectsSection").style.display = "none";
+  });
+</script>
 </body>
 </html>
