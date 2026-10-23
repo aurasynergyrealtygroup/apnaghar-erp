@@ -114,6 +114,7 @@ const API = {
   getLand: (filters = {}) => API.get({ action: "getLand", ...filters }),
   getLandById: (id) => API.get({ action: "getLandById", id }),
   getSocieties: () => API.get({ action: "getSocieties" }),
+  getSearchOptions: () => API.get({ action: "getSearchOptions" }),   // areas + societies (name, address) for search dropdowns
   getNewProjects: (filters = {}) => API.get({ action: "getNewProjects", ...filters }),
   getNewProject: (id) => API.get({ action: "getNewProject", id }),
   getAgents: () => API.get({ action: "getAgents" }),
@@ -135,6 +136,9 @@ const API = {
     save: (sheet, data) => API.post("savePartnerListing", data, { sheet }),
     remove: (sheet, id) => API.post("deletePartnerListing", { id }, { sheet }),
     changePassword: (data) => API.post("changePassword", data),
+    renew: (sheet, id) => API.post("renewListing", { id }, { sheet }),          // re-activate a hidden / expiring ad
+    myProfile: () => API.get({ action: "myProfile" }),
+    saveProfile: (data) => API.post("saveMyProfile", data),
   },
   isPartnerRole: (role) => ["Partner Agent", "Builder", "Owner"].includes(role),
 
@@ -143,6 +147,10 @@ const API = {
     login: (data) => API.post("login", data),
     changePassword: (data) => API.post("changePassword", data),
     runSetup: () => API.post("runSetup", {}),
+    runListingJob: () => API.post("runListingJob", {}),
+    getDbInfo: () => API.get({ action: "getDbInfo" }),
+    createDatabase: (name) => API.post("createDatabase", { confirm: "CREATE NEW", name }),
+    renewListing: (sheet, id) => API.post("renewListing", { id }, { sheet }),
 
     getClients: () => API.get({ action: "getClients" }),
     getClient: (id) => API.get({ action: "getClient", id }),
@@ -271,7 +279,7 @@ function buildPropertyCard(p) {
       <div class="card-body">
         <h3 class="card-title">${title}</h3>
         <div class="card-meta">
-          <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(p.city || "Pune")}</span>
+          <span><i class="fas fa-map-marker-alt"></i> ${escapeHtml([p.society_name, p.area].filter(Boolean).join(", ") || p.city || "Pune")}</span>
           ${p.bhk ? `<span><i class="fas fa-bed"></i> ${escapeHtml(p.bhk)}</span>` : ""}
           ${p.carpet_area ? `<span><i class="fas fa-vector-square"></i> ${escapeHtml(p.carpet_area)} SqFt</span>` : ""}
         </div>

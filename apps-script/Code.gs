@@ -1,5 +1,5 @@
 // ============================================================
-// ApnaGhar ERP — Google Apps Script Backend  (v2.4)
+// ApnaGhar ERP — Google Apps Script Backend  (v2.5)
 // Aura Synergy Realty Group
 // ------------------------------------------------------------
 // FIRST-TIME SETUP (do this once):   (if anything fails, run "diagnose" and read the log)
@@ -11,6 +11,8 @@
 //      Copy the Web app URL (ends with /exec).
 //   4. Paste that URL into website/js/config.js → APPS_SCRIPT_URL, push to GitHub.
 //   5. Login at /admin/login.html with  admin / admin123  and change the password.
+//   (Want a brand-new empty Google Sheet with every tab made for you?  Run  createNewDatabase  instead of steps 1-2.)
+//   6. (v2.5) Also run  installDailyTrigger  once — it hides rent listings after 45 days and sale listings after 60 days.
 // After any change to this file: Deploy → Manage deployments → Edit → Version: New → Deploy
 // ============================================================
 
@@ -27,6 +29,14 @@ const STAFF_ROLES = ["Admin", "Manager", "Agent", "Accountant"];
 const AUTO_APPROVE_PARTNERS = false;  // true = new partner accounts can log in immediately
 const AUTO_APPROVE_ADS = false;       // true = partner ads go live without admin approval
 
+// ---- Listing validity (v2.5) ----
+// A RENT listing is hidden from the website 45 days after its last manual update / renew,
+// a SALE listing after 60 days. LAND = 0 means "never auto-hides". The real values are read from
+// the LISTING_RULES sheet tab (edit them there); these are only the fallback defaults.
+// An agent edits the ad or presses Renew  →  it goes live again and the clock restarts.
+const DEFAULT_LISTING_DAYS = { RENT: 45, SALE: 60, LAND: 0 };
+const LISTING_SHEETS = { PROPERTIES: "property_id", LAND_PROPERTIES: "land_id" };
+
 // ------------------------------------------------------------
 // SCHEMA — every sheet tab, its ID column, ID prefix and headers.
 // Row 1 = title, Row 2 = headers, Row 3+ = data (your existing convention).
@@ -36,7 +46,7 @@ const MEDIA_COLS = ["image1_url","image2_url","image3_url","image4_url","image5_
 
 const SCHEMA = {
   PROPERTIES: { id: "property_id", prefix: "PROP", title: "Properties (Sale / Rent)", public: true,
-    headers: ["property_id","property_code","title","posted_by","posted_by_name","posted_by_type","contact_name","contact_mobile","approval_status","approval_note","property_type","listing_type","bhk","furnished_status","carpet_area","builtup_area","floor","total_floors","facing","city","address","society_id","project_id","owner_name","owner_mobile","agent_id","status","featured","expected_price","expected_rent","deposit_amount","amenities","description"].concat(MEDIA_COLS, ["created_at","updated_at"]) },
+    headers: ["property_id","property_code","title","posted_by","posted_by_name","posted_by_type","contact_name","contact_mobile","approval_status","approval_note","property_type","listing_type","bhk","furnished_status","carpet_area","builtup_area","floor","total_floors","facing","city","area","address","society_id","society_name","project_id","owner_name","owner_mobile","agent_id","status","featured","expected_price","expected_rent","deposit_amount","amenities","description","last_renewed_on","expiry_date","listing_active","deactivated_on"].concat(MEDIA_COLS, ["created_at","updated_at"]) },
   NEW_PROJECTS: { id: "project_id", prefix: "NPJ", title: "New Launch Projects", public: true,
     headers: ["project_id","project_name","builder_name","posted_by","posted_by_name","posted_by_type","contact_name","contact_mobile","approval_status","approval_note","project_type","launch_status","location","city","rera_number","configurations","price_from","price_to","carpet_from","carpet_to","total_towers","total_units","available_units","launch_date","possession_date","booking_amount","offer","amenities","highlights","description","map_url","floor_plan_url","status","featured"].concat(MEDIA_COLS, ["created_at","updated_at"]) },
   PROPERTY_BOOKINGS: { id: "booking_id", prefix: "BKG", title: "Bookings (Property + New Launch Projects)",
@@ -48,11 +58,11 @@ const SCHEMA = {
   CLIENTS: { id: "client_id", prefix: "CLI", title: "Clients / Leads",
     headers: ["client_id","client_type","full_name","mobile","alternate_mobile","email","occupation","company_name","preferred_location","preferred_bhk","property_type_interest","budget_min","budget_max","loan_required","lead_source","lead_status","assigned_agent_id","remarks","created_at","updated_at"] },
   AGENTS: { id: "agent_id", prefix: "AGT", title: "Agents",
-    headers: ["agent_id","full_name","mobile","email","rera_agent_no","experience_years","area","commission_percent","photo_url","joining_date","status","created_at","updated_at"] },
+    headers: ["agent_id","full_name","mobile","alt_mobile","whatsapp","email","address","city","area","rera_agent_no","experience_years","pan_no","aadhaar_last4","commission_percent","bank_name","account_no","ifsc","photo_url","user_id","joining_date","status","created_at","updated_at"] },
   SOCIETIES: { id: "society_id", prefix: "SOC", title: "Societies", public: true,
-    headers: ["society_id","society_name","builder_name","address","area","city","pincode","total_wings","total_flats","amenities","secretary_name","secretary_mobile","image_url","status","created_at","updated_at"] },
+    headers: ["society_id","society_name","builder_name","address","landmark","area","city","pincode","total_wings","total_flats","amenities","secretary_name","secretary_mobile","image_url","status","created_at","updated_at"] },
   LAND_PROPERTIES: { id: "land_id", prefix: "LAND", title: "Land", public: true,
-    headers: ["land_id","title","land_type","survey_no","village","taluka","district","area_value","area_unit","price","price_per_unit","road_touch","zone","ownership","status","featured","description","image1_url","image2_url","image3_url","video_url","document_url","created_at","updated_at"] },
+    headers: ["land_id","title","posted_by","posted_by_name","posted_by_type","contact_name","contact_mobile","approval_status","approval_note","agent_id","land_type","survey_no","village","taluka","district","area","area_value","area_unit","price","price_per_unit","road_touch","zone","ownership","status","featured","description","last_renewed_on","expiry_date","listing_active","deactivated_on","image1_url","image2_url","image3_url","video_url","document_url","created_at","updated_at"] },
   AGREEMENTS: { id: "agreement_id", prefix: "AGR", title: "Rent Agreements",
     headers: ["agreement_id","property_id","owner_name","tenant_client_id","tenant_name","tenant_mobile","start_date","end_date","monthly_rent","deposit","rent_due_day","escalation_percent","agreement_url","status","created_at","updated_at"] },
   RENT_PAYMENTS: { id: "payment_id", prefix: "PAY", title: "Rent Payments",
@@ -89,6 +99,10 @@ const SCHEMA = {
     headers: ["user_id","username","full_name","email","mobile","password_hash","role_id","user_type","company_name","rera_number","city","agent_id","status","approved_by","last_login","created_at","updated_at"] },
   ROLES: { id: "role_id", prefix: "ROLE", title: "Roles",
     headers: ["role_id","role_name","description","created_at"] },
+  LISTING_RULES: { id: "rule_id", prefix: "RUL", title: "Listing Rules — days a listing stays live after the last update (0 = never hides)",
+    headers: ["rule_id","listing_type","validity_days","note","created_at","updated_at"] },
+  LISTING_LOG: { id: "listing_log_id", prefix: "LLG", title: "Listing Log (created / renewed / auto-deactivated)",
+    headers: ["listing_log_id","listing_sheet","listing_id","title","agent_id","action","action_date","done_by","remark","created_at"] },
   USER_ACTIVITY_LOG: { id: "log_id", prefix: "LOG", title: "Activity Log",
     headers: ["log_id","user","module","action","record_id","timestamp","source"] },
 };
@@ -151,14 +165,15 @@ function doPost(e) {
 function routeGet(action, p) {
   // ---------- Public (website) ----------
   switch (action) {
-    case "ping":                  return { success: true, message: "ApnaGhar API is running", time: new Date().toISOString(), version: "2.4" };
+    case "ping":                  return { success: true, message: "ApnaGhar API is running", time: new Date().toISOString(), version: "2.5" };
     case "getProperties":         return getProperties(p);
     case "getProperty":           return getPublicById("PROPERTIES", p.id, p.token);
     case "getFeaturedProperties": return getFeaturedProperties();
     case "searchProperties":      return searchProperties(p);
     case "getLand":               return getLand(p);
-    case "getLandById":           return getById("LAND_PROPERTIES", p.id);
-    case "getSocieties":          return listRows("SOCIETIES");
+    case "getLandById":           return getPublicById("LAND_PROPERTIES", p.id, p.token);
+    case "getSocieties":          return getSocietiesPublic(p.token);
+    case "getSearchOptions":      return getSearchOptions();
     case "getNewProjects":        return getNewProjects(p);
     case "getNewProject":         return getNewProject(p.id, p.token);
     case "getDashboard":          return getDashboardStats();
@@ -170,9 +185,19 @@ function routeGet(action, p) {
   if (action === "whoami")     return { success: true, user: user };
   if (action === "myListings") return myListings(user);
   if (action === "myLeads")    return myLeads(user);
-  requireStaff(user);                         // everything below = ERP staff only
-  if (action === "list")  return listRows(checkSheet(p.sheet));
-  if (action === "get")   return getById(checkSheet(p.sheet), p.id);
+  if (action === "myProfile")  return myProfile(user);
+  requireStaff(user);
+  if (action === "getDbInfo") return getDbInfo();                         // everything below = ERP staff only
+  const scopeFn = agentScopeFor(user);        // staff role "Agent" sees only own properties / land
+  if (action === "list") {
+    const sh = checkSheet(p.sheet);
+    return LISTING_SHEETS[sh] ? scopeResult(listRows(sh), scopeFn) : listRows(sh);
+  }
+  if (action === "get") {
+    const sh = checkSheet(p.sheet), g = getById(sh, p.id);
+    if (LISTING_SHEETS[sh] && scopeFn && g.success && !scopeFn(g.data)) return { success: false, error: "Record not found" };
+    return g;
+  }
   if (action === "getUsers") return listUsersSafe();
   if (action === "getAdminSummary") return getDashboardStats(true);
   const legacy = LEGACY_GET[action];
@@ -200,24 +225,31 @@ function routePost(action, data, body) {
     case "changePassword": return changePassword(user, data);
     case "savePartnerListing":   return savePartnerListing(user, body.sheet, data);
     case "deletePartnerListing": return deletePartnerListing(user, body.sheet, data.id);
+    case "renewListing":         return renewListing(user, body.sheet, data.id);
+    case "saveMyProfile":        return saveMyProfile(user, data);
   }
   requireStaff(user);                         // everything below = ERP staff only
   switch (action) {
     case "approveListing": return approveListing(body.sheet, data, who);
     case "approveUser":    requireAdmin(user); return approveUser(data, who);
-    case "create":      return addRow(checkSheet(body.sheet), data, who);
-    case "update":      return updateRow(checkSheet(body.sheet), data, who);
-    case "delete":      return deleteRow(checkSheet(body.sheet), data.id || data[SCHEMA[checkSheet(body.sheet)].id], who);
+    case "create":      return addRow(checkSheet(body.sheet), listingGuard(user, body.sheet, "create", data), who);
+    case "update":      return updateRow(checkSheet(body.sheet), listingGuard(user, body.sheet, "update", data), who);
+    case "delete":      listingGuard(user, body.sheet, "delete", data); return deleteRow(checkSheet(body.sheet), data.id || data[SCHEMA[checkSheet(body.sheet)].id], who);
     case "saveUser":    requireAdmin(user); return saveUser(data, who);
     case "deleteUser":  requireAdmin(user); return deleteRow("USERS", data.user_id, who);
     case "runSetup":    requireAdmin(user); return setupSheets();
+    case "runListingJob": requireAdmin(user); return deactivateExpiredListings();
+    case "createDatabase":
+      requireAdmin(user);
+      if (data.confirm !== "CREATE NEW") return { success: false, error: "Confirmation missing" };
+      return createNewDatabase(data.name);
   }
   const legacy = LEGACY_POST[action];
   if (legacy) {
     const [op, sheet] = legacy;
-    if (op === "create") return addRow(sheet, data, who);
-    if (op === "update") return updateRow(sheet, data, who);
-    if (op === "delete") return deleteRow(sheet, data[SCHEMA[sheet].id], who);
+    if (op === "create") return addRow(sheet, listingGuard(user, sheet, "create", data), who);
+    if (op === "update") return updateRow(sheet, listingGuard(user, sheet, "update", data), who);
+    if (op === "delete") { listingGuard(user, sheet, "delete", data); return deleteRow(sheet, data[SCHEMA[sheet].id], who); }
   }
   return { success: false, error: "Unknown action: " + action };
 }
@@ -265,6 +297,15 @@ function setupSheets() {
       report.push("Created user admin / admin123  (please change after first login)");
     } else report.push("Admin user already exists");
   } catch (e) { errors.push("Users/Roles → " + e.message); }
+
+  try {
+    const seeded = seedListingRules();
+    if (seeded.length) report.push("Listing rules added: " + seeded.join(", "));
+    const filled = backfillListingDates();
+    if (filled) report.push("Listing dates set for " + filled + " existing listings (so none disappear on day 1)");
+  } catch (e) { errors.push("Listing rules → " + e.message); }
+  try { report.push(installDailyTrigger()); }
+  catch (e) { report.push("⚠️ Daily auto-hide trigger not installed (" + e.message + ") — run installDailyTrigger from the editor once."); }
 
   try { getSecret(); report.push("Login security key ready"); }
   catch (e) { errors.push("Security key → " + e.message); }
@@ -328,6 +369,41 @@ function resetAdmin() {
   Logger.log(log.join("\n"));
 }
 
+// ------------------------------------------------------------
+// NEW DATABASE — creates a brand-new, EMPTY Google Sheet with every tab, header, role and the admin login,
+// then switches the whole system (website + admin + partner portal) to it. Nothing is copied from the old
+// sheet and the old sheet is left untouched. Run from the editor (▶ createNewDatabase) or Admin → Settings.
+// Go back any time with  useExistingDatabase("<sheet id>").
+// ------------------------------------------------------------
+function createNewDatabase(name) {
+  const stamp = Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd HH:mm");
+  const ss = SpreadsheetApp.create((name && String(name).trim()) || "ApnaGhar ERP Database " + stamp);
+  PropertiesService.getScriptProperties().setProperty("DB_SPREADSHEET_ID", ss.getId());
+  _ss = null; _rules = null;                       // forget the old sheet for the rest of this run
+  const res = setupSheets();                        // all tabs + columns + roles + admin + listing rules + nightly trigger
+  try {                                             // remove Google's empty default tab
+    const def = getSS().getSheetByName("Sheet1");
+    if (def && getSS().getSheets().length > 1) getSS().deleteSheet(def);
+  } catch (e) {}
+  const out = { success: res.success, id: ss.getId(), url: ss.getUrl(), message: "New database created and activated", report: res.report, errors: res.errors };
+  Logger.log("✅ NEW DATABASE READY\n" + ss.getUrl() + "\nLogin: admin / admin123\n" + res.report.join("\n"));
+  return out;
+}
+
+// Point the system at any existing Google Sheet (e.g. go back to the old one). Run setupSheets afterwards.
+function useExistingDatabase(sheetId) {
+  if (!sheetId) throw new Error("Pass the Google Sheet ID, e.g. useExistingDatabase('1AbC...')");
+  SpreadsheetApp.openById(sheetId);                 // throws if it cannot be opened
+  PropertiesService.getScriptProperties().setProperty("DB_SPREADSHEET_ID", sheetId);
+  _ss = null; _rules = null;
+  return setupSheets();
+}
+
+function getDbInfo() {
+  const ss = getSS();
+  return { success: true, data: { id: ss.getId(), name: ss.getName(), url: ss.getUrl(), tabs: ss.getSheets().length } };
+}
+
 // Run separately if the Drive step failed in setupSheets
 function setupDrive() {
   const f = getMediaFolder("General");
@@ -349,13 +425,17 @@ function diagnose() {
   Logger.log(out.join("\n"));
 }
 
+// Which Google Sheet is the database?  A sheet created by createNewDatabase() (saved in Script Properties)
+// wins; otherwise the SPREADSHEET_ID constant at the top of this file.
+function dbId() { return PropertiesService.getScriptProperties().getProperty("DB_SPREADSHEET_ID") || SPREADSHEET_ID; }
+
 // Opens the Sheet by ID; falls back to the Sheet this script is attached to.
 function getSS() {
-  try { return SpreadsheetApp.openById(SPREADSHEET_ID); }
+  try { return SpreadsheetApp.openById(dbId()); }
   catch (e) {
     const active = SpreadsheetApp.getActiveSpreadsheet();
     if (active) return active;
-    throw new Error("Cannot open spreadsheet " + SPREADSHEET_ID + ": " + e.message);
+    throw new Error("Cannot open spreadsheet " + dbId() + ": " + e.message);
   }
 }
 
@@ -459,7 +539,7 @@ function addRow(key, data, who) {
     const now = Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd HH:mm");
     data.created_at = now; data.updated_at = now;
     sheet.appendRow(headers.map(function (h) { return data[h] !== undefined ? cleanValue(data[h]) : ""; }));
-    if (key !== "USER_ACTIVITY_LOG") logActivity(who, "Add", key, newId);
+    if (key !== "USER_ACTIVITY_LOG" && key !== "LISTING_LOG") logActivity(who, "Add", key, newId);
     return { success: true, id: newId, message: "Record added successfully" };
   } finally { lock.releaseLock(); }
 }
@@ -566,7 +646,10 @@ function uploadFile(data, who) {
 // ============================================================
 function getProperties(p) {
   let rows = sheetToJSON(getSheet("PROPERTIES"));
-  if (!isStaffToken(p.token)) rows = rows.filter(isLive);
+  const scope = agentScope(p.token);               // staff "Agent" role → own listings only (incl. inactive)
+  if (scope) rows = rows.filter(scope);
+  else if (!isStaffToken(p.token)) rows = rows.filter(function (r) { return isLive(r, "PROPERTIES"); });   // public: approved + not expired
+  rows = decorateListings("PROPERTIES", rows);
   const lc = function (v) { return String(v || "").toLowerCase(); };
   if (p.listing_type)  rows = rows.filter(function (r) { return r.listing_type === p.listing_type; });
   if (p.bhk)           rows = rows.filter(function (r) { return lc(r.bhk).replace(/\s/g, "") === lc(p.bhk).replace(/\s/g, ""); });
@@ -577,9 +660,12 @@ function getProperties(p) {
   if (p.min_price)     rows = rows.filter(function (r) { return Number(r.expected_price || r.expected_rent) >= Number(p.min_price); });
   if (p.max_price)     rows = rows.filter(function (r) { return Number(r.expected_price || r.expected_rent) <= Number(p.max_price); });
   if (p.society_id)    rows = rows.filter(function (r) { return String(r.society_id) === String(p.society_id); });
+  if (p.area)          rows = rows.filter(function (r) { return lc(r.area).indexOf(lc(p.area)) !== -1; });
+  if (p.society)       rows = rows.filter(function (r) { return String(r.society_id) === String(p.society) || lc(r.society_name).indexOf(lc(p.society)) !== -1; });
+  if (p.agent_id)      rows = rows.filter(function (r) { return String(r.agent_id) === String(p.agent_id); });
   if (p.q) {
     const q = lc(p.q);
-    rows = rows.filter(function (r) { return [r.title, r.city, r.address, r.bhk, r.property_type].some(function (v) { return lc(v).indexOf(q) !== -1; }); });
+    rows = rows.filter(function (r) { return [r.title, r.city, r.area, r.address, r.society_name, r.society_address, r.bhk, r.property_type].some(function (v) { return lc(v).indexOf(q) !== -1; }); });
   }
   rows.reverse(); // newest first
   const page = parseInt(p.page) || 1, limit = parseInt(p.limit) || 20;
@@ -588,7 +674,7 @@ function getProperties(p) {
 }
 
 function getFeaturedProperties() {
-  let rows = sheetToJSON(getSheet("PROPERTIES")).filter(function (r) { return r.status === "Available" && isLive(r); }).reverse();
+  let rows = decorateListings("PROPERTIES", sheetToJSON(getSheet("PROPERTIES")).filter(function (r) { return r.status === "Available" && isLive(r, "PROPERTIES"); })).reverse();
   const featured = rows.filter(function (r) { return String(r.featured).toLowerCase() === "yes" || r.featured === true; });
   rows = featured.concat(rows.filter(function (r) { return featured.indexOf(r) === -1; })).slice(0, 6);
   return { success: true, count: rows.length, data: rows };
@@ -598,11 +684,18 @@ function searchProperties(p) { return getProperties({ q: p.q, limit: 1000 }); }
 
 function getLand(p) {
   let rows = sheetToJSON(getSheet("LAND_PROPERTIES"));
+  const scope = agentScope(p.token);
+  if (scope) rows = rows.filter(scope);
+  else if (!isStaffToken(p.token)) rows = rows.filter(function (r) { return isLive(r, "LAND_PROPERTIES"); });
+  rows = decorateListings("LAND_PROPERTIES", rows);
   const lc = function (v) { return String(v || "").toLowerCase(); };
+  if (p.area) rows = rows.filter(function (r) { return [r.area, r.village, r.taluka].some(function (v) { return lc(v).indexOf(lc(p.area)) !== -1; }); });
+  if (p.min_price) rows = rows.filter(function (r) { return Number(r.price) >= Number(p.min_price); });
+  if (p.max_price) rows = rows.filter(function (r) { return Number(r.price) <= Number(p.max_price); });
   if (p.land_type) rows = rows.filter(function (r) { return r.land_type === p.land_type; });
   if (p.district)  rows = rows.filter(function (r) { return lc(r.district).indexOf(lc(p.district)) !== -1; });
   if (p.status)    rows = rows.filter(function (r) { return r.status === p.status; });
-  if (p.q) { const q = lc(p.q); rows = rows.filter(function (r) { return [r.title, r.village, r.taluka, r.district].some(function (v) { return lc(v).indexOf(q) !== -1; }); }); }
+  if (p.q) { const q = lc(p.q); rows = rows.filter(function (r) { return [r.title, r.area, r.village, r.taluka, r.district, r.survey_no].some(function (v) { return lc(v).indexOf(q) !== -1; }); }); }
   return { success: true, count: rows.length, data: rows.reverse() };
 }
 
@@ -620,7 +713,7 @@ function getNewProject(id, token) {
   const staff = isStaffToken(token);
   const res = getById("NEW_PROJECTS", id);
   if (!res.success || (!staff && (res.data.status === "Inactive" || !isLive(res.data)))) return { success: false, error: "Project not found" };
-  res.units = sheetToJSON(getSheet("PROPERTIES")).filter(function (r) { return String(r.project_id) === String(id) && (staff || isLive(r)); });
+  res.units = sheetToJSON(getSheet("PROPERTIES")).filter(function (r) { return String(r.project_id) === String(id) && (staff || isLive(r, "PROPERTIES")); });
   return res;
 }
 
@@ -657,6 +750,7 @@ function getDashboardStats(full) {
     total_bookings: bookings.length,
     active_bookings: bookings.filter(function (b) { return b.booking_status === "Active" || b.booking_status === "Enquiry"; }).length,
     new_inquiries: inquiries.filter(function (i) { return i.status === "New"; }).length,
+    expired_listings: props.filter(function (r) { return listingInfo("PROPERTIES", r).expired; }).length + land.filter(function (r) { return listingInfo("LAND_PROPERTIES", r).expired; }).length,
     pending_users: safeRows("USERS").filter(function (u) { return String(u.status).trim() === "Pending"; }).length,
     pending_ads: props.concat(projects).filter(function (r) { return String(r.approval_status).trim() === "Pending"; }).length,
     last_updated: new Date().toISOString(),
@@ -811,12 +905,23 @@ function changePassword(user, d) {
 // ============================================================
 function isPartnerRole(role) { return Object.keys(PARTNER_ROLES).some(function (k) { return PARTNER_ROLES[k] === role; }); }
 function requireStaff(u) { if (isPartnerRole(u.role)) throw new Error("Partner accounts can only manage their own ads"); }
-function isLive(r) { const a = String(r.approval_status || "").trim(); return a === "" || a === "Approved"; }
+// isLive(row)            → approved? (projects)
+// isLive(row, sheet)     → approved AND not expired (PROPERTIES / LAND_PROPERTIES listings)
+function isLive(r, sheet) {
+  const a = String(r.approval_status || "").trim();
+  if (!(a === "" || a === "Approved")) return false;
+  if (typeof sheet === "string" && LISTING_SHEETS[sheet]) return !listingInfo(sheet, r).expired;
+  return true;
+}
 function isStaffToken(token) { try { return !!token && !isPartnerRole(requireAuth(token).role); } catch (e) { return false; } }
 
 function getPublicById(key, id, token) {
   const res = getById(key, id);
-  if (res.success && !isStaffToken(token) && !isLive(res.data)) return { success: false, error: "Record not found" };
+  if (!res.success) return res;
+  const scope = agentScope(token);
+  if (scope) { if (!scope(res.data)) return { success: false, error: "Record not found" }; }
+  else if (!isStaffToken(token) && !isLive(res.data, key)) return { success: false, error: "Record not found" };
+  if (LISTING_SHEETS[key]) decorateListing(key, res.data, key === "PROPERTIES" ? societyMap() : null);
   return res;
 }
 
@@ -860,12 +965,13 @@ function registerPartner(d) {
 }
 
 const PARTNER_FIELDS = {
-  PROPERTIES: ["title","property_type","listing_type","bhk","furnished_status","carpet_area","builtup_area","floor","total_floors","facing","city","address","project_id","expected_price","expected_rent","deposit_amount","amenities","description","contact_name","contact_mobile","status"].concat(MEDIA_COLS),
+  PROPERTIES: ["title","property_type","listing_type","bhk","furnished_status","carpet_area","builtup_area","floor","total_floors","facing","city","area","address","society_id","society_name","project_id","expected_price","expected_rent","deposit_amount","amenities","description","contact_name","contact_mobile","status"].concat(MEDIA_COLS),
+  LAND_PROPERTIES: ["title","land_type","survey_no","village","taluka","district","area","area_value","area_unit","price","price_per_unit","road_touch","zone","ownership","status","description","contact_name","contact_mobile","image1_url","image2_url","image3_url","video_url","document_url"],
   NEW_PROJECTS: ["project_name","builder_name","project_type","launch_status","location","city","rera_number","configurations","price_from","price_to","carpet_from","carpet_to","total_towers","total_units","available_units","launch_date","possession_date","booking_amount","offer","amenities","highlights","description","map_url","floor_plan_url","contact_name","contact_mobile"].concat(MEDIA_COLS),
 };
 
 function partnerSheet(user, sheet) {
-  if (!PARTNER_FIELDS[sheet]) throw new Error("You can post Properties or Projects only");
+  if (!PARTNER_FIELDS[sheet]) throw new Error("You can post Properties, Land or Projects only");
   if (sheet === "NEW_PROJECTS" && isPartnerRole(user.role) && user.role !== PARTNER_ROLES.Builder) throw new Error("Only Builder accounts can post New Launch Projects");
   return sheet;
 }
@@ -882,32 +988,50 @@ function savePartnerListing(user, sheet, data) {
   const rec = {};
   PARTNER_FIELDS[sheet].forEach(function (f) { if (data[f] !== undefined) rec[f] = data[f]; });
   if (sheet === "PROPERTIES" && rec.status && ["Available","Booked","Sold","Rented"].indexOf(rec.status) === -1) delete rec.status;
+  if (sheet === "LAND_PROPERTIES" && rec.status && ["Available","Booked","Sold"].indexOf(rec.status) === -1) delete rec.status;
   if (sheet === "PROPERTIES" && rec.project_id) {           // may only attach units to own project
     const pj = getById("NEW_PROJECTS", rec.project_id);
     if (!pj.success || String(pj.data.posted_by) !== String(user.user_id)) rec.project_id = "";
   }
-  if (!(sheet === "PROPERTIES" ? rec.title : rec.project_name)) return { success: false, error: "Title / project name is required" };
+  if (sheet === "PROPERTIES" && rec.society_id) {           // society picked from the list → copy its name / area
+    const so = getById("SOCIETIES", rec.society_id);
+    if (so.success) { rec.society_name = so.data.society_name || rec.society_name || ""; if (!rec.area) rec.area = so.data.area || ""; }
+    else rec.society_id = "";
+  }
+  const nameOk = sheet === "NEW_PROJECTS" ? rec.project_name : rec.title;
+  if (!nameOk) return { success: false, error: "Title / project name is required" };
   const u = sheetToJSON(getSheet("USERS")).find(function (x) { return String(x.user_id) === String(user.user_id); }) || {};
   if (!rec.contact_name) rec.contact_name = u.full_name || "";
   if (!rec.contact_mobile) rec.contact_mobile = u.mobile || "";
   rec.approval_status = AUTO_APPROVE_ADS ? "Approved" : "Pending";
   rec.approval_note = "";
   const who = user.username || user.user_id;
+  let existing = null;
+  if (id) existing = ownedRecord(user, sheet, id);
+  if (LISTING_SHEETS[sheet]) {
+    const ag = ensureAgentProfile(user);                    // link every ad to the agent's profile
+    if (ag) rec.agent_id = ag.agent_id;
+    stampListing(sheet, rec, existing);                     // saving = manual update → 45 / 60 day clock restarts
+  }
   if (id) {
-    ownedRecord(user, sheet, id);
     rec[idField] = id;
     const r = updateRow(sheet, rec, who);
-    if (r.success) r.message = AUTO_APPROVE_ADS ? "Listing updated" : "Listing updated — sent for admin approval";
+    if (r.success) {
+      r.message = AUTO_APPROVE_ADS ? "Listing updated" : "Listing updated — sent for admin approval";
+      if (LISTING_SHEETS[sheet]) logListing(sheet, Object.assign({}, existing, rec), "EDITED", who, "Edited & re-activated");
+    }
     return r;
   }
   rec.posted_by = user.user_id;
   rec.posted_by_name = u.company_name || u.full_name || user.username;
   rec.posted_by_type = u.user_type || "";
-  if (sheet === "PROPERTIES" && !rec.status) rec.status = "Available";
+  if ((sheet === "PROPERTIES" || sheet === "LAND_PROPERTIES") && !rec.status) rec.status = "Available";
+  if (sheet === "LAND_PROPERTIES") rec.featured = "No";
   if (sheet === "NEW_PROJECTS") { rec.status = "Active"; rec.featured = "No"; if (!rec.builder_name) rec.builder_name = u.company_name || u.full_name; }
   const r = addRow(sheet, rec, who);
   if (r.success) {
     r.message = AUTO_APPROVE_ADS ? "Your ad is live!" : "Ad submitted ✅ It will appear on the website after admin approval.";
+    if (LISTING_SHEETS[sheet]) { rec[idField] = r.id; logListing(sheet, rec, "CREATED", who, ""); }
     notify("New ad to approve: " + (rec.title || rec.project_name), ["Posted by: " + rec.posted_by_name + " (" + rec.posted_by_type + ")", "Mobile: " + rec.contact_mobile, "ID: " + r.id, "", "Approve in Admin → Approvals"]);
   }
   return r;
@@ -922,7 +1046,8 @@ function deletePartnerListing(user, sheet, id) {
 function myListings(user) {
   const mine = function (r) { return String(r.posted_by) === String(user.user_id); };
   return { success: true, data: {
-    properties: sheetToJSON(getSheet("PROPERTIES")).filter(mine).reverse(),
+    properties: decorateListings("PROPERTIES", sheetToJSON(getSheet("PROPERTIES")).filter(mine)).reverse(),
+    land: decorateListings("LAND_PROPERTIES", sheetToJSON(getSheet("LAND_PROPERTIES")).filter(mine)).reverse(),
     projects: sheetToJSON(getSheet("NEW_PROJECTS")).filter(mine).reverse(),
   } };
 }
@@ -948,7 +1073,7 @@ function myLeads(user) {
 }
 
 function approveListing(sheet, d, who) {
-  if (sheet !== "PROPERTIES" && sheet !== "NEW_PROJECTS") return { success: false, error: "Bad sheet" };
+  if (sheet !== "PROPERTIES" && sheet !== "NEW_PROJECTS" && sheet !== "LAND_PROPERTIES") return { success: false, error: "Bad sheet" };
   const status = d.approval_status === "Rejected" ? "Rejected" : "Approved";
   const rec = { approval_status: status, approval_note: d.approval_note || "" };
   rec[SCHEMA[sheet].id] = d.id;
@@ -959,10 +1084,314 @@ function approveUser(d, who) {
   const status = d.status === "Rejected" ? "Rejected" : "Active";
   const r = updateRow("USERS", { user_id: d.user_id, status: status, approved_by: who }, who);
   const u = sheetToJSON(getSheet("USERS")).find(function (x) { return String(x.user_id) === String(d.user_id); });
+  if (r.success && u && status === "Active" && String(u.user_type) === "Agent") {
+    try { ensureAgentProfile({ user_id: u.user_id, role: PARTNER_ROLES.Agent, username: u.username }); } catch (e) {}   // creates the AGENTS row
+  }
   if (r.success && u && u.email && status === "Active") {
     try { MailApp.sendEmail(u.email, "Your ApnaGhar account is approved", "Hello " + u.full_name + ",\n\nYour account (" + u.username + ") is now active. Login and post your ads here:\nhttps://apnaghar-erp.aurasynergyrealtygroup.workers.dev/website/partner.html\n\n— Aura Synergy Realty Group"); } catch (e) {}
   }
   return r;
+}
+
+// ============================================================
+// LISTING VALIDITY  (v2.5)   RENT = 45 days · SALE = 60 days · then hidden until renewed
+// ------------------------------------------------------------
+// Rule (single source of truth = the DATE):
+//   expiry_date = last_renewed_on + validity_days      (LISTING_RULES sheet, fallback DEFAULT_LISTING_DAYS)
+//   Public website shows a listing only if it is Approved AND today <= expiry_date.
+//   Agent saves / edits the ad, or presses Renew  →  last_renewed_on = today  →  live again.
+// The daily trigger (deactivateExpiredListings) writes listing_active = Yes / No in the sheet so
+// you can see and filter it — but even if the trigger fails, expired ads are still hidden.
+// ============================================================
+function todayStr() { return Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd"); }
+function dayNum(s) {
+  const m = String(s || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? Math.round(Date.UTC(+m[1], +m[2] - 1, +m[3]) / 86400000) : NaN;
+}
+function addDaysStr(s, n) { return new Date((dayNum(s) + Number(n)) * 86400000).toISOString().slice(0, 10); }
+
+let _rules = null;
+function ruleDays(kind) {
+  if (!_rules) {
+    _rules = {};
+    safeRows("LISTING_RULES").forEach(function (r) {
+      const k = String(r.listing_type || "").trim().toUpperCase();
+      if (k && r.validity_days !== null && r.validity_days !== undefined && String(r.validity_days) !== "") _rules[k] = Number(r.validity_days) || 0;
+    });
+  }
+  return _rules[kind] !== undefined ? _rules[kind] : (DEFAULT_LISTING_DAYS[kind] || 0);
+}
+
+function listingKind(sheet, r) {
+  if (sheet === "LAND_PROPERTIES") return "LAND";
+  return String(r.listing_type || "").trim().toLowerCase() === "rent" ? "RENT" : "SALE";
+}
+
+function listingInfo(sheet, r) {
+  const kind = listingKind(sheet, r), days = ruleDays(kind);
+  const base = String(r.last_renewed_on || "").slice(0, 10);
+  const out = { kind: kind, days: days, base: base, expiry: "", days_left: null, expired: false, state: "Active" };
+  if (!days || isNaN(dayNum(base))) return out;                 // no rule / no date → never expires
+  out.expiry = addDaysStr(base, days);
+  out.days_left = dayNum(out.expiry) - dayNum(todayStr());
+  out.expired = out.days_left < 0;
+  out.state = out.expired ? "Inactive" : "Active";
+  return out;
+}
+
+function societyMap() {
+  const m = {};
+  safeRows("SOCIETIES").forEach(function (s) { m[String(s.society_id)] = s; });
+  return m;
+}
+
+// Adds computed fields: listing_status, expiry_date, days_left, validity_days, society_* (name/address/area)
+function decorateListing(sheet, r, soc) {
+  const info = listingInfo(sheet, r);
+  r.listing_status = info.state;
+  r.expiry_date = info.expiry || null;
+  r.days_left = info.days_left;
+  r.validity_days = info.days;
+  if (soc && r.society_id && soc[String(r.society_id)]) {
+    const so = soc[String(r.society_id)];
+    r.society_name = r.society_name || so.society_name || null;
+    r.society_address = [so.address, so.landmark ? "Near " + so.landmark : "", so.pincode].filter(String).join(", ") || null;
+    if (!r.area) r.area = so.area || null;
+  }
+  return r;
+}
+function decorateListings(sheet, rows) {
+  const soc = sheet === "PROPERTIES" ? societyMap() : null;
+  return rows.map(function (r) { return decorateListing(sheet, r, soc); });
+}
+
+// Marks the record as freshly (manually) updated → live for the full validity period again
+function stampListing(sheet, rec, existing) {
+  const merged = Object.assign({}, existing || {}, rec);
+  rec.last_renewed_on = todayStr();
+  merged.last_renewed_on = rec.last_renewed_on;
+  rec.listing_active = "Yes";
+  rec.deactivated_on = "";
+  rec.expiry_date = listingInfo(sheet, merged).expiry;
+  return rec;
+}
+
+function logListing(sheet, rec, action, who, remark) {
+  try {
+    addRow("LISTING_LOG", {
+      listing_sheet: sheet, listing_id: rec[LISTING_SHEETS[sheet]] || "", title: rec.title || "", agent_id: rec.agent_id || "",
+      action: action, action_date: Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd HH:mm"), done_by: who || "SYSTEM", remark: remark || "",
+    }, who);
+  } catch (e) { /* never block the main action */ }
+}
+
+// ---- who is this user in AGENTS? ----
+function userRow(userId) {
+  return sheetToJSON(getSheet("USERS")).find(function (x) { return String(x.user_id) === String(userId); }) || null;
+}
+function agentIdForUser(userId) { const u = userRow(userId); return u && u.agent_id ? String(u.agent_id) : ""; }
+
+// Agent accounts (website "Partner Agent" or ERP role "Agent") always get one AGENTS row, linked to the login.
+function ensureAgentProfile(user) {
+  if (!user || (user.role !== PARTNER_ROLES.Agent && user.role !== "Agent")) return null;
+  const u = userRow(user.user_id);
+  if (!u) return null;
+  if (u.agent_id) { const a = getById("AGENTS", u.agent_id); if (a.success) return a.data; }
+  const mob = normMobile(u.mobile);
+  const same = mob ? safeRows("AGENTS").find(function (x) { return normMobile(x.mobile) === mob; }) : null;
+  const id = same ? same.agent_id : addRow("AGENTS", {
+    full_name: u.full_name, mobile: mob, whatsapp: mob, email: u.email || "", rera_agent_no: u.rera_number || "",
+    city: u.city || "Pune", joining_date: todayStr(), status: "Active", user_id: u.user_id,
+  }, "SYSTEM").id;
+  updateRow("USERS", { user_id: u.user_id, agent_id: id }, "SYSTEM");
+  const a = getById("AGENTS", id);
+  return a.success ? a.data : null;
+}
+
+// ---- "agent sees only own properties" ----
+// Returns a row-filter for staff role "Agent" (own ads only), or null for everyone else.
+function agentScopeFor(u) {
+  if (!u || u.role !== "Agent") return null;
+  const aid = agentIdForUser(u.user_id);
+  return function (r) { return String(r.posted_by) === String(u.user_id) || (aid !== "" && String(r.agent_id) === aid); };
+}
+function agentScope(token) {
+  let u; try { u = requireAuth(token); } catch (e) { return null; }
+  return agentScopeFor(u);
+}
+function scopeResult(res, sc) {
+  if (sc && res.success) { res.data = res.data.filter(sc); res.count = res.data.length; }
+  return res;
+}
+
+// Guards admin-side create / update / delete of PROPERTIES & LAND_PROPERTIES
+function listingGuard(user, sheet, op, data) {
+  if (!LISTING_SHEETS[sheet]) return data;
+  const idField = LISTING_SHEETS[sheet];
+  if (user.role === "Agent") {
+    const ag = ensureAgentProfile(user);
+    if (op === "create") { data.agent_id = ag ? ag.agent_id : ""; data.posted_by = user.user_id; }
+    else {
+      const rec = getById(sheet, data[idField] || data.id);
+      const sc = agentScopeFor(user);
+      if (!rec.success || !sc(rec.data)) throw new Error("You can only change your own listings");
+      delete data.agent_id; delete data.posted_by;
+    }
+  }
+  if (op === "create" || op === "update") {
+    let existing = null;
+    if (op === "update") { const g = getById(sheet, data[idField] || data.id); if (g.success) existing = g.data; }
+    if (data.last_renewed_on === undefined) stampListing(sheet, data, existing);    // any manual save = renewed
+  }
+  return data;
+}
+
+// ---- Renew / re-activate ----
+function renewListing(user, sheet, id) {
+  if (!LISTING_SHEETS[sheet]) return { success: false, error: "Bad sheet" };
+  const res = getById(sheet, id);
+  if (!res.success) return { success: false, error: "Listing not found" };
+  if (isPartnerRole(user.role)) ownedRecord(user, sheet, id);
+  else { const sc = agentScopeFor(user); if (sc && !sc(res.data)) throw new Error("You can only renew your own listings"); }
+  const rec = {};
+  rec[LISTING_SHEETS[sheet]] = id;
+  stampListing(sheet, rec, res.data);
+  const who = user.username || user.user_id;
+  const r = updateRow(sheet, rec, who);
+  if (r.success) {
+    const days = listingInfo(sheet, Object.assign({}, res.data, rec)).days;
+    logListing(sheet, res.data, "RENEWED", who, "Manual renew");
+    r.expiry_date = rec.expiry_date || null;
+    r.message = days ? "Renewed ✅ Live again for " + days + " days (till " + rec.expiry_date + ")" : "Renewed ✅";
+  }
+  return r;
+}
+
+// ---- Daily job: writes listing_active / expiry_date / deactivated_on into the sheets ----
+function deactivateExpiredListings() {
+  const out = [];
+  Object.keys(LISTING_SHEETS).forEach(function (key) {
+    const sheet = getSheet(key);
+    ensureColumns(sheet, SCHEMA[key].headers);
+    const all = sheet.getDataRange().getValues();
+    if (all.length < 3) return;
+    const headers = all[1].map(String);
+    const col = function (h) { return headers.indexOf(h); };
+    const cA = col("listing_active"), cE = col("expiry_date"), cD = col("deactivated_on"), idC = col(LISTING_SHEETS[key]);
+    const n = all.length - 2;
+    const A = [], E = [], D = [];
+    let off = 0, on = 0;
+    for (let i = 2; i < all.length; i++) {
+      const row = all[i], rec = {};
+      headers.forEach(function (h, j) { if (h) rec[h] = cellOut(row[j]); });
+      let a = cellOut(row[cA]) || "", e = cellOut(row[cE]) || "", d = cellOut(row[cD]) || "";
+      if (row[idC] !== "" && row[idC] !== null) {
+        const info = listingInfo(key, rec), want = info.expired ? "No" : "Yes";
+        if (want === "No" && a !== "No") { d = Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd HH:mm"); off++; logListing(key, rec, "AUTO_DEACTIVATED", "SYSTEM", info.days + " days without update"); }
+        if (want === "Yes" && a === "No") { d = ""; on++; logListing(key, rec, "REACTIVATED", "SYSTEM", "Date updated"); }
+        a = want; e = info.expiry || "";
+      }
+      A.push([a]); E.push([e]); D.push([d]);
+    }
+    sheet.getRange(3, cA + 1, n, 1).setValues(A);
+    sheet.getRange(3, cE + 1, n, 1).setValues(E);
+    sheet.getRange(3, cD + 1, n, 1).setValues(D);
+    out.push(key + ": " + off + " hidden, " + on + " re-activated");
+  });
+  SpreadsheetApp.flush();
+  Logger.log(out.join("\n"));
+  return { success: true, report: out };
+}
+
+// Run once from the editor (setupSheets also tries it): daily run at ~1 AM IST
+function installDailyTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === "deactivateExpiredListings") ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger("deactivateExpiredListings").timeBased().everyDays(1).atHour(1).inTimezone(TZ).create();
+  return "Daily trigger installed — rent/sale listings auto-hide every night at ~1 AM";
+}
+
+function seedListingRules() {
+  const have = safeRows("LISTING_RULES").map(function (r) { return String(r.listing_type || "").toUpperCase(); });
+  const notes = { RENT: "Rent listing hidden after this many days without update / renew", SALE: "Sale listing hidden after this many days without update / renew", LAND: "0 = land listings never auto-hide (set a number to enable)" };
+  const added = [];
+  ["RENT", "SALE", "LAND"].forEach(function (k) {
+    if (have.indexOf(k) === -1) { addRow("LISTING_RULES", { listing_type: k, validity_days: DEFAULT_LISTING_DAYS[k], note: notes[k] }, "SETUP"); added.push(k + "=" + DEFAULT_LISTING_DAYS[k]); }
+  });
+  _rules = null;
+  return added;
+}
+
+// One-time: existing listings with no last_renewed_on get today's date, so nothing vanishes on day 1.
+function backfillListingDates() {
+  let total = 0;
+  Object.keys(LISTING_SHEETS).forEach(function (key) {
+    const sheet = getSheet(key);
+    ensureColumns(sheet, SCHEMA[key].headers);
+    const all = sheet.getDataRange().getValues();
+    if (all.length < 3) return;
+    const headers = all[1].map(String), cR = headers.indexOf("last_renewed_on"), cA = headers.indexOf("listing_active"), idC = headers.indexOf(LISTING_SHEETS[key]);
+    const R = [], A = [];
+    let n = 0;
+    for (let i = 2; i < all.length; i++) {
+      let r = all[i][cR], a = all[i][cA];
+      if (all[i][idC] !== "" && (r === "" || r === null)) { r = todayStr(); a = a || "Yes"; n++; }
+      R.push([r]); A.push([a]);
+    }
+    if (n) { sheet.getRange(3, cR + 1, R.length, 1).setValues(R); sheet.getRange(3, cA + 1, A.length, 1).setValues(A); }
+    total += n;
+  });
+  return total;
+}
+
+// ============================================================
+// AGENT PROFILE  (agent details stored in AGENTS; agent can edit own non-sensitive fields)
+// ============================================================
+const AGENT_SELF_FIELDS = ["alt_mobile","whatsapp","email","address","city","area","rera_agent_no","experience_years","pan_no","aadhaar_last4","bank_name","account_no","ifsc","photo_url"];
+function asText(v) { v = String(v == null ? "" : v).trim(); return v ? "'" + v : ""; }   // leading ' keeps 0123 / long numbers as text
+
+function myProfile(user) {
+  const agent = ensureAgentProfile(user);
+  const u = userRow(user.user_id) || {};
+  if (agent && agent.aadhaar_last4 != null) agent.aadhaar_last4 = String(agent.aadhaar_last4).padStart(4, "0");
+  return { success: true, data: { is_agent: !!agent, agent: agent, user: { full_name: u.full_name, mobile: u.mobile, email: u.email, company_name: u.company_name, user_type: u.user_type } } };
+}
+
+function saveMyProfile(user, d) {
+  const agent = ensureAgentProfile(user);
+  if (!agent) return { success: false, error: "My Profile is available for Agent accounts only" };
+  const rec = { agent_id: agent.agent_id };
+  AGENT_SELF_FIELDS.forEach(function (f) { if (d[f] !== undefined) rec[f] = d[f]; });
+  if (rec.aadhaar_last4 !== undefined) rec.aadhaar_last4 = asText(String(rec.aadhaar_last4).replace(/\D/g, "").slice(-4));   // never store the full Aadhaar number
+  if (rec.account_no !== undefined) rec.account_no = asText(String(rec.account_no).replace(/\s/g, ""));
+  if (rec.pan_no) rec.pan_no = String(rec.pan_no).toUpperCase().trim();
+  if (rec.ifsc) rec.ifsc = String(rec.ifsc).toUpperCase().trim();
+  if (rec.pan_no && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(rec.pan_no)) return { success: false, error: "PAN format looks wrong (e.g. ABCDE1234F)" };
+  if (rec.ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(rec.ifsc)) return { success: false, error: "IFSC format looks wrong (e.g. HDFC0001234)" };
+  const r = updateRow("AGENTS", rec, user.username);
+  if (r.success) r.message = "Profile saved";
+  return r;
+}
+
+// ============================================================
+// PUBLIC SEARCH HELPERS  (area / society dropdowns)
+// ============================================================
+function getSearchOptions() {
+  const soc = safeRows("SOCIETIES").filter(function (s) { return String(s.status || "Active") !== "Inactive"; });
+  const areas = {};
+  soc.forEach(function (s) { if (s.area) areas[String(s.area).trim()] = 1; });
+  safeRows("PROPERTIES").filter(function (r) { return isLive(r, "PROPERTIES"); }).forEach(function (r) { if (r.area) areas[String(r.area).trim()] = 1; });
+  safeRows("LAND_PROPERTIES").filter(function (r) { return isLive(r, "LAND_PROPERTIES"); }).forEach(function (r) { if (r.area) areas[String(r.area).trim()] = 1; });
+  return { success: true, data: {
+    areas: Object.keys(areas).sort(),
+    societies: soc.map(function (s) { return { society_id: s.society_id, society_name: s.society_name, area: s.area, address: s.address, landmark: s.landmark, pincode: s.pincode }; }),
+  } };
+}
+
+// Public society list never exposes the secretary's phone number
+function getSocietiesPublic(token) {
+  const res = listRows("SOCIETIES");
+  if (!isStaffToken(token)) res.data = res.data.map(function (s) { delete s.secretary_name; delete s.secretary_mobile; return s; });
+  return res;
 }
 
 function jsonResponse(data) {

@@ -54,6 +54,19 @@
         </div>
       </div>
       <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><h3><i class="fas fa-database"></i> New Google Sheet Database (automatic)</h3></div>
+        <div class="card-body" style="padding:20px">
+          <p style="font-size:13px;margin-bottom:8px">Creates a <b>brand-new, empty Google Sheet</b> in your Google Drive with <b>every tab, column, role, listing rule</b> and the <b>admin / admin123</b> login — and switches the website, admin panel and Partner Portal to it.</p>
+          <p style="font-size:12px;color:#b42318;margin-bottom:12px">⚠️ The new sheet starts <b>empty</b> (old data is not copied; the old sheet is not deleted and can be re-activated from Apps Script with <code>useExistingDatabase</code>). You will be logged out and must login again as <b>admin / admin123</b>.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input type="text" id="newDbName" placeholder="Sheet name (optional) e.g. ApnaGhar ERP Live" style="flex:1;min-width:220px;padding:9px;border:1px solid var(--gray-200);border-radius:8px" />
+            <button class="btn btn-primary" onclick="createDb()" id="dbBtn"><i class="fas fa-plus-circle"></i> Create New Google Sheet</button>
+            <button class="btn btn-outline" onclick="showDb()"><i class="fas fa-info-circle"></i> Current database</button>
+          </div>
+          <div id="dbOut" style="margin-top:12px;font-size:13px"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
         <div class="card-header"><h3><i class="fas fa-table"></i> Sheet Setup / Repair</h3></div>
         <div class="card-body" style="padding:20px">
           <p style="font-size:13px;margin-bottom:12px">Creates any missing tabs (PROPERTIES, NEW_PROJECTS, PROPERTY_BOOKINGS, WEBSITE_INQUIRIES, MEDIA_LIBRARY …) and adds any missing columns. Existing data is never deleted. Safe to run any time.</p>
@@ -105,6 +118,25 @@ function saveOverride() {
   localStorage.setItem("ag_api_url", u); showToast("Saved for this browser. Reloading…", "success"); setTimeout(() => location.reload(), 800);
 }
 function clearOverride() { localStorage.removeItem("ag_api_url"); location.reload(); }
+async function showDb() {
+  const r = await API.admin.getDbInfo(), o = document.getElementById("dbOut");
+  o.innerHTML = r.success ? `Current database: <b>${escapeHtml(r.data.name)}</b> (${r.data.tabs} tabs) — <a target="_blank" href="${escapeHtml(r.data.url)}">Open Google Sheet ↗</a>`
+    : `<span style="color:#b42318">${escapeHtml(r.error)}</span>`;
+  if (r.success) localStorage.setItem("ag_sheet_url", r.data.url);
+}
+async function createDb() {
+  if (!confirm("Create a NEW EMPTY Google Sheet and switch the whole system to it?\n\nOld data stays in the old sheet but will no longer be shown.")) return;
+  if (prompt('Type  NEW  to confirm') !== "NEW") return;
+  const b = document.getElementById("dbBtn"), o = document.getElementById("dbOut");
+  b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating (≈30–60 sec)…';
+  const r = await API.admin.createDatabase(document.getElementById("newDbName").value.trim());
+  b.disabled = false; b.innerHTML = '<i class="fas fa-plus-circle"></i> Create New Google Sheet';
+  if (!r.success) { o.innerHTML = `<span style="color:#b42318">${escapeHtml(r.error || "Failed")}</span>${/permission|authoriz|Drive|Spreadsheet/i.test(r.error || "") ? "<br>Open Apps Script, run <b>createNewDatabase</b> once and click Allow." : ""}`; return; }
+  localStorage.setItem("ag_sheet_url", r.url);
+  o.innerHTML = `✅ <b>New database is live.</b> <a target="_blank" href="${escapeHtml(r.url)}">Open Google Sheet ↗</a><br>${(r.errors || []).length ? "<span style='color:#b42318'>Problems: " + escapeHtml(r.errors.join("; ")) + "</span><br>" : ""}Login again with <b>admin / admin123</b> (then change the password). Redirecting…`;
+  sessionStorage.removeItem("ag_user"); localStorage.removeItem("ag_user");
+  setTimeout(() => location.href = "login.html", 5000);
+}
 async function runSetup() {
   const b = document.getElementById("setupBtn"), o = document.getElementById("setupOut");
   b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running…';

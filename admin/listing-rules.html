@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Listing Rules — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v2.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../website/index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Listing Rules — Auto-hide</div>
+      </div>
+      <div class="topbar-right"><button class="btn btn-gold" onclick="runJob()"><i class="fas fa-sync-alt"></i> Run auto-hide now</button> <button class="btn btn-primary" onclick="CRUD.openAdd()"><i class="fas fa-plus"></i> Add Rule</button></div>
+    </header>
+    <main class="admin-content" id="crudRoot"></main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="../website/js/config.js"></script>
+<script src="../website/js/api.js"></script>
+<script src="admin.js"></script>
+<script src="sidebar.js"></script>
+<script src="media-upload.js"></script>
+<script src="crud.js"></script>
+<script>
+
+CRUD.init({
+  sheet: "LISTING_RULES", idField: "rule_id", title: "Rule", plural: "Listing Rules", icon: "fa-hourglass-half", module: "Listing Rules", noDelete: true,
+  intro: "A listing stays <b>live on the website</b> for this many days after the agent's last <b>update or Renew</b>. After that it is <b>hidden from everyone</b> (the agent still sees it and can renew it). " +
+         "<b>RENT = 45</b> days, <b>SALE = 60</b> days, <b>LAND = 0</b> (0 = never hides). Change a number here and it applies immediately — no code change needed. " +
+         "A nightly job (≈1 AM) also writes <code>listing_active = Yes/No</code> into the Properties / Land sheets so you can filter them there.",
+  columns: [
+    { label: "Listing type", render: r => `<b style="color:var(--navy)">${escapeHtml(r.listing_type || "—")}</b>` },
+    { label: "Days live", render: r => Number(r.validity_days) ? `<b>${escapeHtml(r.validity_days)}</b> days` : "Never hides" },
+    { label: "Note", field: "note" },
+  ],
+  fields: [
+    { name: "listing_type", label: "Listing type", type: "select", options: ["RENT","SALE","LAND"], blank: false, required: true },
+    { name: "validity_days", label: "Days live after last update (0 = never hides)", type: "number", required: true },
+    { name: "note", label: "Note", full: true },
+  ],
+});
+async function runJob() {
+  if (!confirm("Check every listing now and hide expired ones / re-show renewed ones?")) return;
+  const r = await API.admin.runListingJob();
+  r.success ? showToast((r.report || []).join(" | ") || "Done", "success") : showToast(r.error || "Failed", "error");
+}
+</script>
+</body>
+</html>
