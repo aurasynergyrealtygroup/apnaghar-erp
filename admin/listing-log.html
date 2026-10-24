@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Listing Log — ApnaGhar Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+<div class="admin-layout">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon"><img src="images/logo-small.png" alt="Aura Synergy Realty Group logo" /></span>
+      <div><span class="sidebar-logo-text">ApnaGhar</span><span class="sidebar-logo-version">ERP v2.0</span></div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar"><i class="fas fa-user-tie"></i></div>
+      <div><div class="user-name" id="sidebarUserName">Admin</div><div class="user-role" id="sidebarUserRole">Administrator</div></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <a class="nav-item" href="../website/index.html" style="padding:8px 0"><i class="fas fa-globe"></i> View Website</a>
+      <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <div class="page-heading">Listing Log — created / renewed / hidden</div>
+      </div>
+      <div class="topbar-right"><a class="btn btn-outline" href="listing-rules.html"><i class="fas fa-hourglass-half"></i> Listing Rules</a></div>
+    </header>
+    <main class="admin-content" id="crudRoot"></main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="../website/js/config.js"></script>
+<script src="../website/js/api.js"></script>
+<script src="admin.js"></script>
+<script src="sidebar.js"></script>
+<script src="media-upload.js"></script>
+<script src="crud.js"></script>
+<script>
+
+CRUD.init({
+  sheet: "LISTING_LOG", idField: "listing_log_id", title: "Log entry", plural: "Listing Log", icon: "fa-history", module: "Listing Log", noDelete: true,
+  intro: "Every time an ad is created, edited, renewed, auto-hidden (after 45 / 60 days) or re-activated it is recorded here. Read-only history.",
+  filters: [{ field: "action", label: "All actions", options: ["CREATED","EDITED","RENEWED","AUTO_DEACTIVATED","REACTIVATED"] }, { field: "listing_sheet", label: "Properties + Land", options: ["PROPERTIES","LAND_PROPERTIES"] }],
+  columns: [
+    { label: "When", render: r => escapeHtml(String(r.action_date || r.created_at || "").slice(0, 16)) },
+    { label: "Action", render: r => `<b style="color:${r.action === "AUTO_DEACTIVATED" ? "#b42318" : "var(--navy)"}">${escapeHtml(r.action || "")}</b>` },
+    { label: "Listing", render: R.title("title", r => escapeHtml((r.listing_sheet === "LAND_PROPERTIES" ? "Land " : "Property ") + (r.listing_id || ""))) },
+    { label: "Agent", field: "agent_id" },
+    { label: "By", field: "done_by" },
+    { label: "Remark", field: "remark" },
+  ],
+  fields: [ { name: "remark", label: "Remark", full: true } ],
+});
+</script>
+</body>
+</html>

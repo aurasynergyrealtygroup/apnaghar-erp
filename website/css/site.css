@@ -124,3 +124,11 @@
   .type-cards { grid-template-columns:1fr; } .steps-row { grid-template-columns:1fr 1fr; }
   .pf-grid { grid-template-columns:1fr; } .p-item { grid-template-columns:72px 1fr; } .p-item img { width:72px; height:56px; } .p-item .acts { grid-column:1/-1; justify-content:flex-start; }
 }
+
+/* ===== v2.5 — listing validity (45 / 60 days), agent filters ===== */
+.ap-Expired { background:#fdecea; color:#b42318; } .ap-Soon { background:#fff4d6; color:#8a5a00; } .ap-Left { background:#e6f6ec; color:#146c2e; }
+.ad-filter { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-bottom:12px; }
+.ad-filter input, .ad-filter select { padding:9px 10px; border:1px solid var(--gray-200); border-radius:8px; font-size:13px; background:#fff; font-family:inherit; width:100%; }
+.ad-count { font-size:12px; color:var(--text-light); margin:0 0 10px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+.soc-hint { display:block; font-size:11px; color:var(--text-light); margin-top:4px; }
+.profile-note { font-size:12px; color:var(--text-light); background:#eef4fb; border:1px solid #c9daf0; border-radius:8px; padding:10px 12px; margin-bottom:14px; }

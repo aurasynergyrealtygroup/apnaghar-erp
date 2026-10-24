@@ -41,7 +41,7 @@
 <section class="section" style="padding-top:40px"><div class="container">
   <div class="pill-tabs" id="stageTabs">
     <button class="active" data-stage="">All</button><button data-stage="Pre-Launch">Pre-Launch</button><button data-stage="New Launch">New Launch</button>
-    <button data-stage="Under Construction">Under Construction</button><button data-stage="Ready to Move">Ready to Move</button>
+    <button data-stage="Under Construction">Under Construction</button><button data-stage="Ready to Move">Ready to Move</button><button data-stage="Sold Out">Sold Out</button>
   </div>
   <div class="filter-bar"><input type="text" id="pjSearch" placeholder="Search project, builder, location, BHK..." /></div>
   <div class="properties-grid" id="pjGrid"><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
@@ -121,7 +121,14 @@ function renderPJ() {
   document.getElementById("pjGrid").innerHTML = list.length ? list.map(buildProjectCard).join("")
     : `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-rocket"></i><p>${PJ.length ? "No project matches your search" : "New launch projects जल्द ही उपलब्ध होंगे — हमसे संपर्क करें"}</p><a href="contact.html" class="btn btn-primary" style="margin-top:12px">Contact Us</a></div>`;
 }
-API.getNewProjects().then(r => { PJ = r.success ? r.data : []; renderPJ(); });
+API.getNewProjects().then(r => {
+  if (!r.success) {   // don't hide a server / setup error behind the "coming soon" message
+    document.getElementById("pjGrid").innerHTML = `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-triangle-exclamation"></i><p>Projects could not be loaded${r.error ? ": " + escapeHtml(r.error) : ""}</p><p style="font-size:12px;color:var(--text-light)">Admin: open Admin → Settings → Website Data Check</p></div>`;
+    console.error("getNewProjects failed", r);
+    return;
+  }
+  PJ = r.data || []; renderPJ();
+});
 
 </script>
 </body>

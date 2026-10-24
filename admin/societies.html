@@ -51,6 +51,7 @@ CRUD.init({
   columns: [
     { label: "Image", render: R.thumb("image_url") },
     { label: "Society", render: R.title("society_name", r => escapeHtml(r.builder_name || "")) },
+    { label: "Address", render: r => `<div style="font-size:12px">${escapeHtml(r.address || "—")}</div><div style="font-size:10px;color:var(--text-light)">${escapeHtml([r.landmark && "Near " + r.landmark, r.pincode].filter(Boolean).join(" • "))}</div>` },
     { label: "Area", render: r => escapeHtml([r.area, r.city].filter(Boolean).join(", ") || "—") },
     { label: "Wings / Flats", render: r => `${r.total_wings || "—"} / ${r.total_flats || "—"}` },
     { label: "Secretary", render: r => escapeHtml([r.secretary_name, r.secretary_mobile].filter(Boolean).join(" • ") || "—") },
@@ -60,7 +61,8 @@ CRUD.init({
   fields: [
     { name: "society_name", label: "Society Name", required: true },
     { name: "builder_name", label: "Builder" },
-    { name: "address", label: "Address", full: true },
+    { name: "address", label: "Society Address", full: true, placeholder: "Plot / Survey no., road, locality" },
+    { name: "landmark", label: "Landmark", placeholder: "Near …" },
     { name: "area", label: "Area" }, { name: "city", label: "City" }, { name: "pincode", label: "Pincode" },
     { name: "total_wings", label: "Total Wings", type: "number" }, { name: "total_flats", label: "Total Flats", type: "number" },
     { name: "secretary_name", label: "Secretary Name" }, { name: "secretary_mobile", label: "Secretary Mobile", type: "tel" },

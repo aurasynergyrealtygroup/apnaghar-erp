@@ -43,6 +43,9 @@ function readURLParams() {
   }
   if (p.get("bhk")) selectBHK(document.querySelector(`[data-bhk="${p.get("bhk")}"]`), p.get("bhk"));
   if (p.get("q")) document.getElementById("searchInput").value = p.get("q");
+  STATE.urlArea = p.get("area") || ""; STATE.urlSociety = p.get("society") || "";
+  if (p.get("min_price")) document.getElementById("minPrice").value = p.get("min_price");
+  if (p.get("max_price")) document.getElementById("maxPrice").value = p.get("max_price");
 }
 
 // ---- LOAD DATA FROM API ----
@@ -56,8 +59,29 @@ async function loadProperties() {
     return;
   }
   STATE.allProperties = result.data || [];
+  await loadSearchOptions();
   applyFilters();
 }
+
+// ---- Area / society dropdowns (from SOCIETIES + live ads) ----
+async function loadSearchOptions() {
+  const r = await API.getSearchOptions();
+  const o = r.success ? r.data : { areas: [], societies: [] };
+  const fromAds = [...new Set(STATE.allProperties.map(p => p.area).filter(Boolean))];
+  STATE.opts = { areas: [...new Set([...(o.areas || []), ...fromAds])].sort(), societies: o.societies || [] };
+  document.getElementById("areaFilter").innerHTML = '<option value="">All Areas</option>' + STATE.opts.areas.map(a => `<option>${escapeHtml(a)}</option>`).join("");
+  if (STATE.urlArea) document.getElementById("areaFilter").value = STATE.urlArea;
+  fillSocieties();
+  if (STATE.urlSociety) document.getElementById("societyFilter").value = STATE.urlSociety;
+}
+function fillSocieties() {
+  const area = document.getElementById("areaFilter").value.toLowerCase();
+  const list = (STATE.opts?.societies || []).filter(s => !area || String(s.area || "").toLowerCase() === area);
+  document.getElementById("societyFilter").innerHTML = '<option value="">All Societies</option>' +
+    list.map(s => `<option value="${escapeHtml(s.society_name)}">${escapeHtml(s.society_name)}${s.area ? " — " + escapeHtml(s.area) : ""}</option>`).join("");
+}
+function onAreaChange() { fillSocieties(); applyFilters(); }
+const priceOf = p => Number(p.listing_type === "Rent" ? p.expected_rent : p.expected_price) || 0;
 
 // ---- APPLY ALL FILTERS ----
 function applyFilters() {
@@ -121,6 +145,21 @@ function applyFilters() {
     activeFilters["Facing"] = facingChecked.join(", ");
   }
 
+  // Area / society / society-or-flat address keyword
+  const area = document.getElementById("areaFilter").value;
+  if (area) { data = data.filter(p => String(p.area || "").toLowerCase() === area.toLowerCase()); activeFilters["Area"] = area; }
+  const soc = document.getElementById("societyFilter").value;
+  if (soc) { data = data.filter(p => String(p.society_name || "").toLowerCase() === soc.toLowerCase()); activeFilters["Society"] = soc; }
+  const kw = document.getElementById("locKeyword").value.trim().toLowerCase();
+  if (kw) {
+    data = data.filter(p => [p.society_name, p.society_address, p.address, p.area].some(v => String(v || "").toLowerCase().includes(kw)));
+    activeFilters["Address"] = `"${kw}"`;
+  }
+  // Custom min / max price (rent for Rent ads, sale price for Sale ads)
+  const minP = Number(document.getElementById("minPrice").value) || 0, maxP = Number(document.getElementById("maxPrice").value) || 0;
+  if (minP) { data = data.filter(p => priceOf(p) >= minP); activeFilters["Min ₹"] = minP.toLocaleString("en-IN"); }
+  if (maxP) { data = data.filter(p => priceOf(p) > 0 && priceOf(p) <= maxP); activeFilters["Max ₹"] = maxP.toLocaleString("en-IN"); }
+
   // Search text
   const q = document.getElementById("searchInput").value.trim().toLowerCase();
   if (q) {
@@ -128,6 +167,9 @@ function applyFilters() {
       (p.title || "").toLowerCase().includes(q) ||
       (p.city || "").toLowerCase().includes(q) ||
       (p.address || "").toLowerCase().includes(q) ||
+      (p.area || "").toLowerCase().includes(q) ||
+      (p.society_name || "").toLowerCase().includes(q) ||
+      (p.society_address || "").toLowerCase().includes(q) ||
       (p.bhk || "").toLowerCase().includes(q) ||
       (p.property_type || "").toLowerCase().includes(q)
     );
@@ -269,6 +311,8 @@ function clearAllFilters() {
   document.querySelectorAll('input[name="budgetSale"]')[0].checked = true;
   document.querySelectorAll('input[name="budgetRent"]')[0].checked = true;
   document.getElementById("searchInput").value = "";
+  ["areaFilter", "locKeyword", "minPrice", "maxPrice"].forEach(id => document.getElementById(id).value = "");
+  fillSocieties(); document.getElementById("societyFilter").value = "";
   STATE.selectedBHK = "";
   document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
   document.querySelector('[data-bhk=""]')?.classList.add("active");
@@ -303,6 +347,11 @@ function removeFilter(key) {
       document.querySelectorAll('.checkbox-group input[value="Furnished"], .checkbox-group input[value="Semi-Furnished"], .checkbox-group input[value="Unfurnished"]').forEach(c => c.checked = false); break;
     case "Facing":
       document.querySelectorAll('.checkbox-group input[value="East"], .checkbox-group input[value="West"], .checkbox-group input[value="North"], .checkbox-group input[value="South"]').forEach(c => c.checked = false); break;
+    case "Area": document.getElementById("areaFilter").value = ""; fillSocieties(); break;
+    case "Society": document.getElementById("societyFilter").value = ""; break;
+    case "Address": document.getElementById("locKeyword").value = ""; break;
+    case "Min ₹": document.getElementById("minPrice").value = ""; break;
+    case "Max ₹": document.getElementById("maxPrice").value = ""; break;
     case "Search": clearSearch(); return;
   }
   applyFilters();

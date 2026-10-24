@@ -79,6 +79,23 @@
       </div>
     </div>
 
+    <!-- Location: area / society / address -->
+    <div class="filter-group">
+      <h4>Location</h4>
+      <select id="areaFilter" class="loc-input" onchange="onAreaChange()"><option value="">All Areas</option></select>
+      <select id="societyFilter" class="loc-input" onchange="applyFilters()"><option value="">All Societies</option></select>
+      <input type="text" id="locKeyword" class="loc-input" placeholder="Society name / address…" oninput="debounceSearch()" />
+    </div>
+
+    <!-- Custom price / rent range -->
+    <div class="filter-group">
+      <h4>Price / Rent (₹)</h4>
+      <div class="price-range-row">
+        <input type="number" id="minPrice" class="loc-input" placeholder="Min" min="0" oninput="debounceSearch()" />
+        <input type="number" id="maxPrice" class="loc-input" placeholder="Max" min="0" oninput="debounceSearch()" />
+      </div>
+    </div>
+
     <!-- Property Type -->
     <div class="filter-group">
       <h4>Property Type</h4>

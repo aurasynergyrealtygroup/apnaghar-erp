@@ -54,6 +54,67 @@
         </div>
       </div>
       <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><h3><i class="fas fa-file-import"></i> Auto-import leads from other Google Sheets → Clients</h3><span id="leadBadge"></span></div>
+        <div class="card-body" style="padding:20px">
+          <p style="font-size:13px;margin-bottom:8px">New rows in your lead sheet(s) (e.g. <b>Facebook / Meta lead form</b> sheet) are added to <b>Clients</b> automatically every 5 minutes. The lead sheet is only <b>read</b>, never changed. Same mobile number = no duplicate client (a "repeat enquiry" note is added instead).</p>
+          <div id="leadSources" style="font-size:13px;margin:10px 0"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <input type="text" id="leadUrl" placeholder="Add another lead sheet link: https://docs.google.com/spreadsheets/d/…" style="flex:1;min-width:260px;padding:9px;border:1px solid var(--gray-200);border-radius:8px" />
+            <button class="btn btn-outline" onclick="addLead()"><i class="fas fa-plus"></i> Add sheet</button>
+          </div>
+          <button class="btn btn-primary" onclick="leadOn()"><i class="fas fa-play"></i> Turn auto-import ON</button>
+          <button class="btn btn-gold" onclick="leadNow()" id="leadNowBtn" style="margin-left:6px"><i class="fas fa-sync-alt"></i> Import now</button>
+          <button class="btn btn-outline" onclick="leadOff()" style="margin-left:6px"><i class="fas fa-stop"></i> Turn OFF</button>
+          <div id="leadOut" style="margin-top:12px;font-size:13px"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><h3><i class="fas fa-code-merge"></i> Merge latest tabs into this Google Sheet (safe)</h3></div>
+        <div class="card-body" style="padding:20px">
+          <p style="font-size:13px;margin-bottom:8px">Keeps <b>one</b> Google Sheet. Adds the <b>latest new tabs</b> and any <b>missing columns at the end</b>. Your existing tabs, rows and column order are <b>never changed</b>; a tab with an older layout is skipped and reported. A <b>backup copy</b> is saved in your Google Drive first. Run again after any future update — it only adds what is still missing.</p>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px;margin-bottom:10px">
+            <label><input type="checkbox" id="mgCols" checked /> Also add missing columns to existing tabs (at the end)</label>
+            <label><input type="checkbox" id="mgBackup" checked /> Make a backup copy in Drive first</label>
+          </div>
+          <button class="btn btn-outline" onclick="previewMerge()" id="mgPrev"><i class="fas fa-eye"></i> Preview (changes nothing)</button>
+          <button class="btn btn-primary" onclick="doMerge()" id="mgBtn" style="margin-left:6px"><i class="fas fa-code-merge"></i> Merge now</button>
+          <div id="mgOut" style="margin-top:12px;font-size:13px"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><h3><i class="fas fa-link"></i> Attach Google Sheet to this project</h3></div>
+        <div class="card-body" style="padding:20px">
+          <p style="font-size:13px;margin-bottom:8px">Makes the <b>website, admin panel and Partner Portal</b> read and write the Google Sheet you paste here. Nothing is deleted or copied — missing tabs / columns are added, your data stays.</p>
+          <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">The Google account that deployed the Apps Script must have <b>Editor</b> access to that sheet.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input type="text" id="attachUrl" placeholder="https://docs.google.com/spreadsheets/d/…/edit" style="flex:1;min-width:260px;padding:9px;border:1px solid var(--gray-200);border-radius:8px" />
+            <button class="btn btn-primary" onclick="attachSheet()" id="attachBtn"><i class="fas fa-link"></i> Attach this Google Sheet</button>
+          </div>
+          <div id="attachOut" style="margin-top:12px;font-size:13px"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><h3><i class="fas fa-stethoscope"></i> Website Data Check — "my sheet data is not showing"</h3></div>
+        <div class="card-body" style="padding:20px">
+          <p style="font-size:13px;margin-bottom:12px">Reads Properties, Land and Projects <b>exactly like the website does</b> and tells you, ad by ad, what is visible and <b>why</b> the others are hidden (waiting approval, expired after 45 / 60 days, wrong header row, wrong column names).</p>
+          <button class="btn btn-gold" onclick="runCheck()" id="chkBtn"><i class="fas fa-search"></i> Check now</button>
+          <div id="chkOut" style="margin-top:14px;font-size:13px"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><h3><i class="fas fa-database"></i> New Google Sheet Database (automatic)</h3></div>
+        <div class="card-body" style="padding:20px">
+          <p style="font-size:13px;margin-bottom:8px">Creates a <b>brand-new, empty Google Sheet</b> in your Google Drive with <b>every tab, column, role, listing rule</b> and the <b>admin / admin123</b> login — and switches the website, admin panel and Partner Portal to it.</p>
+          <p style="font-size:12px;color:#b42318;margin-bottom:12px">⚠️ The new sheet starts <b>empty</b> (old data is not copied; the old sheet is not deleted and can be re-activated from Apps Script with <code>useExistingDatabase</code>). You will be logged out and must login again as <b>admin / admin123</b>.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <input type="text" id="newDbName" placeholder="Sheet name (optional) e.g. ApnaGhar ERP Live" style="flex:1;min-width:220px;padding:9px;border:1px solid var(--gray-200);border-radius:8px" />
+            <button class="btn btn-primary" onclick="createDb()" id="dbBtn"><i class="fas fa-plus-circle"></i> Create New Google Sheet</button>
+            <button class="btn btn-outline" onclick="showDb()"><i class="fas fa-info-circle"></i> Current database</button>
+          </div>
+          <div id="dbOut" style="margin-top:12px;font-size:13px"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:20px">
         <div class="card-header"><h3><i class="fas fa-table"></i> Sheet Setup / Repair</h3></div>
         <div class="card-body" style="padding:20px">
           <p style="font-size:13px;margin-bottom:12px">Creates any missing tabs (PROPERTIES, NEW_PROJECTS, PROPERTY_BOOKINGS, WEBSITE_INQUIRIES, MEDIA_LIBRARY …) and adds any missing columns. Existing data is never deleted. Safe to run any time.</p>
@@ -105,6 +166,104 @@ function saveOverride() {
   localStorage.setItem("ag_api_url", u); showToast("Saved for this browser. Reloading…", "success"); setTimeout(() => location.reload(), 800);
 }
 function clearOverride() { localStorage.removeItem("ag_api_url"); location.reload(); }
+async function runCheck() {
+  const b = document.getElementById("chkBtn"), o = document.getElementById("chkOut");
+  b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking…';
+  const r = await API.admin.diagnose();
+  b.disabled = false; b.innerHTML = '<i class="fas fa-search"></i> Check now';
+  if (!r.success) { o.innerHTML = `<span style="color:#b42318">${escapeHtml(r.error || "Failed")}${/Unknown|action/i.test(r.error || "") ? "<br>The backend is old — paste the v2.5 Code.gs and Deploy → New version." : ""}</span>`; return; }
+  let h = r.attached_elsewhere ? `<div style="background:#fdecea;border:1px solid #f5b5ae;border-radius:8px;padding:10px 12px;margin-bottom:10px;color:#b42318"><b>⚠ The website is reading a DIFFERENT Google Sheet</b> ("${escapeHtml(r.database)}") than your main one. Paste your main sheet link in <b>Attach Google Sheet</b> above.</div>` : "";
+  h += `<div style="margin-bottom:10px">Backend <b>v${escapeHtml(r.version)}</b> • Database: <a target="_blank" href="${escapeHtml(r.url)}"><b>${escapeHtml(r.database)}</b> ↗</a> • Today ${escapeHtml(r.today)}</div>`;
+  h += `<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;margin-bottom:12px"><b>What to do:</b><ul style="margin:6px 0 0 18px">${r.advice.map(a => `<li>${escapeHtml(a)}</li>`).join("")}</ul></div>`;
+  Object.entries(r.sheets).forEach(([k, s]) => {
+    h += `<div style="border:1px solid var(--gray-200);border-radius:8px;padding:12px;margin-bottom:10px"><b>${k}</b> — `;
+    if (!s.tab_exists) { h += `<span style="color:#b42318">${escapeHtml(s.problem)}</span></div>`; return; }
+    h += `<span style="color:#146c2e"><b>${s.visible_on_website ?? 0}</b> visible</span> • ${s.hidden_count ?? 0} hidden • ${s.rows_read ?? 0} rows read • headers on row ${s.header_row_found || "?"}`;
+    if (s.problem) h += `<div style="color:#b42318;margin-top:6px">⚠ ${escapeHtml(s.problem)} <button class="btn btn-sm btn-primary" style="margin-left:8px" onclick="repairSheet('${k}')">Repair layout</button></div>`;
+    if (s.missing_columns && s.missing_columns.length && !s.problem) h += `<div style="font-size:12px;color:var(--text-light);margin-top:6px">Missing columns (added by Run Setup): ${escapeHtml(s.missing_columns.join(", "))}</div>`;
+    if (s.hidden && s.hidden.length) h += `<table style="width:100%;margin-top:8px;font-size:12px;border-collapse:collapse">${s.hidden.map(x => `<tr><td style="padding:4px 6px;border-top:1px solid #eee"><b>${escapeHtml(x.title || x.id)}</b><br><span style="color:var(--text-light)">${escapeHtml(x.id)}</span></td><td style="padding:4px 6px;border-top:1px solid #eee;color:#b42318">${escapeHtml(x.why)}</td></tr>`).join("")}</table>`;
+    if (s.warnings && s.warnings.length) h += `<div style="font-size:12px;color:#8a5a00;margin-top:6px">${s.warnings.map(w => "• " + escapeHtml(w)).join("<br>")}</div>`;
+    h += `</div>`;
+  });
+  o.innerHTML = h;
+}
+async function repairSheet(key) {
+  if (!confirm(`${key}: fix header row / column names?\n\nA backup tab is created first. No data rows are deleted.`)) return;
+  const r = await API.admin.repairSheet(key);
+  alert(r.success ? r.report.join("\n") : "Error: " + r.error);
+  if (r.success) runCheck();
+}
+async function loadLeadStatus() {
+  const r = await API.admin.leadSyncStatus(), s = document.getElementById("leadSources"), b = document.getElementById("leadBadge");
+  if (!r.success) { s.innerHTML = `<span style="color:#b42318">${escapeHtml(r.error || "Failed")}${/Unknown|action/i.test(r.error || "") ? " — paste the latest Code.gs and deploy a new version" : ""}</span>`; return; }
+  const d = r.data;
+  b.innerHTML = d.trigger_on ? '<span class="badge badge-success">● Auto-import ON</span>' : '<span class="badge badge-warning">○ OFF</span>';
+  s.innerHTML = `<b>Lead sheets:</b><ul style="margin:4px 0 8px 18px">${d.sources.map(x => `<li><a target="_blank" href="https://docs.google.com/spreadsheets/d/${escapeHtml(x.id)}/edit">${escapeHtml(x.name)} ↗</a> <span style="color:var(--text-light)">(source: ${escapeHtml(x.lead_source || "—")})</span> <a href="#" onclick="rmLead('${escapeHtml(x.id)}');return false" style="color:#b42318;margin-left:8px">remove</a></li>`).join("") || "<li>none</li>"}</ul>
+    Imported so far: <b>${d.imported}</b> new clients • ${d.repeats} repeat enquiries • ${d.skipped} skipped (bad phone)`;
+}
+async function addLead() { const v = document.getElementById("leadUrl").value.trim(); if (!v) return; const r = await API.admin.addLeadSource(v); document.getElementById("leadOut").innerHTML = r.success ? "✅ " + escapeHtml(r.message) : `<span style="color:#b42318">${escapeHtml(r.error)}</span>`; if (r.success) { document.getElementById("leadUrl").value = ""; loadLeadStatus(); } }
+async function rmLead(id) { if (!confirm("Remove this lead sheet from auto-import? (clients already imported are kept)")) return; await API.admin.removeLeadSource(id); loadLeadStatus(); }
+async function leadOn() { const r = await API.admin.leadSyncOn(); document.getElementById("leadOut").innerHTML = r.success ? "✅ " + escapeHtml(r.message) : `<span style="color:#b42318">${escapeHtml(r.error)}${/permission|authoriz|trigger/i.test(r.error || "") ? "<br>Open Apps Script, run <b>setupLeadSync</b> once and click Allow." : ""}</span>`; loadLeadStatus(); }
+async function leadOff() { const r = await API.admin.leadSyncOff(); document.getElementById("leadOut").innerHTML = r.success ? escapeHtml(r.message) : escapeHtml(r.error); loadLeadStatus(); }
+async function leadNow() {
+  const b = document.getElementById("leadNowBtn"), o = document.getElementById("leadOut");
+  b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing…';
+  const r = await API.admin.syncLeadsNow();
+  b.disabled = false; b.innerHTML = '<i class="fas fa-sync-alt"></i> Import now';
+  o.innerHTML = r.success ? `<div style="white-space:pre-wrap">${(r.report || []).map(escapeHtml).join("\n") || "Done"}</div><div style="margin-top:6px">New clients: <b>${r.created}</b> • repeats: ${r.repeats} • skipped: ${r.skipped} — <a href="clients.html">Open Clients →</a></div>` : `<span style="color:#b42318">${escapeHtml(r.error || "Failed")}</span>`;
+  loadLeadStatus();
+}
+loadLeadStatus();
+function planHtml(p) {
+  const li = (a, f) => a.length ? "<ul style='margin:4px 0 8px 18px'>" + a.map(f).join("") + "</ul>" : "<div style='margin:2px 0 8px 18px;color:var(--text-light)'>none</div>";
+  return `<b>＋ New tabs to add (${p.newTabs.length})</b>${li(p.newTabs, t => `<li>${escapeHtml(t)}</li>`)}
+    <b>＋ Extra columns added at the end (${p.addColumns.length} tab${p.addColumns.length === 1 ? "" : "s"})</b>${li(p.addColumns, c => `<li><b>${escapeHtml(c.tab)}</b>: ${escapeHtml(c.columns.join(", "))}</li>`)}
+    <b>⏭ Skipped for safety (${p.skipped.length})</b>${li(p.skipped, s => `<li><b>${escapeHtml(s.tab)}</b> — ${escapeHtml(s.reason)}</li>`)}
+    <b>✔ Already up to date (${p.upToDate.length})</b> &nbsp; <b>Your own tabs left alone (${p.leftAlone.length})</b>: <span style="color:var(--text-light)">${escapeHtml(p.leftAlone.join(", ") || "—")}</span>`;
+}
+async function previewMerge() {
+  const o = document.getElementById("mgOut"); o.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking…';
+  const r = await API.admin.previewMerge();
+  o.innerHTML = r.success ? `<div style="margin-bottom:8px">Sheet: <a target="_blank" href="${escapeHtml(r.url)}"><b>${escapeHtml(r.database)}</b> ↗</a> — ${escapeHtml(r.summary)}</div>` + planHtml(r.plan) : `<span style="color:#b42318">${escapeHtml(r.error || "Failed")}</span>`;
+}
+async function doMerge() {
+  if (!confirm("Add the latest tabs / columns to this Google Sheet?\n\nYour existing data and column order are not changed. A backup copy is saved in Drive first.")) return;
+  const o = document.getElementById("mgOut"), b = document.getElementById("mgBtn");
+  b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Merging (≈30–90 sec)…';
+  const r = await API.admin.mergeSheet({ addColumns: document.getElementById("mgCols").checked, backup: document.getElementById("mgBackup").checked });
+  b.disabled = false; b.innerHTML = '<i class="fas fa-code-merge"></i> Merge now';
+  o.innerHTML = r.success ? `✅ <b>Merged into ${escapeHtml(r.database)}</b> — <a target="_blank" href="${escapeHtml(r.url)}">Open sheet ↗</a><div style="margin-top:8px;white-space:pre-wrap;font-size:12px">${(r.report || []).map(escapeHtml).join("\n")}</div>` : `<span style="color:#b42318">${escapeHtml(r.error || "Failed")}</span>`;
+}
+async function attachSheet() {
+  const v = document.getElementById("attachUrl").value.trim(), o = document.getElementById("attachOut"), b = document.getElementById("attachBtn");
+  if (!v) return alert("Google Sheet link paste करें");
+  if (!confirm("Website + admin + Partner Portal इसी Google Sheet से data पढ़ेंगे। Continue?")) return;
+  b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Attaching…';
+  const r = await API.admin.attachSheet(v);
+  b.disabled = false; b.innerHTML = '<i class="fas fa-link"></i> Attach this Google Sheet';
+  if (!r.success) { o.innerHTML = `<span style="color:#b42318">${escapeHtml(r.error || "Failed")}</span>`; return; }
+  localStorage.setItem("ag_sheet_url", r.url);
+  o.innerHTML = `✅ <b>Attached: ${escapeHtml(r.name)}</b> — <a target="_blank" href="${escapeHtml(r.url)}">Open sheet ↗</a><br><span style="font-size:12px;color:var(--text-light)">${(r.report || []).map(escapeHtml).join("<br>") || "Everything was already set up"}</span>`;
+}
+async function showDb() {
+  const r = await API.admin.getDbInfo(), o = document.getElementById("dbOut");
+  o.innerHTML = r.success ? `Current database: <b>${escapeHtml(r.data.name)}</b> (${r.data.tabs} tabs) — <a target="_blank" href="${escapeHtml(r.data.url)}">Open Google Sheet ↗</a>`
+    : `<span style="color:#b42318">${escapeHtml(r.error)}</span>`;
+  if (r.success) localStorage.setItem("ag_sheet_url", r.data.url);
+}
+async function createDb() {
+  if (!confirm("Create a NEW EMPTY Google Sheet and switch the whole system to it?\n\nOld data stays in the old sheet but will no longer be shown.")) return;
+  if (prompt('Type  NEW  to confirm') !== "NEW") return;
+  const b = document.getElementById("dbBtn"), o = document.getElementById("dbOut");
+  b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating (≈30–60 sec)…';
+  const r = await API.admin.createDatabase(document.getElementById("newDbName").value.trim());
+  b.disabled = false; b.innerHTML = '<i class="fas fa-plus-circle"></i> Create New Google Sheet';
+  if (!r.success) { o.innerHTML = `<span style="color:#b42318">${escapeHtml(r.error || "Failed")}</span>${/permission|authoriz|Drive|Spreadsheet/i.test(r.error || "") ? "<br>Open Apps Script, run <b>createNewDatabase</b> once and click Allow." : ""}`; return; }
+  localStorage.setItem("ag_sheet_url", r.url);
+  o.innerHTML = `✅ <b>New database is live.</b> <a target="_blank" href="${escapeHtml(r.url)}">Open Google Sheet ↗</a><br>${(r.errors || []).length ? "<span style='color:#b42318'>Problems: " + escapeHtml(r.errors.join("; ")) + "</span><br>" : ""}Login again with <b>admin / admin123</b> (then change the password). Redirecting…`;
+  sessionStorage.removeItem("ag_user"); localStorage.removeItem("ag_user");
+  setTimeout(() => location.href = "login.html", 5000);
+}
 async function runSetup() {
   const b = document.getElementById("setupBtn"), o = document.getElementById("setupOut");
   b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Running…';

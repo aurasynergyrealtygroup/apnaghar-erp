@@ -39,6 +39,18 @@ async function loadAdminProperties() {
   filterProperties();
 }
 
+// ---- Listing validity: Rent 45 days / Sale 60 days (set in Listing Rules) ----
+function listingChip(p) {
+  if (p.listing_status === "Inactive") { const n = Math.abs(p.days_left || 0); return `<div style="margin-top:3px"><span class="badge badge-danger" style="font-size:10px">⛔ Hidden — expired ${n}d ago</span></div>`; }
+  if (p.expiry_date && p.days_left != null) return `<div style="font-size:10px;margin-top:3px;color:${p.days_left <= 7 ? "#b26a00" : "var(--text-light)"}">${p.days_left <= 7 ? "⏱" : "🟢"} ${p.days_left}d left • ${escapeHtml(String(p.expiry_date).slice(0, 10))}</div>`;
+  return "";
+}
+async function renewProperty(id) {
+  const r = await API.admin.renewListing("PROPERTIES", id);
+  r.success ? showToast(r.message || "Renewed", "success") : showToast(r.error || "Could not renew", "error");
+  loadAdminProperties();
+}
+
 // ---- FILTER ----
 function filterProperties() {
   const q = document.getElementById("propSearch").value.toLowerCase();
@@ -47,11 +59,13 @@ function filterProperties() {
   const status = document.getElementById("statusFilterP").value;
 
   filteredProperties = allProperties.filter(p => {
-    const matchQ = !q || (p.title||"").toLowerCase().includes(q) || (p.property_code||"").toLowerCase().includes(q) || (p.city||"").toLowerCase().includes(q);
+    const matchQ = !q || [p.title, p.property_code, p.city, p.area, p.society_name, p.society_address, p.address, p.posted_by_name].some(v => String(v || "").toLowerCase().includes(q));
+    const ls = document.getElementById("listingStatusFilter").value;
+    const matchLs = !ls || (ls === "Active" && p.listing_status !== "Inactive") || (ls === "Inactive" && p.listing_status === "Inactive") || (ls === "Soon" && p.listing_status === "Active" && p.days_left != null && p.days_left <= 7);
     const matchListing = !listingType || p.listing_type === listingType;
     const matchType = !propType || p.property_type === propType;
     const matchStatus = !status || p.status === status;
-    return matchQ && matchListing && matchType && matchStatus;
+    return matchQ && matchLs && matchListing && matchType && matchStatus;
   });
 
   currentPropPage = 1;
@@ -89,10 +103,11 @@ function renderTableView(page, total) {
       <td style="font-weight:600">${p.bhk || "—"}</td>
       <td><span style="font-size:12px">${p.carpet_area ? p.carpet_area + " sqft" : "—"}</span></td>
       <td style="font-weight:700;color:var(--navy)">${p.listing_type === "Rent" ? fmt(p.expected_rent) + "/mo" : fmt(p.expected_price)}</td>
-      <td><span style="font-size:12px">${p.society_id || "—"}</span></td>
-      <td>${statusBadge(p.status)}${p.approval_status && p.approval_status !== "Approved" ? "<br>" + statusBadge(p.approval_status) : ""}${p.posted_by_name ? `<div style="font-size:10px;color:var(--text-light)">by ${escapeHtml(p.posted_by_name)}</div>` : ""}</td>
+      <td><span style="font-size:12px">${escapeHtml(p.society_name || p.society_id || "—")}</span>${p.area ? `<div style="font-size:10px;color:var(--text-light)">${escapeHtml(p.area)}</div>` : ""}</td>
+      <td>${statusBadge(p.status)}${p.approval_status && p.approval_status !== "Approved" ? "<br>" + statusBadge(p.approval_status) : ""}${p.posted_by_name ? `<div style="font-size:10px;color:var(--text-light)">by ${escapeHtml(p.posted_by_name)}</div>` : ""}${listingChip(p)}</td>
       <td>
         <div style="display:flex;gap:5px">
+          ${p.listing_status === "Inactive" || (p.days_left != null && p.days_left <= 7) ? `<button class="btn btn-sm btn-gold btn-icon" onclick="renewProperty('${p.property_id}')" title="Renew — show on website again for ${p.validity_days || 45} days"><i class="fas fa-sync-alt"></i></button>` : ""}
           <a href="../website/property-detail.html?id=${p.property_id}" target="_blank" class="btn btn-sm btn-outline btn-icon" title="View Live"><i class="fas fa-external-link-alt"></i></a>
           <button class="btn btn-sm btn-outline btn-icon" onclick="viewProperty('${p.property_id}')" title="Quick View"><i class="fas fa-eye"></i></button>
           <button class="btn btn-sm btn-primary btn-icon" onclick="editProperty('${p.property_id}')" title="Edit"><i class="fas fa-edit"></i></button>
@@ -176,7 +191,7 @@ function openAddModal() {
 }
 
 function clearPropForm() {
-  const fields = ["pCode","pTitle","pCarpetArea","pBuiltupArea","pFloor","pTotalFloors","pAddress","pSocietyId","pExpectedPrice","pExpectedRent","pDeposit","pImage1","pImage2","pImage3","pImage4","pImage5","pImage6","pVideo","pBrochure","pAmenities","pDescription","pOwnerName","pOwnerMobile"];
+  const fields = ["pCode","pTitle","pCarpetArea","pBuiltupArea","pFloor","pTotalFloors","pAddress","pArea","pSocietyId","pSocietyName","pExpectedPrice","pExpectedRent","pDeposit","pImage1","pImage2","pImage3","pImage4","pImage5","pImage6","pVideo","pBrochure","pAmenities","pDescription","pOwnerName","pOwnerMobile"];
   fields.forEach(id => document.getElementById(id).value = "");
   document.getElementById("pCity").value = "Pune";
   document.getElementById("pType").value = "Apartment";
@@ -212,6 +227,8 @@ function editProperty(id) {
   document.getElementById("pCity").value = p.city || "Pune";
   document.getElementById("pAddress").value = p.address || "";
   document.getElementById("pSocietyId").value = p.society_id || "";
+  document.getElementById("pArea").value = p.area || "";
+  document.getElementById("pSocietyName").value = p.society_name || "";
   document.getElementById("pStatus").value = p.status || "Available";
   document.getElementById("pExpectedPrice").value = p.expected_price || "";
   document.getElementById("pExpectedRent").value = p.expected_rent || "";
@@ -257,6 +274,8 @@ async function saveProperty() {
     city: document.getElementById("pCity").value,
     address: document.getElementById("pAddress").value,
     society_id: document.getElementById("pSocietyId").value,
+    area: document.getElementById("pArea").value,
+    society_name: document.getElementById("pSocietyName").value,
     status: document.getElementById("pStatus").value,
     expected_price: document.getElementById("pExpectedPrice").value,
     expected_rent: document.getElementById("pExpectedRent").value,
