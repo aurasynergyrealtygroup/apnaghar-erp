@@ -48,6 +48,8 @@
 
 CRUD.init({
   sheet: "LAND_PROPERTIES", idField: "land_id", title: "Land", plural: "Land Listings", icon: "fa-map", module: "Land",
+  load: async () => { const r = await API.getLand({}); if (r.success) r.data = r.data.slice().reverse(); return r; },   // decorated: listing_status / days_left
+  rowActions: r => (r.listing_status === "Inactive" || (r.days_left != null && r.days_left <= 7)) ? `<button class="btn btn-sm btn-gold btn-icon" title="Renew listing" onclick="renewLand('${escapeHtml(r.land_id)}')"><i class="fas fa-sync-alt"></i></button>` : "",
   kpis: [
     { label: "Total", icon: "fa-map", color: "navy", value: r => r.length },
     { label: "Available", icon: "fa-check-circle", color: "green", value: r => r.filter(x => x.status === "Available").length },
@@ -61,8 +63,9 @@ CRUD.init({
     { label: "Type", field: "land_type" },
     { label: "Area", render: r => r.area_value ? escapeHtml(r.area_value + " " + (r.area_unit || "")) : "—" },
     { label: "Price", render: R.money("price") },
-    { label: "District", field: "district" },
-    { label: "Status", render: R.badge("status") },
+    { label: "Area", render: r => escapeHtml([r.area, r.village].filter(Boolean).join(", ") || r.district || "—") },
+    { label: "Posted by", render: r => r.posted_by_name ? `<div style="font-size:12px">${escapeHtml(r.posted_by_name)}</div><div style="font-size:10px;color:var(--text-light)">${escapeHtml(r.posted_by_type || "")}</div>` : "Admin" },
+    { label: "Status", render: r => statusBadge(r.status) + (r.approval_status && r.approval_status !== "Approved" ? "<br>" + statusBadge(r.approval_status) : "") + (r.listing_status === "Inactive" ? `<div><span class="badge badge-danger" style="font-size:10px">⛔ Hidden — expired</span></div>` : r.days_left != null ? `<div style="font-size:10px;color:var(--text-light)">${r.days_left}d left</div>` : "") },
   ],
   defaults: { status: "Available", district: "Pune", area_unit: "Guntha", featured: "No" },
   fields: [
@@ -72,6 +75,7 @@ CRUD.init({
     { name: "village", label: "Village" },
     { name: "taluka", label: "Taluka" },
     { name: "district", label: "District" },
+    { name: "area", label: "Area / Locality", placeholder: "Mulshi, Uruli Kanchan…", help: "Buyers search land by this" },
     { name: "area_value", label: "Area", type: "number", step: "any" },
     { name: "area_unit", label: "Area Unit", type: "select", options: ["Guntha","Acre","Hectare","SqFt","SqMt"], blank: false },
     { name: "price", label: "Total Price (₹)", type: "number" },
@@ -90,6 +94,9 @@ CRUD.init({
   ],
 });
 
+function renewLand(id) {
+  API.admin.renewListing("LAND_PROPERTIES", id).then(r => { r.success ? showToast(r.message || "Renewed", "success") : showToast(r.error || "Could not renew", "error"); CRUD.load(); });
+}
 </script>
 </body>
 </html>

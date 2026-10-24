@@ -234,3 +234,9 @@
   .view-toggle { display: none; }
   .sort-select { flex: 1; }
 }
+
+/* v2.5 — location + custom price filters */
+.loc-input { width: 100%; padding: 9px 10px; margin-bottom: 8px; border: 1px solid #d9e0ea; border-radius: 8px; font-size: 13px; background: #fff; font-family: inherit; }
+.loc-input:focus { outline: none; border-color: #1e3a5f; }
+.price-range-row { display: flex; gap: 8px; }
+.price-range-row .loc-input { margin-bottom: 0; }

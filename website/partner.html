@@ -36,6 +36,7 @@
   </div>
 </nav>
 
+<datalist id="areaList"></datalist>
 <section class="portal-wrap"><div class="container">
   <!-- LOGIN -->
   <div id="loginView" style="max-width:440px;margin:0 auto;display:none">
@@ -60,15 +61,32 @@
     <div class="portal-tabs" id="pTabs">
       <button data-tab="ads" class="active"><i class="fas fa-list"></i> My Ads</button>
       <button data-tab="prop"><i class="fas fa-plus"></i> Post Property</button>
+      <button data-tab="land"><i class="fas fa-map"></i> Post Land</button>
       <button data-tab="proj" id="projTabBtn" style="display:none"><i class="fas fa-rocket"></i> Post New Project</button>
       <button data-tab="leads"><i class="fas fa-inbox"></i> My Leads</button>
+      <button data-tab="profile" id="profileTabBtn" style="display:none"><i class="fas fa-id-card"></i> My Profile</button>
       <button data-tab="acct"><i class="fas fa-key"></i> Account</button>
     </div>
-    <div class="ptab" id="tab-ads"><div class="p-list" id="adsList"><p><i class="fas fa-spinner fa-spin"></i> Loading…</p></div></div>
+    <div class="ptab" id="tab-ads">
+      <div class="ad-filter">
+        <select id="adType" onchange="renderAds()"><option value="">All ads</option><option value="Rent">Rent</option><option value="Sale">Sale</option><option value="Land">Land</option><option value="Project">Projects</option></select>
+        <select id="adStatus" onchange="renderAds()"><option value="">Any status</option><option value="Live">✔ Live</option><option value="Hidden">⛔ Hidden (expired)</option><option value="Soon">⏱ Expiring in 7 days</option><option value="Pending">⏳ Waiting approval</option></select>
+        <input type="text" id="adArea" list="areaList" placeholder="Area" oninput="renderAds()" />
+        <input type="text" id="adKw" placeholder="Society / address / title" oninput="renderAds()" />
+        <input type="number" id="adMin" placeholder="Min ₹" min="0" oninput="renderAds()" />
+        <input type="number" id="adMax" placeholder="Max ₹" min="0" oninput="renderAds()" />
+      </div>
+      <div class="ad-count"><span id="adCount"></span><button class="btn btn-sm btn-gold" id="renewAllBtn" style="display:none" onclick="renewAllHidden()"><i class="fas fa-sync-alt"></i> Renew all hidden ads</button></div>
+      <div class="p-list" id="adsList"><p><i class="fas fa-spinner fa-spin"></i> Loading…</p></div>
+    </div>
     <div class="ptab" id="tab-prop" style="display:none"><div class="portal-card"><h3 id="propFormTitle" style="color:var(--navy);margin-bottom:14px">Post Property</h3>
       <input type="hidden" id="prop_property_id" /><div class="pf-grid" id="propForm"></div>
       <button class="btn btn-primary" id="propSave" onclick="saveAd('PROPERTIES')"><i class="fas fa-paper-plane"></i> Submit Ad</button>
-      <span style="font-size:12px;color:var(--text-light);margin-left:10px">Ad goes live after admin approval.</span></div></div>
+      <span style="font-size:12px;color:var(--text-light);margin-left:10px">Ad goes live after admin approval. Rent ads stay live 45 days, Sale ads 60 days — press <b>Renew</b> (or edit) to keep them live.</span></div></div>
+    <div class="ptab" id="tab-land" style="display:none"><div class="portal-card"><h3 id="landFormTitle" style="color:var(--navy);margin-bottom:14px">Post Land</h3>
+      <input type="hidden" id="land_land_id" /><div class="pf-grid" id="landForm"></div>
+      <button class="btn btn-primary" id="landSave" onclick="saveAd('LAND_PROPERTIES')"><i class="fas fa-paper-plane"></i> Submit Land Ad</button>
+      <span style="font-size:12px;color:var(--text-light);margin-left:10px">Goes live after admin approval.</span></div></div>
     <div class="ptab" id="tab-proj" style="display:none"><div class="portal-card"><h3 id="projFormTitle" style="color:var(--navy);margin-bottom:14px">Post New Launch Project</h3>
       <input type="hidden" id="proj_project_id" /><div class="pf-grid" id="projForm"></div>
       <button class="btn btn-primary" id="projSave" onclick="saveAd('NEW_PROJECTS')"><i class="fas fa-paper-plane"></i> Submit Project</button>
@@ -76,6 +94,10 @@
     <div class="ptab" id="tab-leads" style="display:none"><div class="portal-card"><h3 style="color:var(--navy);margin-bottom:6px">Leads on my ads</h3>
       <p style="font-size:13px;color:var(--text-light);margin-bottom:14px">Inquiries, site-visit requests and bookings received on your live ads.</p>
       <div style="overflow-x:auto" id="leadsBox"></div></div></div>
+    <div class="ptab" id="tab-profile" style="display:none"><div class="portal-card"><h3 style="color:var(--navy);margin-bottom:6px">My Agent Profile</h3>
+      <div class="profile-note">🔒 Only ApnaGhar admin can see your PAN / bank details. They are never shown on the website. For Aadhaar we store only the <b>last 4 digits</b>.</div>
+      <div class="pf-grid" id="profileForm"></div>
+      <button class="btn btn-primary" onclick="saveProfile()"><i class="fas fa-save"></i> Save Profile</button><div id="profStatus" class="form-status"></div></div></div>
     <div class="ptab" id="tab-acct" style="display:none"><div class="portal-card" style="max-width:520px"><h3 style="color:var(--navy);margin-bottom:14px">Change Password</h3>
       <div class="form-group"><label>Current Password</label><input type="password" id="oPw" /></div>
       <div class="form-group"><label>New Password (min 6)</label><input type="password" id="nPw" autocomplete="new-password" /></div>
@@ -148,7 +170,8 @@
 initSiteNav();
 
 const U = () => API.user();
-let MY = { properties: [], projects: [] };
+let MY = { properties: [], land: [], projects: [] };
+let OPTS = { areas: [], societies: [] };
 const SEL = (o) => o.map(x => typeof x === "string" ? { v: x, t: x || "—" } : x);
 const PROP_FIELDS = [
   { sec: "Basic Details" },
@@ -163,7 +186,10 @@ const PROP_FIELDS = [
   { n: "status", l: "Availability", type: "select", o: ["Available", "Booked", "Sold", "Rented"] },
   { sec: "Location & Price" },
   { n: "city", l: "City", def: "Pune" }, { n: "project_id", l: "Part of my project (Builders)", type: "select", builderOnly: 1 },
-  { n: "address", l: "Address / Area / Society", full: 1 },
+  { n: "area", l: "Area / Locality *", list: "areaList", ph: "e.g. Baner, Wakad, Hadapsar" },
+  { n: "society_id", l: "Society (pick from list)", type: "select", society: 1 },
+  { n: "society_name", l: "Society name (if not in the list)", ph: "e.g. Sai Heights" },
+  { n: "address", l: "Flat / Property Address", full: 1, ph: "Flat no., wing, floor, street, landmark" },
   { n: "expected_price", l: "Sale Price (₹)", type: "number" }, { n: "expected_rent", l: "Monthly Rent (₹)", type: "number" },
   { n: "deposit_amount", l: "Deposit (₹)", type: "number" },
   { sec: "Description" },
@@ -202,6 +228,40 @@ const PROJ_FIELDS = [
   { n: "contact_name", l: "Contact Name" }, { n: "contact_mobile", l: "Contact Mobile", type: "tel" },
 ];
 
+const LAND_FIELDS = [
+  { sec: "Land Details" },
+  { n: "title", l: "Ad Title *", full: 1, ph: "e.g. 5 Guntha NA Plot, Mulshi" },
+  { n: "land_type", l: "Land Type", type: "select", o: ["NA Plot", "Agricultural", "Commercial", "Industrial", "Farm House Plot"] },
+  { n: "status", l: "Availability", type: "select", o: ["Available", "Booked", "Sold"] },
+  { n: "survey_no", l: "Survey / Gat No." }, { n: "area_value", l: "Plot Area", type: "number" },
+  { n: "area_unit", l: "Area Unit", type: "select", o: ["Guntha", "Acre", "Hectare", "SqFt", "SqMt"] },
+  { n: "road_touch", l: "Road Touch", type: "select", o: ["", "Yes", "No"] },
+  { n: "zone", l: "Zone", ph: "Residential / Agri / Yellow" }, { n: "ownership", l: "Ownership", ph: "Single / Joint / Company" },
+  { sec: "Location & Price" },
+  { n: "area", l: "Area / Locality *", list: "areaList", ph: "e.g. Mulshi, Uruli Kanchan" },
+  { n: "village", l: "Village" }, { n: "taluka", l: "Taluka" }, { n: "district", l: "District", def: "Pune" },
+  { n: "price", l: "Total Price (₹) *", type: "number" }, { n: "price_per_unit", l: "Price per Unit (₹)", type: "number" },
+  { sec: "Description" },
+  { n: "description", l: "Description", type: "textarea", full: 1 },
+  { sec: "Photos, Video & Documents (Upload or paste link)" },
+  { n: "image1_url", l: "Main Photo *", up: "image" }, { n: "image2_url", l: "Photo 2", up: "image" }, { n: "image3_url", l: "Photo 3", up: "image" },
+  { n: "video_url", l: "Video (≤35 MB or YouTube link)", up: "video" }, { n: "document_url", l: "7/12 Extract / Documents (PDF)", up: "doc" },
+  { sec: "Contact for this ad (shared with ApnaGhar team)" },
+  { n: "contact_name", l: "Contact Name" }, { n: "contact_mobile", l: "Contact Mobile", type: "tel" },
+];
+const PROFILE_FIELDS = [
+  { sec: "Contact" },
+  { n: "alt_mobile", l: "Alternate Mobile", type: "tel" }, { n: "whatsapp", l: "WhatsApp Number", type: "tel" },
+  { n: "email", l: "Email", type: "email" }, { n: "city", l: "City", def: "Pune" },
+  { n: "address", l: "Office / Home Address", full: 1 }, { n: "area", l: "Main Working Area", list: "areaList" },
+  { sec: "Professional" },
+  { n: "rera_agent_no", l: "MahaRERA Agent No." }, { n: "experience_years", l: "Experience (years)", type: "number" },
+  { n: "photo_url", l: "Your Photo", up: "image" },
+  { sec: "KYC & Payout (private — admin only)" },
+  { n: "pan_no", l: "PAN Number", ph: "ABCDE1234F" }, { n: "aadhaar_last4", l: "Aadhaar — last 4 digits only", ph: "1234" },
+  { n: "bank_name", l: "Bank Name" }, { n: "account_no", l: "Account Number" }, { n: "ifsc", l: "IFSC Code", ph: "HDFC0001234" },
+];
+
 function buildForm(boxId, fields, prefix, module) {
   document.getElementById(boxId).innerHTML = fields.map(f => {
     if (f.sec) return `<div class="pf-sec">${f.sec}</div>`;
@@ -209,9 +269,9 @@ function buildForm(boxId, fields, prefix, module) {
     const id = prefix + f.n, full = f.full || f.up ? " full" : "", ph = f.ph ? ` placeholder="${escapeHtml(f.ph)}"` : "";
     let inp;
     if (f.up) inp = `<input type="text" id="${id}" data-upload="${f.up}" data-module="${module}" />`;
-    else if (f.type === "select") inp = `<select id="${id}">${f.n === "project_id" ? `<option value="">— Not in a project —</option>` + MY.projects.map(p => `<option value="${escapeHtml(p.project_id)}">${escapeHtml(p.project_name)}</option>`).join("") : SEL(f.o).map(o => `<option value="${escapeHtml(o.v)}">${escapeHtml(o.t)}</option>`).join("")}</select>`;
+    else if (f.type === "select") inp = `<select id="${id}"${f.society ? ` onchange="onSocietyPick(this)"` : ""}>${f.n === "project_id" ? `<option value="">— Not in a project —</option>` + MY.projects.map(p => `<option value="${escapeHtml(p.project_id)}">${escapeHtml(p.project_name)}</option>`).join("") : f.society ? `<option value="">— Not in the list —</option>` + OPTS.societies.map(s => `<option value="${escapeHtml(s.society_id)}">${escapeHtml(s.society_name)}${s.area ? " — " + escapeHtml(s.area) : ""}</option>`).join("") : SEL(f.o).map(o => `<option value="${escapeHtml(o.v)}">${escapeHtml(o.t)}</option>`).join("")}</select>${f.society ? `<small class="soc-hint" id="${prefix}society_hint"></small>` : ""}`;
     else if (f.type === "textarea") inp = `<textarea id="${id}" rows="3"${ph}></textarea>`;
-    else inp = `<input type="${f.type || "text"}" id="${id}"${ph} />`;
+    else inp = `<input type="${f.type || "text"}" id="${id}"${ph}${f.list ? ` list="${f.list}"` : ""} />`;
     return `<div class="form-group${full}"><label>${f.l}</label>${inp}</div>`;
   }).join("");
   fields.forEach(f => { if (f.def) { const el = document.getElementById(prefix + f.n); if (el) el.value = f.def; } });
@@ -221,47 +281,74 @@ function buildForm(boxId, fields, prefix, module) {
   AGUpload.enhance(document.getElementById(boxId));
 }
 
+const KIND = {
+  PROPERTIES:      { idf: "property_id", prefix: "prop_", fields: PROP_FIELDS, formBox: "propForm", titleBox: "propFormTitle", newTitle: "Post Property", mod: "Partner Ads", list: "properties", btn: "propSave" },
+  LAND_PROPERTIES: { idf: "land_id",     prefix: "land_", fields: LAND_FIELDS, formBox: "landForm", titleBox: "landFormTitle", newTitle: "Post Land", mod: "Partner Land", list: "land", btn: "landSave" },
+  NEW_PROJECTS:    { idf: "project_id",  prefix: "proj_", fields: PROJ_FIELDS, formBox: "projForm", titleBox: "projFormTitle", newTitle: "Post New Launch Project", mod: "Partner Projects", list: "projects", btn: "projSave" },
+};
+const TAB_SHEET = { prop: "PROPERTIES", land: "LAND_PROPERTIES", proj: "NEW_PROJECTS" };
+const $ = (id) => document.getElementById(id);
+
 function showTab(t) {
   document.querySelectorAll("#pTabs button").forEach(b => b.classList.toggle("active", b.dataset.tab === t));
   document.querySelectorAll(".ptab").forEach(x => x.style.display = x.id === "tab-" + t ? "" : "none");
   if (t === "leads") loadLeads();
+  if (t === "profile") loadProfile();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 document.querySelectorAll("#pTabs button").forEach(b => b.onclick = () => {
-  if (b.dataset.tab === "prop") resetForm("PROPERTIES");
-  if (b.dataset.tab === "proj") resetForm("NEW_PROJECTS");
+  if (TAB_SHEET[b.dataset.tab]) resetForm(TAB_SHEET[b.dataset.tab]);
   showTab(b.dataset.tab);
 });
 
+// Picking a society fills Area + Society name and shows the society's address
+function onSocietyPick(sel) {
+  const prefix = sel.id.replace(/society_id$/, "");
+  const s = OPTS.societies.find(x => String(x.society_id) === String(sel.value));
+  const hint = $(prefix + "society_hint");
+  if (!s) { if (hint) hint.textContent = ""; return; }
+  if ($(prefix + "area")) $(prefix + "area").value = s.area || $(prefix + "area").value;
+  if ($(prefix + "society_name")) $(prefix + "society_name").value = s.society_name || "";
+  if (hint) hint.textContent = "📍 " + [s.address, s.landmark && "Near " + s.landmark, s.pincode].filter(Boolean).join(", ");
+}
+
 function resetForm(sheet) {
-  if (sheet === "PROPERTIES") { buildForm("propForm", PROP_FIELDS, "prop_", "Partner Ads"); document.getElementById("prop_property_id").value = ""; document.getElementById("propFormTitle").textContent = "Post Property"; }
-  else { buildForm("projForm", PROJ_FIELDS, "proj_", "Partner Projects"); document.getElementById("proj_project_id").value = ""; document.getElementById("projFormTitle").textContent = "Post New Launch Project"; }
+  const K = KIND[sheet];
+  buildForm(K.formBox, K.fields, K.prefix, K.mod);
+  $(K.prefix + K.idf).value = "";
+  $(K.titleBox).textContent = K.newTitle;
 }
 
 function editAd(sheet, id) {
-  const isP = sheet === "PROPERTIES", rec = (isP ? MY.properties : MY.projects).find(x => String(x[isP ? "property_id" : "project_id"]) === String(id));
+  const K = KIND[sheet], rec = MY[K.list].find(x => String(x[K.idf]) === String(id));
   if (!rec) return;
   resetForm(sheet);
-  const prefix = isP ? "prop_" : "proj_";
-  (isP ? PROP_FIELDS : PROJ_FIELDS).forEach(f => { if (!f.n) return; const el = document.getElementById(prefix + f.n); if (el && rec[f.n] != null) el.value = rec[f.n]; });
-  document.getElementById(isP ? "prop_property_id" : "proj_project_id").value = id;
-  document.getElementById(isP ? "propFormTitle" : "projFormTitle").textContent = "Edit: " + (rec.title || rec.project_name);
+  K.fields.forEach(f => { if (!f.n) return; const el = $(K.prefix + f.n); if (el && rec[f.n] != null) el.value = rec[f.n]; });
+  $(K.prefix + K.idf).value = id;
+  $(K.titleBox).textContent = "Edit: " + (rec.title || rec.project_name);
+  const sel = $(K.prefix + "society_id"); if (sel && sel.value) { const keep = $(K.prefix + "area").value; onSocietyPick(sel); $(K.prefix + "area").value = keep || $(K.prefix + "area").value; }
   AGUpload.refresh();
-  showTab(isP ? "prop" : "proj");
+  showTab(Object.keys(TAB_SHEET).find(k => TAB_SHEET[k] === sheet));
 }
 
 async function saveAd(sheet) {
-  const isP = sheet === "PROPERTIES", prefix = isP ? "prop_" : "proj_", fields = isP ? PROP_FIELDS : PROJ_FIELDS;
-  const d = {};
-  fields.forEach(f => { if (!f.n) return; const el = document.getElementById(prefix + f.n); if (el) d[f.n] = el.value.trim(); });
-  if (isP && !d.title) return alert("Ad Title ज़रूरी है");
-  if (isP && d.listing_type === "Sale" && !d.expected_price) return alert("Sale Price भरें");
-  if (isP && d.listing_type === "Rent" && !d.expected_rent) return alert("Monthly Rent भरें");
-  if (!isP && (!d.project_name || !d.location || !d.rera_number)) return alert("Project Name, Location और MahaRERA No. ज़रूरी हैं");
+  const K = KIND[sheet], d = {};
+  K.fields.forEach(f => { if (!f.n) return; const el = $(K.prefix + f.n); if (el) d[f.n] = el.value.trim(); });
+  if (sheet !== "NEW_PROJECTS" && !d.title) return alert("Ad Title ज़रूरी है");
+  if (sheet === "PROPERTIES") {
+    if (d.listing_type === "Sale" && !d.expected_price) return alert("Sale Price भरें");
+    if (d.listing_type === "Rent" && !d.expected_rent) return alert("Monthly Rent भरें");
+    if (!d.area) return alert("Area / Locality भरें (जैसे Baner, Wakad) — buyers इसी से search करते हैं");
+  }
+  if (sheet === "LAND_PROPERTIES") {
+    if (!d.price) return alert("Total Price भरें");
+    if (!d.area && !d.village) return alert("Area / Locality या Village भरें");
+  }
+  if (sheet === "NEW_PROJECTS" && (!d.project_name || !d.location || !d.rera_number)) return alert("Project Name, Location और MahaRERA No. ज़रूरी हैं");
   if (!d.image1_url) return alert("कम से कम 1 photo upload करें");
-  const id = document.getElementById(isP ? "prop_property_id" : "proj_project_id").value;
-  if (id) d[isP ? "property_id" : "project_id"] = id;
-  const btn = document.getElementById(isP ? "propSave" : "projSave"), orig = btn.innerHTML;
+  const id = $(K.prefix + K.idf).value;
+  if (id) d[K.idf] = id;
+  const btn = $(K.btn), orig = btn.innerHTML;
   btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
   const r = await API.partner.save(sheet, d);
   btn.disabled = false; btn.innerHTML = orig;
@@ -277,34 +364,127 @@ async function deleteAd(sheet, id, name) {
   loadAds();
 }
 
+async function renewAd(sheet, id) {
+  const r = await API.partner.renew(sheet, id);
+  if (!r.success) return alert(r.error || "Could not renew");
+  alert(r.message || "Renewed");
+  loadAds();
+}
+
+async function renewAllHidden() {
+  const hidden = [...MY.properties.map(x => ["PROPERTIES", x.property_id, x]), ...MY.land.map(x => ["LAND_PROPERTIES", x.land_id, x])].filter(x => x[2].listing_status === "Inactive");
+  if (!hidden.length) return;
+  if (!confirm(`${hidden.length} hidden ads renew करनी हैं? (ये फिर से 45 / 60 दिन के लिए live होंगे)`)) return;
+  const b = $("renewAllBtn"); b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Renewing…';
+  let ok = 0;
+  for (const [sh, id] of hidden) { const r = await API.partner.renew(sh, id); if (r.success) ok++; }
+  b.disabled = false; b.innerHTML = '<i class="fas fa-sync-alt"></i> Renew all hidden ads';
+  alert(`${ok} / ${hidden.length} ads renewed`);
+  loadAds();
+}
+
+// ---- one card per ad (property / land / project) ----
+function adPrice(rec, sheet) {
+  if (sheet === "PROPERTIES") return rec.listing_type === "Rent" ? Number(rec.expected_rent) || 0 : Number(rec.expected_price) || 0;
+  if (sheet === "LAND_PROPERTIES") return Number(rec.price) || 0;
+  return Number(rec.price_from) || 0;
+}
+function validityBadge(rec) {
+  if (rec.listing_status === "Inactive") {
+    const n = Math.abs(rec.days_left ?? 0);
+    return `<span class="ap-badge ap-Expired">⛔ Hidden — expired ${n} day${n === 1 ? "" : "s"} ago</span>`;
+  }
+  if (rec.expiry_date != null && rec.days_left != null) {
+    const soon = rec.days_left <= 7;
+    return `<span class="ap-badge ${soon ? "ap-Soon" : "ap-Left"}">${soon ? "⏱" : "🟢"} ${rec.days_left} day${rec.days_left === 1 ? "" : "s"} left • till ${escapeHtml(String(rec.expiry_date).slice(0, 10))}</span>`;
+  }
+  return "";
+}
 function adItem(rec, sheet) {
-  const isP = sheet === "PROPERTIES", id = rec[isP ? "property_id" : "project_id"], name = rec.title || rec.project_name;
-  const ap = rec.approval_status || "Approved";
-  const price = isP ? (rec.listing_type === "Rent" ? formatPrice(rec.expected_rent) + "/mo" : formatPrice(rec.expected_price)) : (rec.price_from ? formatPrice(rec.price_from) + "+" : "");
-  const live = ap === "Approved" ? `<a class="btn btn-sm btn-outline" target="_blank" href="${isP ? "property-detail" : "project-detail"}.html?id=${encodeURIComponent(id)}"><i class="fas fa-eye"></i> View</a>` : "";
+  const K = KIND[sheet], isP = sheet === "PROPERTIES", isL = sheet === "LAND_PROPERTIES", id = rec[K.idf], name = rec.title || rec.project_name;
+  const ap = rec.approval_status || "Approved", pr = adPrice(rec, sheet);
+  const price = !pr ? "" : isP && rec.listing_type === "Rent" ? formatPrice(pr) + "/mo" : formatPrice(pr) + (sheet === "NEW_PROJECTS" ? "+" : "");
+  const live = ap === "Approved" && isP ? `<a class="btn btn-sm btn-outline" target="_blank" href="property-detail.html?id=${encodeURIComponent(id)}"><i class="fas fa-eye"></i> View</a>`
+             : ap === "Approved" && sheet === "NEW_PROJECTS" ? `<a class="btn btn-sm btn-outline" target="_blank" href="project-detail.html?id=${encodeURIComponent(id)}"><i class="fas fa-eye"></i> View</a>` : "";
+  const hasClock = (isP || isL) && rec.listing_status;
+  const needRenew = hasClock && (rec.listing_status === "Inactive" || (rec.days_left != null && rec.days_left <= 7));
+  const renewBtn = needRenew ? `<button class="btn btn-sm btn-gold" onclick="renewAd('${sheet}','${escapeHtml(id)}')"><i class="fas fa-sync-alt"></i> Renew</button>` : "";
+  const kind = isP ? "🏠 " + [rec.bhk, rec.listing_type, rec.status].filter(Boolean).join(" • ")
+             : isL ? "🌄 " + [rec.land_type, rec.area_value && rec.area_value + " " + (rec.area_unit || ""), rec.status].filter(Boolean).join(" • ")
+             : "🚀 " + [rec.launch_status, rec.configurations].filter(Boolean).join(" • ");
+  const where = isP ? [rec.society_name, rec.area, rec.address].filter(Boolean).join(" • ") : isL ? [rec.area, rec.village, rec.taluka].filter(Boolean).join(" • ") : rec.location || "";
   return `<div class="p-item"><img src="${escapeHtml(getImageUrl(rec.image1_url))}" referrerpolicy="no-referrer" onerror="this.src='${CONFIG.CLOUDINARY.placeholder}'" />
     <div><h4>${escapeHtml(name)}</h4>
-      <div class="meta"><span class="ap-badge ap-${ap}">${ap === "Pending" ? "⏳ Waiting approval" : ap === "Rejected" ? "✖ Rejected" : "✔ Live"}</span>
-      ${isP ? "🏠 " + escapeHtml([rec.bhk, rec.listing_type, rec.status].filter(Boolean).join(" • ")) : "🚀 " + escapeHtml([rec.launch_status, rec.configurations].filter(Boolean).join(" • "))} ${price ? "• <b>" + price + "</b>" : ""}</div>
+      <div class="meta"><span class="ap-badge ap-${ap}">${ap === "Pending" ? "⏳ Waiting approval" : ap === "Rejected" ? "✖ Rejected" : "✔ Approved"}</span>${validityBadge(rec)}</div>
+      <div class="meta" style="margin-top:4px">${escapeHtml(kind)} ${price ? "• <b>" + price + "</b>" : ""}</div>
+      ${where ? `<div class="meta">📍 ${escapeHtml(where)}</div>` : ""}
       ${ap === "Rejected" && rec.approval_note ? `<div class="meta" style="color:var(--red);margin-top:4px">Admin note: ${escapeHtml(rec.approval_note)} — edit & resubmit</div>` : ""}
-      <div class="meta">ID ${escapeHtml(id)} • Updated ${escapeHtml(rec.updated_at || rec.created_at || "")}</div></div>
-    <div class="acts">${live}
+      <div class="meta">ID ${escapeHtml(id)} • Last updated ${escapeHtml(String(rec.last_renewed_on || rec.updated_at || rec.created_at || "").slice(0, 10))}</div></div>
+    <div class="acts">${live}${renewBtn}
       <button class="btn btn-sm btn-primary" onclick="editAd('${sheet}','${escapeHtml(id)}')"><i class="fas fa-edit"></i> Edit</button>
       <button class="btn btn-sm btn-outline" onclick="deleteAd('${sheet}','${escapeHtml(id)}','${escapeHtml(name).replace(/'/g, "")}')"><i class="fas fa-trash"></i></button></div></div>`;
 }
 
+// ---- My Ads: search by type / area / society / address / price / status ----
+function matchAd(x) {
+  const r = x.rec, t = $("adType").value, st = $("adStatus").value;
+  const area = $("adArea").value.trim().toLowerCase(), kw = $("adKw").value.trim().toLowerCase();
+  const mn = Number($("adMin").value) || 0, mx = Number($("adMax").value) || 0;
+  if (t === "Rent" || t === "Sale") { if (x.sheet !== "PROPERTIES" || r.listing_type !== t) return false; }
+  else if (t === "Land" && x.sheet !== "LAND_PROPERTIES") return false;
+  else if (t === "Project" && x.sheet !== "NEW_PROJECTS") return false;
+  const ap = r.approval_status || "Approved";
+  if (st === "Live" && !(ap === "Approved" && r.listing_status !== "Inactive")) return false;
+  if (st === "Hidden" && r.listing_status !== "Inactive") return false;
+  if (st === "Soon" && !(r.listing_status === "Active" && r.days_left != null && r.days_left <= 7)) return false;
+  if (st === "Pending" && ap !== "Pending") return false;
+  if (area && ![r.area, r.village, r.taluka, r.city, r.location].some(v => String(v || "").toLowerCase().includes(area))) return false;
+  if (kw && ![r.title, r.project_name, r.society_name, r.society_address, r.address, r.survey_no].some(v => String(v || "").toLowerCase().includes(kw))) return false;
+  const pr = adPrice(r, x.sheet);
+  if (mn && pr < mn) return false;
+  if (mx && (!pr || pr > mx)) return false;
+  return true;
+}
+function renderAds() {
+  const all = [...MY.projects.map(rec => ({ rec, sheet: "NEW_PROJECTS" })), ...MY.land.map(rec => ({ rec, sheet: "LAND_PROPERTIES" })), ...MY.properties.map(rec => ({ rec, sheet: "PROPERTIES" }))];
+  const shown = all.filter(matchAd);
+  const hidden = [...MY.properties, ...MY.land].filter(x => x.listing_status === "Inactive").length;
+  $("adCount").innerHTML = `Showing <b>${shown.length}</b> of ${all.length} ads${hidden ? ` • <b style="color:#b42318">${hidden} hidden (expired) — renew to show again</b>` : ""}`;
+  $("renewAllBtn").style.display = hidden ? "" : "none";
+  $("adsList").innerHTML = shown.length ? shown.map(x => adItem(x.rec, x.sheet)).join("") : all.length
+    ? `<div class="portal-card" style="text-align:center;color:var(--text-light)">No ads match these filters.</div>`
+    : `<div class="portal-card" style="text-align:center"><i class="fas fa-bullhorn" style="font-size:40px;color:var(--gold)"></i><h3 style="margin:10px 0">No ads yet</h3>
+       <p style="color:var(--text-light);margin-bottom:14px">Post your first ad — it's free.</p>
+       <button class="btn btn-primary" onclick="document.querySelector('[data-tab=prop]').click()"><i class="fas fa-plus"></i> Post Property</button>
+       <button class="btn btn-outline" style="margin-left:8px" onclick="document.querySelector('[data-tab=land]').click()"><i class="fas fa-map"></i> Post Land</button>
+       ${U().role === "Builder" ? `<button class="btn btn-gold" style="margin-left:8px" onclick="document.querySelector('[data-tab=proj]').click()"><i class="fas fa-rocket"></i> Post Project</button>` : ""}</div>`;
+}
+
 async function loadAds() {
   const r = await API.partner.myListings();
-  if (!r.success) { document.getElementById("adsList").innerHTML = `<div class="status-error">${escapeHtml(r.error)}</div>`; return; }
-  MY = r.data;
-  const items = MY.projects.map(p => adItem(p, "NEW_PROJECTS")).concat(MY.properties.map(p => adItem(p, "PROPERTIES")));
-  document.getElementById("adsList").innerHTML = items.length ? items.join("") :
-    `<div class="portal-card" style="text-align:center"><i class="fas fa-bullhorn" style="font-size:40px;color:var(--gold)"></i><h3 style="margin:10px 0">No ads yet</h3>
-     <p style="color:var(--text-light);margin-bottom:14px">Post your first ad — it's free.</p>
-     <button class="btn btn-primary" onclick="document.querySelector('[data-tab=prop]').click()"><i class="fas fa-plus"></i> Post Property</button>
-     ${U().role === "Builder" ? `<button class="btn btn-gold" style="margin-left:8px" onclick="document.querySelector('[data-tab=proj]').click()"><i class="fas fa-rocket"></i> Post Project</button>` : ""}</div>`;
-  const pend = [...MY.projects, ...MY.properties].filter(x => x.approval_status === "Pending").length;
-  document.getElementById("pSub").innerHTML = `${escapeHtml(U().role)}${U().company_name ? " • " + escapeHtml(U().company_name) : ""} • ${MY.properties.length + MY.projects.length} ads${pend ? ` • <b style="color:#b26a00">${pend} waiting approval</b>` : ""}`;
+  if (!r.success) { $("adsList").innerHTML = `<div class="status-error">${escapeHtml(r.error)}</div>`; return; }
+  MY = Object.assign({ properties: [], land: [], projects: [] }, r.data);
+  renderAds();
+  const total = MY.properties.length + MY.land.length + MY.projects.length;
+  const pend = [...MY.projects, ...MY.properties, ...MY.land].filter(x => x.approval_status === "Pending").length;
+  $("pSub").innerHTML = `${escapeHtml(U().role)}${U().company_name ? " • " + escapeHtml(U().company_name) : ""} • ${total} ads${pend ? ` • <b style="color:#b26a00">${pend} waiting approval</b>` : ""}`;
+}
+
+// ---- My Profile (Agent accounts) ----
+async function loadProfile() {
+  const r = await API.partner.myProfile();
+  if (!r.success) { $("profStatus").innerHTML = `<div class="status-error">${escapeHtml(r.error)}</div>`; return; }
+  buildForm("profileForm", PROFILE_FIELDS, "pf_", "Agent Profiles");
+  const a = r.data.agent || {};
+  PROFILE_FIELDS.forEach(f => { if (!f.n) return; const el = $("pf_" + f.n); if (el && a[f.n] != null) el.value = a[f.n]; });
+  if ($("pf_aadhaar_last4") && a.aadhaar_last4) $("pf_aadhaar_last4").value = String(a.aadhaar_last4).replace(/\D/g, "").padStart(4, "0").slice(-4);
+  AGUpload.refresh();
+}
+async function saveProfile() {
+  const d = {};
+  PROFILE_FIELDS.forEach(f => { if (!f.n) return; const el = $("pf_" + f.n); if (el) d[f.n] = el.value.trim(); });
+  const r = await API.partner.saveProfile(d);
+  $("profStatus").innerHTML = r.success ? `<div class="status-success">Profile saved ✔</div>` : `<div class="status-error">${escapeHtml(r.error)}</div>`;
 }
 
 async function loadLeads() {
@@ -344,8 +524,11 @@ async function startPortal() {
   document.getElementById("portalView").style.display = "";
   document.getElementById("pWelcome").textContent = "Namaste, " + (u.full_name || u.username).split(" ")[0] + " 👋";
   document.getElementById("projTabBtn").style.display = u.role === "Builder" ? "" : "none";
+  document.getElementById("profileTabBtn").style.display = u.role === "Partner Agent" ? "" : "none";
+  const o = await API.getSearchOptions();                       // area + society dropdowns
+  if (o.success) { OPTS = o.data; document.getElementById("areaList").innerHTML = OPTS.areas.map(a => `<option value="${escapeHtml(a)}">`).join(""); }
   await loadAds();
-  resetForm("PROPERTIES");
+  resetForm("PROPERTIES"); resetForm("LAND_PROPERTIES");
   if (u.role === "Builder") resetForm("NEW_PROJECTS");
 }
 

@@ -71,7 +71,7 @@ function renderPropertyDetail(p) {
 
   // Title & Location
   document.getElementById("detailTitle").textContent  = p.title || "Property";
-  document.getElementById("detailAddress").textContent = [p.address, p.city].filter(Boolean).join(", ");
+  document.getElementById("detailAddress").textContent = [p.address, p.society_name, p.society_address, p.society_address ? "" : p.area, p.city].filter(Boolean).join(", ");
 
   // Price
   const price = p.listing_type === "Rent" ? formatPrice(p.expected_rent) : formatPrice(p.expected_price);
@@ -133,7 +133,7 @@ function renderPropertyDetail(p) {
   ).join("");
 
   // Map
-  const mapQuery = encodeURIComponent([p.address, p.city, "Pune"].filter(Boolean).join(", "));
+  const mapQuery = encodeURIComponent([p.society_name, p.society_address || p.address, p.area, p.city, "Pune"].filter(Boolean).join(", "));
   document.getElementById("mapFrame").src =
     `https://maps.google.com/maps?q=${mapQuery}&output=embed`;
   document.getElementById("mapOpenBtn").href =
