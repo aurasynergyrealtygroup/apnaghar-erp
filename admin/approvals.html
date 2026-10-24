@@ -37,7 +37,7 @@
     <main class="admin-content">
       <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
         <div class="kpi-card"><div class="kpi-icon orange"><i class="fas fa-user-clock"></i></div><div><span class="kpi-val" id="kU">—</span><span class="kpi-label">Accounts to approve</span></div></div>
-        <div class="kpi-card"><div class="kpi-icon gold"><i class="fas fa-home"></i></div><div><span class="kpi-val" id="kP">—</span><span class="kpi-label">Property ads to approve</span></div></div>
+        <div class="kpi-card"><div class="kpi-icon gold"><i class="fas fa-home"></i></div><div><span class="kpi-val" id="kP">—</span><span class="kpi-label">Property &amp; land ads to approve</span></div></div>
         <div class="kpi-card"><div class="kpi-icon navy"><i class="fas fa-rocket"></i></div><div><span class="kpi-val" id="kJ">—</span><span class="kpi-label">Projects to approve</span></div></div>
       </div>
       <div class="setup-alert" style="background:#eef4fb;border-color:#c9daf0;color:var(--navy)"><i class="fas fa-info-circle"></i><div>
@@ -65,13 +65,14 @@
 
 let ADS = [], USERS = [];
 async function load() {
-  const [u, p, j] = await Promise.all([API.admin.getUsers(), API.getProperties({ limit: 5000 }), API.admin.getNewProjects()]);
+  const [u, p, j, ld] = await Promise.all([API.admin.getUsers(), API.getProperties({ limit: 5000 }), API.admin.getNewProjects(), API.getLand({})]);
   USERS = u.success ? u.data : [];
   ADS = [...(j.success ? j.data : []).map(x => ({ ...x, _sheet: "NEW_PROJECTS", _id: x.project_id, _name: x.project_name })),
-         ...(p.success ? p.data : []).map(x => ({ ...x, _sheet: "PROPERTIES", _id: x.property_id, _name: x.title }))];
+         ...(p.success ? p.data : []).map(x => ({ ...x, _sheet: "PROPERTIES", _id: x.property_id, _name: x.title })),
+         ...(ld.success ? ld.data : []).map(x => ({ ...x, _sheet: "LAND_PROPERTIES", _id: x.land_id, _name: x.title }))];
   const pendU = USERS.filter(x => String(x.status).trim() === "Pending");
   document.getElementById("kU").textContent = pendU.length;
-  document.getElementById("kP").textContent = ADS.filter(a => a._sheet === "PROPERTIES" && a.approval_status === "Pending").length;
+  document.getElementById("kP").textContent = ADS.filter(a => a._sheet !== "NEW_PROJECTS" && a.approval_status === "Pending").length;
   document.getElementById("kJ").textContent = ADS.filter(a => a._sheet === "NEW_PROJECTS" && a.approval_status === "Pending").length;
   document.getElementById("uBody").innerHTML = pendU.length ? pendU.map(x => `<tr>
       <td style="font-size:12px">${escapeHtml(x.created_at || "")}</td>
@@ -91,14 +92,14 @@ function renderAds() {
   const mode = document.getElementById("showAll").value;
   const list = ADS.filter(a => mode === "partner" ? a.posted_by : a.approval_status === mode);
   document.getElementById("aBody").innerHTML = list.length ? list.map(a => {
-    const isP = a._sheet === "PROPERTIES";
+    const isP = a._sheet === "PROPERTIES", isL = a._sheet === "LAND_PROPERTIES";
     const media = [1, 2, 3, 4, 5, 6].filter(i => a["image" + i + "_url"]).length;
-    const price = isP ? (a.listing_type === "Rent" ? fmt(a.expected_rent) + "/mo" : fmt(a.expected_price)) : (a.price_from ? fmt(a.price_from) + "+" : "—");
-    const view = isP ? `../website/property-detail.html?id=${encodeURIComponent(a._id)}` : `../website/project-detail.html?id=${encodeURIComponent(a._id)}`;
-    const edit = isP ? `properties.html` : `projects.html?edit=${encodeURIComponent(a._id)}`;
+    const price = isL ? fmt(a.price) : isP ? (a.listing_type === "Rent" ? fmt(a.expected_rent) + "/mo" : fmt(a.expected_price)) : (a.price_from ? fmt(a.price_from) + "+" : "—");
+    const view = isL ? `../website/land.html` : isP ? `../website/property-detail.html?id=${encodeURIComponent(a._id)}` : `../website/project-detail.html?id=${encodeURIComponent(a._id)}`;
+    const edit = isL ? `land.html?edit=${encodeURIComponent(a._id)}` : isP ? `properties.html` : `projects.html?edit=${encodeURIComponent(a._id)}`;
     return `<tr>
       <td><img class="thumb-sm" src="${escapeHtml(getImageUrl(a.image1_url))}" referrerpolicy="no-referrer" onclick="AGUpload.lightbox(this.src)" style="cursor:zoom-in" /></td>
-      <td><div style="font-weight:600;color:var(--navy)">${escapeHtml(a._name)}</div><div style="font-size:11px;color:var(--text-light)">${isP ? "🏠 " + escapeHtml([a.bhk, a.listing_type, a.city].filter(Boolean).join(" • ")) : "🚀 " + escapeHtml([a.launch_status, a.location, a.rera_number && "RERA " + a.rera_number].filter(Boolean).join(" • "))} • ${escapeHtml(a._id)}</div></td>
+      <td><div style="font-weight:600;color:var(--navy)">${escapeHtml(a._name)}</div><div style="font-size:11px;color:var(--text-light)">${isL ? "🌄 " + escapeHtml([a.land_type, a.area, a.village].filter(Boolean).join(" • ")) : isP ? "🏠 " + escapeHtml([a.bhk, a.listing_type, a.society_name, a.area].filter(Boolean).join(" • ")) : "🚀 " + escapeHtml([a.launch_status, a.location, a.rera_number && "RERA " + a.rera_number].filter(Boolean).join(" • "))} • ${escapeHtml(a._id)}</div></td>
       <td style="font-size:12px"><b>${escapeHtml(a.posted_by_name || "Admin")}</b><br>${escapeHtml(a.posted_by_type || "")} ${a.contact_mobile ? `• <a href="tel:${escapeHtml(a.contact_mobile)}">${escapeHtml(a.contact_mobile)}</a>` : ""}</td>
       <td style="font-weight:700;color:var(--navy)">${price}</td>
       <td style="font-size:12px">${media} 📷 ${a.video_url ? "• 🎬" : ""} ${a.brochure_url ? "• 📄" : ""}</td>

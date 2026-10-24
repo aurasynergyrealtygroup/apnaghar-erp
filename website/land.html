@@ -40,7 +40,7 @@
   <h1>Land & Plots</h1><p>NA Plot, खेती की ज़मीन, Commercial Land — Verified 7/12 के साथ</p></div></section>
 <section class="section" style="padding-top:40px"><div class="container">
   <div class="filter-bar">
-    <input type="text" id="lSearch" placeholder="Search village, taluka, title..." />
+    <input type="text" id="lSearch" placeholder="Search area, village, taluka, title..." />
     <select id="lType"><option value="">All Types</option><option>NA Plot</option><option>Agricultural</option><option>Commercial</option><option>Industrial</option><option>Farm House Plot</option></select>
     <select id="lStatus"><option value="">All Status</option><option selected>Available</option><option>Booked</option><option>Sold</option></select>
   </div>
@@ -121,7 +121,7 @@ function landCard(l) {
       <span class="listing-badge sale-badge">${escapeHtml(l.land_type || "Land")}</span>${l.status === "Available" ? '<span class="avail-badge">Available</span>' : ""}
       ${l.video_url ? '<span class="video-indicator"><i class="fas fa-play"></i></span>' : ""}</div>
     <div class="card-body"><h3 class="card-title">${t}</h3>
-      <div class="card-meta"><span><i class="fas fa-map-marker-alt"></i> ${escapeHtml([l.village, l.taluka, l.district].filter(Boolean).join(", ") || "Pune")}</span></div>
+      <div class="card-meta"><span><i class="fas fa-map-marker-alt"></i> ${escapeHtml([l.area, l.village, l.taluka, l.district].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(", ") || "Pune")}</span></div>
       <div class="card-meta">${l.area_value ? `<span><i class="fas fa-vector-square"></i> ${escapeHtml(l.area_value + " " + (l.area_unit || ""))}</span>` : ""}${l.road_touch === "Yes" ? '<span><i class="fas fa-road"></i> Road touch</span>' : ""}</div>
       <div class="card-footer"><span class="card-price">${formatPrice(l.price)}</span>
         <div style="display:flex;gap:6px">${l.video_url ? `<a class="btn btn-sm btn-outline" target="_blank" href="${escapeHtml(l.video_url)}"><i class="fas fa-play"></i></a>` : ""}
@@ -130,7 +130,7 @@ function landCard(l) {
 }
 function renderLand() {
   const q = document.getElementById("lSearch").value.toLowerCase(), t = document.getElementById("lType").value, s = document.getElementById("lStatus").value;
-  const list = LAND.filter(l => (!t || l.land_type === t) && (!s || l.status === s) && (!q || [l.title, l.village, l.taluka, l.district, l.survey_no].join(" ").toLowerCase().includes(q)));
+  const list = LAND.filter(l => (!t || l.land_type === t) && (!s || l.status === s) && (!q || [l.title, l.area, l.village, l.taluka, l.district, l.survey_no].join(" ").toLowerCase().includes(q)));
   document.getElementById("landGrid").innerHTML = list.length ? list.map(landCard).join("") : `<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-map"></i><p>Land listings जल्द ही उपलब्ध होंगी। अपनी requirement बताएँ।</p><button class="btn btn-primary" style="margin-top:12px" onclick="AGLead.open({mode:'inquiry',title:'Land requirement'})">Post Requirement</button></div>`;
 }
 API.getLand().then(r => { LAND = r.success ? r.data : []; renderLand(); });

@@ -42,3 +42,5 @@ try {
   const o = localStorage.getItem("ag_api_url");
   if (o && /^https:\/\/script\.google\.com\//.test(o)) CONFIG.APPS_SCRIPT_URL = o;
 } catch (e) {}
+// Admin → Settings → "Create new Google Sheet" stores the new sheet's link in this browser so the admin "Open Google Sheet" button points to it.
+try { const s = localStorage.getItem("ag_sheet_url"); if (s && /^https:\/\/docs\.google\.com\/spreadsheets\//.test(s)) CONFIG.SHEET_URL = s; } catch (e) {}
