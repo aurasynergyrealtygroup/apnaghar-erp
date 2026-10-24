@@ -1,6 +1,31 @@
 # ApnaGhar ERP v2.0 — What changed
 **Setup instructions: see SETUP_GUIDE.md**
 
+## v2.5 — Agent listings, 45 / 60 day auto-hide, area / society / address search
+**After pasting the new `apps-script/Code.gs`: run `setupSheets` once, then Deploy → Manage deployments → Edit → Version: New → Deploy.**
+
+- **Agent login (own ads only)** — agents use the existing Partner login (`website/partner.html`). They see and manage **only their own** ads.
+  ERP staff with the role *Agent* are also limited to their own Properties / Land in the admin panel. Admin / Manager see everything.
+- **Agent details stored** — approving an Agent account auto-creates a row in **AGENTS** and links it to the login (`AGENTS.user_id`, `USERS.agent_id`).
+  Agents fill **My Profile** (alt mobile, WhatsApp, address, RERA, PAN, Aadhaar *last 4 digits only*, bank). PAN / bank are never public.
+- **Agents can post Rent, Sale and Land** — new *Post Land* tab. Every ad stores the agent (`agent_id`). Land from partners needs admin approval like other ads.
+- **Rent hides after 45 days, Sale after 60 days** — days are in the **LISTING_RULES** tab (admin → *Listing Rules*). Land = 0 (never hides) until you set a number.
+  Hidden ads are removed from the website for everyone; the agent still sees them marked ⛔ and can press **Renew**.
+  **Edit / save / Renew = manual update → live again, clock restarts.** (Admin saving a listing also renews it.)
+- **Nightly job** — `deactivateExpiredListings` writes `listing_active` (Yes/No), `expiry_date`, `deactivated_on` into the sheet and logs to **LISTING_LOG**.
+  Installed automatically by `setupSheets` (or run `installDailyTrigger` once). Even if the job is off, expired ads stay hidden — the date is the rule.
+- **Search** — website Properties page: Area, Society, society/flat address keyword, min/max price (rent price for Rent ads, sale price for Sale ads).
+  Agent portal *My Ads*: filter by Rent / Sale / Land, status (Live / Hidden / Expiring), area, society / address, price.
+- **Society name + address** — SOCIETIES now has address, landmark, pincode. Picking a society on an ad auto-fills area + name and shows the address on the website.
+- **Existing listings are safe** — on first setup every existing listing gets today's date, so nothing disappears on day 1.
+- New admin pages: **Listing Rules** (with *Run auto-hide now*) and **Listing Log**. Admin Properties / Land show 🟢 days left / ⛔ hidden and a Renew button. Approvals now include Land.
+- Public `getSocieties` no longer exposes the secretary's name / mobile.
+- **Automatic new Google Sheet** — `createNewDatabase()` (Apps Script editor, or Admin → Settings → *Create New Google Sheet*) makes a brand-new empty Google Sheet in your Drive with all 30 tabs + headers, roles, listing rules, the `admin / admin123` login and the nightly trigger, then switches the whole system to it (saved in Script Properties — no code edit needed). The old sheet is untouched; go back with `useExistingDatabase("<sheet id>")`. Admin → Settings also has *Current database* (link to the active sheet).
+- **Safe merge into ONE sheet** — Admin → Settings → *Merge latest tabs into this Google Sheet* (Preview, then Merge), or Apps Script `previewOnly` / `runMerge`. Adds new tabs and missing columns **at the end only**; a Drive backup copy is made first; your own tabs, rows and column order are never changed; a tab with an older layout (headers not on row 2) is skipped and reported. Safe to re-run after any future update.
+- **Attach a Google Sheet** — Admin → Settings → *Attach Google Sheet* (paste the sheet link), or run `attachProjectSheet` in Apps Script, makes the whole project (website, admin, Partner Portal) read/write that sheet. Nothing is deleted; missing tabs/columns are added. Website Data Check warns if the site is reading a different sheet than `SPREADSHEET_ID`.
+- **Website Data Check** — Admin → Settings → *Check now* (or run `showDiagnosis` in the Apps Script editor and open View → Logs). Shows per ad: visible, or *why hidden* (Pending approval, expired after 45/60 days, headers not on row 2, column names different). *Repair layout* fixes headers / column names after making a `…_BACKUP_…` tab (no data rows are deleted).
+- Reference workbook: `ApnaGhar_ERP_v2.5_Sheet_Additions.xlsx` (new columns + tab layouts).
+
 ## Critical fixes
 - **Saving to Google Sheet never worked**: (1) `config.js` still had `YOUR_SCRIPT_ID`; (2) every save was sent as
   `application/json`, which Google Apps Script blocks from browsers (CORS). Now sent as `text/plain` — saves work.

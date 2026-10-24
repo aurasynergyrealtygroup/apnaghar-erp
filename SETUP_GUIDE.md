@@ -114,3 +114,57 @@ The URL stays the same. (If you skip this, the website keeps using the old code.
 | "Login required" / "Session expired" | Log in again (sessions last 7 days) |
 | Upload: "could not be made public" | Your Google account blocks public link sharing — use a normal Gmail account or ask your Workspace admin |
 | Images don't show | Make sure the Drive file is shared "Anyone with the link" (uploads through the admin do this automatically) |
+
+---
+
+## v2.5 — Agent listings & 45 / 60 day auto-hide (update steps)
+
+1. **Apps Script** → replace `Code.gs` with the new `apps-script/Code.gs` (first line must say **v2.5**) → Save.
+2. Run **`setupSheets`** once (▶). Accept the new permission popup (it now also needs *"manage your triggers"* for the nightly job).
+   The log should show: `Listing rules added: RENT=45, SALE=60, LAND=0`, `Listing dates set for N existing listings`, `Daily trigger installed`.
+   If it says the trigger was not installed, select **`installDailyTrigger`** and Run it once.
+3. **Deploy → Manage deployments → ✏️ Edit → Version: New → Deploy** (the Web App URL stays the same).
+4. Upload the website / admin files to GitHub as before.
+
+| Task | Where |
+|---|---|
+| Change the 45 / 60 days | Admin → **Listing Rules** (or the `LISTING_RULES` tab) |
+| See who was hidden / renewed | Admin → **Listing Log** |
+| Hide expired ads right now | Listing Rules → **Run auto-hide now** |
+| Re-show a hidden ad | Agent: Partner Portal → **Renew** · Admin: 🔄 button on Properties / Land · or type today's date in `last_renewed_on` in the sheet |
+| Agent registers & logs in | `website/post-ad.html` → admin **Approvals** → Approve → agent logs in at `website/partner.html` |
+| Staff member who should see only own ads | Users & Roles → role **Agent** (agent row is linked automatically) |
+| Add society name + address | Admin → **Societies** (Address, Landmark, Pincode) |
+
+**Test checklist (5 min):** register an agent → approve → login → Post Property (Rent) with a society → approve it in admin →
+open `properties.html`, filter by that Area / Society → check it shows. In the sheet set that ad's `last_renewed_on` to 46 days ago →
+refresh the website: it is gone → in the Partner Portal it shows ⛔ → press **Renew** → it is back.
+
+### Want a fresh Google Sheet created for you? (automatic)
+1. Apps Script → paste the v2.5 `Code.gs` → Save.
+2. Function dropdown → **`createNewDatabase`** → ▶ Run → Allow permissions. (≈30–60 seconds.)
+3. Open **View → Logs**: it prints the link of the new Google Sheet. It already has every tab, column, role, listing rule and the `admin / admin123` login.
+4. Deploy → Manage deployments → ✏️ Edit → Version: New → Deploy. Login at `/admin/login.html`.
+
+Later you can also do this from **Admin → Settings → New Google Sheet Database**. The new sheet starts **empty**; the old sheet is not deleted.
+Go back to an old sheet: run `useExistingDatabase('<sheet id>')` in Apps Script.
+
+### "My sheet data is not showing on the website"
+1. Admin → **Settings → Website Data Check → Check now** (scroll down the Settings page). Or, if the admin page is not updated: Apps Script editor → run **`showDiagnosis`** → View → Logs. It lists every ad as *visible* or *hidden + the reason*.
+2. Fix by reason: **Pending** → Admin → Approvals · **Expired** → Renew (Properties / Land page or Partner Portal) · **headers on row N / names not recognised** → *Repair layout* button.
+3. Everything looks fine but the site is still empty → Apps Script **Deploy → Manage deployments → Edit → Version: New → Deploy**, check `APPS_SCRIPT_URL` in `website/js/config.js` is that deployment's URL, then hard-refresh (Ctrl+Shift+R).
+
+### Attach YOUR Google Sheet to the project
+The sheet the project uses is **`SPREADSHEET_ID`** (top of `Code.gs`) — currently `14SH_L0fsknVQRNqrNPcfSS0lODipe-7mlnFt1pvFFG8`.
+If you ever ran `createNewDatabase` or `useExistingDatabase`, the website reads *that* sheet instead, and rows you add in your main sheet will not show.
+- **Apps Script:** run **`attachProjectSheet`** → View → Logs shows the attached sheet. (Or `attachSheet("<sheet link>")` for another sheet.)
+- **Admin:** Settings → *Attach Google Sheet to this project* → paste the sheet link → Attach.
+The Google account that deployed the Web App must have **Editor** access to the sheet. Then Deploy → Manage deployments → Edit → Version: New → Deploy.
+
+### Keep ONE Google Sheet — merge the latest tabs without changing your data
+1. Paste the new `Code.gs` → Save.
+2. Run **`previewOnly`** (changes nothing) → View → Logs: lists new tabs to add, extra columns to add at the end, and tabs skipped for safety.
+3. Run **`runMerge`** → it saves a **backup copy in your Google Drive**, adds the new tabs and end-columns, and prints a report in the Logs.
+4. Or do the same in **Admin → Settings → Merge latest tabs into this Google Sheet** (Preview / Merge now).
+Your own tabs (INDEX, OWNERS, …), every data row and your column order stay as they are. Run it again after any future update.
+
