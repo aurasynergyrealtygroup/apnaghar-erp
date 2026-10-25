@@ -37,6 +37,10 @@ const CRUD = {
       `<select class="toolbar-select" data-filter="${f.field}" onchange="CRUD.applyFilters()">
         <option value="">${f.label}</option>${f.options.map(o => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("")}
       </select>`).join("");
+    // Optional numeric range filters — e.g. Price Min/Max, Sqft Min/Max. Opt-in via cfg.rangeFilters, so pages that don't set it are unaffected.
+    const rangeFilters = (c.rangeFilters || []).map(f =>
+      `<input type="number" class="toolbar-select" style="width:110px" data-range-min="${f.field}" step="${f.step || "any"}" placeholder="${escapeHtml(f.label)} Min" oninput="CRUD.applyFilters()" />
+       <input type="number" class="toolbar-select" style="width:110px" data-range-max="${f.field}" step="${f.step || "any"}" placeholder="${escapeHtml(f.label)} Max" oninput="CRUD.applyFilters()" />`).join("");
     document.getElementById("crudRoot").innerHTML = `
       ${c.kpis ? `<div class="kpi-grid" id="crudKpis" style="grid-template-columns:repeat(${c.kpis.length},1fr);margin-bottom:20px"></div>` : ""}
       ${c.intro ? `<div class="setup-alert" style="background:#eef4fb;border-color:#c9daf0;color:var(--navy)"><i class="fas fa-info-circle"></i><div>${c.intro}</div></div>` : ""}
@@ -53,6 +57,7 @@ const CRUD = {
             <div class="toolbar-search" style="flex:1"><i class="fas fa-search"></i>
               <input type="text" id="crudSearch" placeholder="Search..." oninput="CRUD.applyFilters()" /></div>
             ${filters}
+            ${rangeFilters}
           </div>
         </div>
         <div class="table-wrap"><table>
@@ -122,9 +127,13 @@ const CRUD = {
   applyFilters() {
     const q = (document.getElementById("crudSearch").value || "").toLowerCase();
     const fs = [...document.querySelectorAll("[data-filter]")].map(s => [s.dataset.filter, s.value]).filter(x => x[1]);
+    const rMin = [...document.querySelectorAll("[data-range-min]")].map(s => [s.dataset.rangeMin, s.value]).filter(x => x[1] !== "");
+    const rMax = [...document.querySelectorAll("[data-range-max]")].map(s => [s.dataset.rangeMax, s.value]).filter(x => x[1] !== "");
     CRUD.filtered = CRUD.rows.filter(r =>
       (!q || Object.values(r).some(v => String(v ?? "").toLowerCase().includes(q))) &&
-      fs.every(([k, v]) => String(r[k] ?? "") === v));
+      fs.every(([k, v]) => String(r[k] ?? "") === v) &&
+      rMin.every(([k, v]) => Number(r[k] || 0) >= Number(v)) &&
+      rMax.every(([k, v]) => Number(r[k] || 0) <= Number(v)));
     CRUD.page = 1; CRUD.render();
   },
 

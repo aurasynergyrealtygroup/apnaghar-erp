@@ -1,6 +1,18 @@
 # ApnaGhar ERP v2.0 — What changed
 **Setup instructions: see SETUP_GUIDE.md**
 
+## v2.6 — Builder marketing/sales contacts on New Launch Projects + Price/Sqft search (Admin only)
+**After pasting the new `apps-script/Code.gs`: Deploy → Manage deployments → Edit (pencil) → Version: New → Deploy.**
+
+- **New Launch Projects (`NEW_PROJECTS` tab) — 24 new columns added**, all for the builder's own marketing & sales team contact details (name + mobile for each): Marketing Head, Marketing Manager, Sales Head, Sales Manager, Channel Partner Manager, Channel Sales Manager, CP Relationship Manager, CRM Manager, Site Sales Executive, Project Sales Executive, Digital Marketing Manager, Booking Manager.
+  Every existing column in `NEW_PROJECTS` is untouched — the 24 new ones are added at the end only.
+- **Where you'll see them**: only inside **Admin → New Launch Projects → Add/Edit Project**, in a new form section called *"Builder Marketing & Sales Team Contacts"*, right after the Floor Plan field. Nowhere else changed — not the public website, not the Partner portal (builders posting their own project from `website/partner.html`), not any other admin page or login.
+- **Getting the columns into your live Google Sheet** — you do **not** need to add them by hand. Either:
+  1. Just add or edit any project in Admin → New Launch Projects — the system auto-creates any missing column the moment you save, or
+  2. Go to **Admin → Settings → Website Data Check → Repair layout** for `NEW_PROJECTS` — this adds the 24 columns immediately (a `NEW_PROJECTS_BACKUP_...` tab is made first automatically; no existing data is touched).
+- **Admin search by Price and Sqft** — Admin → New Launch Projects now has **Price (₹) Min/Max** and **Sqft (Carpet Area) Min/Max** number filters next to the existing text search box (which already searches Project Name, Builder, Location, etc.). Combine all of them together — e.g. type "Hadapsar", set Price Min/Max, and Sqft Min/Max at once.
+  This search widget only appears on the New Launch Projects page — no other admin list page was changed.
+
 ## v2.5 — Agent listings, 45 / 60 day auto-hide, area / society / address search
 **After pasting the new `apps-script/Code.gs`: run `setupSheets` once, then Deploy → Manage deployments → Edit → Version: New → Deploy.**
 

@@ -48,7 +48,15 @@ const SCHEMA = {
   PROPERTIES: { id: "property_id", prefix: "PROP", title: "Properties (Sale / Rent)", public: true,
     headers: ["property_id","property_code","title","posted_by","posted_by_name","posted_by_type","contact_name","contact_mobile","approval_status","approval_note","property_type","listing_type","bhk","furnished_status","carpet_area","builtup_area","floor","total_floors","facing","city","area","address","society_id","society_name","project_id","owner_name","owner_mobile","agent_id","status","featured","expected_price","expected_rent","deposit_amount","amenities","description","last_renewed_on","expiry_date","listing_active","deactivated_on"].concat(MEDIA_COLS, ["created_at","updated_at"]) },
   NEW_PROJECTS: { id: "project_id", prefix: "NPJ", title: "New Launch Projects", public: true,
-    headers: ["project_id","project_name","builder_name","posted_by","posted_by_name","posted_by_type","contact_name","contact_mobile","approval_status","approval_note","project_type","launch_status","location","city","rera_number","configurations","price_from","price_to","carpet_from","carpet_to","total_towers","total_units","available_units","launch_date","possession_date","booking_amount","offer","amenities","highlights","description","map_url","floor_plan_url","status","featured"].concat(MEDIA_COLS, ["created_at","updated_at"]) },
+    headers: ["project_id","project_name","builder_name","posted_by","posted_by_name","posted_by_type","contact_name","contact_mobile","approval_status","approval_note","project_type","launch_status","location","city","rera_number","configurations","price_from","price_to","carpet_from","carpet_to","total_towers","total_units","available_units","launch_date","possession_date","booking_amount","offer","amenities","highlights","description","map_url","floor_plan_url","status","featured",
+    // Builder marketing & sales team contacts — admin-entry only, never shown on the public website
+    "marketing_head_name","marketing_head_mobile","marketing_manager_name","marketing_manager_mobile",
+    "sales_head_name","sales_head_mobile","sales_manager_name","sales_manager_mobile",
+    "channel_partner_manager_name","channel_partner_manager_mobile","channel_sales_manager_name","channel_sales_manager_mobile",
+    "cp_relationship_manager_name","cp_relationship_manager_mobile","crm_manager_name","crm_manager_mobile",
+    "site_sales_executive_name","site_sales_executive_mobile","project_sales_executive_name","project_sales_executive_mobile",
+    "digital_marketing_manager_name","digital_marketing_manager_mobile","booking_manager_name","booking_manager_mobile"
+    ].concat(MEDIA_COLS, ["created_at","updated_at"]) },
   PROPERTY_BOOKINGS: { id: "booking_id", prefix: "BKG", title: "Bookings (Property + New Launch Projects)",
     headers: ["booking_id","booking_for","property_id","project_id","unit_no","tower_wing","configuration","client_id","customer_name","customer_mobile","customer_email","agent_id","total_price","token_amount","booking_date","expected_registration_date","booking_status","payment_mode","transaction_ref","receipt_url","document_url","source","notes","created_at","updated_at"] },
   WEBSITE_INQUIRIES: { id: "inquiry_id", prefix: "INQ", title: "Website Inquiries / Leads",
