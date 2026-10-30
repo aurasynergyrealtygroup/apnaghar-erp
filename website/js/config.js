@@ -16,6 +16,8 @@ const CONFIG = {
     brand: "ApnaGhar",
     phone: "+917507163733",
     phone_display: "+91 75071 63733",
+    phone2: "+917972085446",
+    phone_display_multi: "+91 7507163733/7972085446",
     whatsapp: "917507163733",
     email: "aurasynergyrealtygroup@gmail.com",
     address: "Sasane Nagar, Hadapsar, Pune – 411028",
