@@ -82,3 +82,6 @@
   highlights, available units, map, Book Now / Free Site Visit / WhatsApp.
 - Property page: Book Now, Free Site Visit, up to 6 photos, amenities & brochure from the Sheet.
 - Video works for YouTube, Google Drive, Cloudflare Stream and direct files.
+
+## v2.8 — project-detail phone display
+- `website/project-detail.html`: Call button and footer now show **+91 7507163733/7972085446** (each number taps to call). Added `phone2` to `website/js/config.js`. Other pages unchanged.

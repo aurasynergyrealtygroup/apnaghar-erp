@@ -84,7 +84,7 @@
       <div class="footer-col">
         <h4>Contact</h4>
         <ul class="footer-contact">
-          <li><i class="fas fa-phone"></i> <a href="tel:+917507163733">+91 75071 63733</a></li>
+          <li><i class="fas fa-phone"></i> <a href="tel:+917507163733">+91 7507163733</a>/<a href="tel:+917972085446">7972085446</a></li>
           <li><i class="fab fa-whatsapp"></i> <a href="https://wa.me/917507163733">+91 75071 63733</a></li>
           <li><i class="fas fa-envelope"></i> <a href="mailto:aurasynergyrealtygroup@gmail.com">aurasynergyrealtygroup@gmail.com</a></li>
           <li><i class="fas fa-map-marker-alt"></i> Sasane Nagar, Hadapsar, Pune – 411028</li>
@@ -103,9 +103,9 @@
 </footer>
 <a href="https://wa.me/917507163733?text=Hello! I'm interested in properties." class="whatsapp-float" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
 <a href="tel:+917507163733" class="call-float" aria-label="Call"><i class="fas fa-phone"></i></a>
-<script src="js/config.js"></script>
+<script src="js/config.js?v=20261030"></script>
 <script src="js/api.js"></script>
-<script src="js/site.js"></script>
+<script src="js/site.js?v=20261030"></script>
 <script>
 initSiteNav();
 
@@ -166,7 +166,7 @@ function book(mode) { AGLead.open({ mode, project_id: P.project_id, title: P.pro
         <button class="btn btn-outline full-width" onclick="book('visit')"><i class="fas fa-calendar-check"></i> Free Site Visit</button>
         ${P.brochure_url ? `<a class="btn btn-outline full-width" target="_blank" href="${escapeHtml(P.brochure_url)}"><i class="fas fa-file-download"></i> Download Brochure</a>` : `<button class="btn btn-outline full-width" onclick="book('inquiry')"><i class="fas fa-file-alt"></i> Request Brochure</button>`}
         <a class="btn btn-whatsapp full-width" target="_blank" href="https://wa.me/${CONFIG.COMPANY.whatsapp}?text=${encodeURIComponent("Hello! I'm interested in " + P.project_name + " (" + location.href + ")")}"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-        <a class="btn btn-outline full-width" href="tel:${CONFIG.COMPANY.phone}"><i class="fas fa-phone"></i> ${CONFIG.COMPANY.phone_display}</a>
+        <div class="btn btn-outline full-width" style="flex-wrap:wrap;gap:0"><i class="fas fa-phone" style="margin-right:6px"></i><a href="tel:${CONFIG.COMPANY.phone}">+91 7507163733</a><span>/</span><a href="tel:${CONFIG.COMPANY.phone2}">7972085446</a></div>
       </div>
       <p style="font-size:12px;color:var(--text-light);margin-top:12px"><i class="fas fa-lock"></i> Booking request is free — our team will call to confirm unit & payment.</p>
     </div></aside>
